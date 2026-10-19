@@ -1512,7 +1512,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='32';
+const APP_VER='33';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -2575,6 +2575,7 @@ function openConn(){
       :`<label class="fld" for="srvUrl"><span>Server address</span><input id="srvUrl" type="url" inputmode="url" placeholder="https://life-sync.yourname.workers.dev" autocomplete="off"></label>
         <label class="fld" for="srvKey"><span>Key (only if this server is already paired)</span><input id="srvKey" autocomplete="off" placeholder="Leave empty the first time"></label>
         <div class="sh-actions" style="margin-top:0"><button class="primary" id="srvGo" style="flex:1">${ic('link')}Connect</button></div>`}
+    ${syncOn()?`<div class="sh-actions" style="margin-top:0"><button class="primary" id="diagGo" style="flex:1">Check everything</button></div>`:''}
     <div class="set-grp">What it powers</div>
     ${connRow('notif','reminder','Notifications',NS().on?'On · reminders, classes, morning digest':'Off',NS().on)}
     ${connRow('cals','ext','Calendars',(SYNC.cals||[]).length?`${SYNC.cals.length} linked · ${(SYNC.cals||[]).map(c=>c.name).join(', ')}`:'Outlook and iPhone (iCloud) calendars',(SYNC.cals||[]).length>0)}
@@ -3086,6 +3087,36 @@ document.addEventListener('click',e=>{
   }
 },true);
 setInterval(()=>{const m=$('#fcMini');if(m&&FOCUS())m.textContent=`${Math.ceil(focusLeft()/6e4)} min left`;if(FOCUS()&&focusLeft()<=0&&!$('#fcT'))finishFocus(true)},15000);
+
+/* ===================== diagnostics: one screen that shows what each connection returns ===================== */
+async function openDiag(){
+  NAV_DIR=1;openSheet(`${sheetHead('Connection <em>check</em>','conn')}<div id="diagOut"><p class="hint">Checking your server…</p></div>`);
+  const out=[],row=(name,ok,detail)=>out.push(`<div class="trow" style="cursor:default;align-items:flex-start"><span>${ok?'✅':'⚠️'} ${esc(name)}<small style="white-space:normal;word-break:break-word">${detail}</small></span></div>`);
+  const t=async(fn)=>{try{return{v:await fn()}}catch(e){return{e:e.message||String(e)}}};
+  const paint=()=>{const el=$('#diagOut');if(el)el.innerHTML=out.join('')+'<p class="small">Screenshot this screen and send it to Claude if something shows ⚠️.</p>'};
+  if(!syncOn()){row('Server',false,'Not connected. Paste your server address in Connections.');return paint()}
+  const st=await t(()=>api('/status'));
+  if(st.e){row('Server',false,'Can’t reach it: '+esc(st.e));return paint()}
+  const c=st.v.connections||{};
+  row('Server',true,`${esc(SYNC.url.replace(/^https:\/\//,''))} · ${(st.v.calendars||[]).length} calendars on server · ${st.v.scheduleCount||0} notifications queued`);
+  row('Notifications',!!c.pushSubscribed,c.pushSubscribed?'This phone is registered for push.':'This phone isn’t registered. Open Notifications and turn Allow notifications on.');
+  const cal=await t(()=>api(`/calendar?from=${addDays(-7)}&to=${addDays(30)}`));
+  row('Calendars',!cal.e&&!(cal.v.errors||[]).length,cal.e?esc(cal.e):`${(cal.v.events||[]).length} events in the next month${(cal.v.errors||[]).length?' · errors: '+esc(cal.v.errors.map(x=>x.cal+': '+x.message).join('; ')):''}`);
+  paint();
+  const ml=await t(()=>api('/mail'));
+  const gm=c.gmailUpdated?`Gmail last sent ${ago(c.gmailUpdated)}`:'Gmail script has never sent anything (run syncGmail in Apps Script)';
+  row('Email',!ml.e&&!!c.gmailUpdated,ml.e?esc(ml.e):`${(ml.v.items||[]).length} unread · ${gm} · Outlook ${c.outlookMail?'connected':'not connected'}${(ml.v.errors||[]).length?' · errors: '+esc(ml.v.errors.map(x=>x.source+': '+(x.code||'')+' '+x.message).join('; ')):''}${SYNC.mailOn?'':' · “Show unread mail on Today” is OFF in Email'}`);
+  paint();
+  const hl=await t(()=>api('/health?days=14'));
+  const days=hl.v&&hl.v.days||[],last=days[0];
+  row('Fitbit / Apple Health',!hl.e&&days.length>0,hl.e?esc(hl.e):`Fitbit ${c.googleHealth?'connected':'NOT connected'} · ${days.length} days of data${last?` · latest ${esc(last.date)}: ${['steps','sleepMin','restingHr','weightLb','kcal'].filter(k=>last[k]!=null).map(k=>k+' '+last[k]).join(', ')||'no values'}`:''}${(hl.v.errors||[]).length?' · errors: '+esc(hl.v.errors.map(x=>x.source+': '+(x.code||'')+' '+(x.message||'')+(x.part?' ('+x.part+')':'')).join('; ')):''}${SYNC.healthOn?'':' · “Use health data” is OFF'}`);
+  paint();
+  if(!ml.e){MAILC.items=ml.v.items||[];MAILC.at=Date.now();try{localStorage.setItem('ishiros.cache.mail',JSON.stringify(MAILC))}catch(e){}}
+  if(!hl.e){HC.days=days.length?(await t(()=>api('/health?days=30'))).v?.days||days:days;HC.at=Date.now();try{localStorage.setItem('ishiros.cache.health',JSON.stringify(HC))}catch(e){}importHealth()}
+  if(!cal.e){CALC.ev=cal.v.events||CALC.ev;}
+  DATA_VER++;render(false);
+}
+document.addEventListener('click',e=>{const b=e.target.closest('#diagGo');if(!b)return;e.stopImmediatePropagation();openDiag()},true);
 
 /* ===================== boot ===================== */
 load();
