@@ -85,7 +85,7 @@ test('VAPID JWT verifies with the published public key', async () => {
   assert.ok(verifyJwt(jwt, v.publicKey));
   const payload = JSON.parse(Buffer.from(b64uDecode(jwt.split('.')[1])).toString());
   assert.equal(payload.aud, 'https://fcm.googleapis.com');
-  assert.equal(payload.sub, 'mailto:life@example.invalid');
+  assert.equal(payload.sub, 'https://ishirj.github.io/life/');
   const now = Math.floor(Date.now() / 1000);
   assert.ok(payload.exp > now + 11 * 3600 && payload.exp <= now + 12 * 3600 + 5);
   const header = JSON.parse(Buffer.from(b64uDecode(jwt.split('.')[0])).toString());

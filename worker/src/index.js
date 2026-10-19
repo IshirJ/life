@@ -9,6 +9,7 @@ import {
   getCalendar, getMail, outlookCalendar, ingestHealth, getHealth, normalizeIcsUrl, tzOf,
 } from './services.js';
 import { isValidTz, parseYmd } from './tz.js';
+import { searchFood } from './food.js';
 
 const MIN = 60 * 1000;
 const DUE_WINDOW = 30 * MIN;
@@ -29,6 +30,7 @@ const MASK = '********';
 function maskConfig(c) {
   const out = JSON.parse(JSON.stringify(c || {}));
   for (const p of ['ms', 'google']) if (out[p]?.clientSecret) out[p].clientSecret = MASK;
+  if (out.fdcKey) out.fdcKey = MASK;
   out.tz ||= DEFAULT_TZ;
   out.calendars ||= [];
   return out;
@@ -62,6 +64,10 @@ function mergeConfig(cur, body) {
   if (body.tz != null) {
     if (!isValidTz(body.tz)) throw new HttpError(400, 'invalid tz');
     next.tz = body.tz;
+  }
+  if (body.fdcKey != null && body.fdcKey !== MASK) {
+    const k = String(body.fdcKey).trim().slice(0, 100);
+    if (k) next.fdcKey = k; else delete next.fdcKey;
   }
   if (body.healthPrefer === 'apple' || body.healthPrefer === 'google') next.healthPrefer = body.healthPrefer;
   return next;
@@ -234,7 +240,7 @@ async function route(request, env, url) {
       const sub = await kvGet(env, 'sub');
       if (!sub) return err(400, 'no push subscription');
       const r = await sendPush(env, sub, { title: 'Life', body: 'Notifications are working.', tag: 'life-test' });
-      return json({ ok: r.ok, status: r.status, ...(r.error ? { error: r.error } : {}) });
+      return json({ ok: r.ok, status: r.status, host: r.host, ...(r.error ? { error: r.error } : {}), ...(r.reason ? { reason: r.reason } : {}) });
     }
     case 'PUT /schedule': {
       const body = await readJson(request, 2_000_000);
@@ -256,6 +262,12 @@ async function route(request, env, url) {
       } catch (e) {
         return json({ events: [], errors: [{ cal: 'outlook', ...(e.code === 'reauth' ? { code: 'reauth' } : {}), message: String(e.message || e) }] });
       }
+    }
+    case 'GET /food/search': {
+      const q = (url.searchParams.get('q') || '').trim().slice(0, 100);
+      if (q.length < 2) return err(400, 'q must be at least 2 characters');
+      const page = Math.max(1, Math.min(20, parseInt(url.searchParams.get('page'), 10) || 1));
+      return json(await searchFood(await config(), q, page));
     }
     case 'GET /mail':
       return json(await getMail(env, await config()));

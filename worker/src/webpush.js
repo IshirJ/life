@@ -1,7 +1,8 @@
 // Web Push: RFC 8291 (aes128gcm message encryption) + RFC 8292 (VAPID), WebCrypto only.
 import { b64uEncode, b64uDecode, concatBytes, hmacSha256, randomBytes, utf8, kvGet, kvPut } from './util.js';
 
-const VAPID_SUB = 'mailto:life@example.invalid';
+// Apple rejects placeholder contacts (BadJwtToken); use the app's real https URL.
+const VAPID_SUB = 'https://ishirj.github.io/life/';
 const RS = 4096;
 let vapidMem = null; // per-isolate cache of the KV `vapid` record
 
@@ -100,7 +101,10 @@ export async function sendPush(env, subscription, payload) {
     return { status: 0, ok: false, error: String(e?.message || e) };
   }
   if (res.status === 404 || res.status === 410) await env.LIFE.delete('sub');
-  return { status: res.status, ok: res.status >= 200 && res.status < 300 };
+  const ok = res.status >= 200 && res.status < 300;
+  let reason;
+  if (!ok) { try { reason = (await res.text()).slice(0, 300); } catch {} }
+  return { status: res.status, ok, ...(reason ? { reason } : {}), host: new URL(subscription.endpoint).host };
 }
 
 function trimPayload(p) {

@@ -96,6 +96,18 @@ Install **Scriptable**, create a script, paste `scriptable/LifeWidget.js`, set `
 `LIFE_KEY`, then add a Scriptable widget (small/medium/large) and pick the script. The Life app keeps
 the summary fresh with `PUT /widget`.
 
+<a id="food"></a>
+
+## 7. Food search (optional key)
+
+`GET /food/search?q=<text>&page=1` searches USDA FoodData Central and Open Food Facts together.
+It works out of the box with USDA's shared `DEMO_KEY`, but that is limited to roughly 30 requests/hour
+(when exceeded, results still come from Open Food Facts and `errors` contains `{source:'usda', code:'rate'}`).
+
+1. Get a free key at https://fdc.nal.usda.gov/api-key-signup (instant, emailed).
+2. Paste it in **Life → Settings → Connections → Food search** (stored as `fdcKey` via `PUT /config`;
+   masked in `GET /config`).
+
 ## Development
 
 ```
