@@ -1167,13 +1167,27 @@ function openerMode(el){
 }
 let NAV_DIR=0,FORCE_MODE=null;
 /* iPhone home-screen apps can report a viewport shorter than the screen; measure the gap so bottom layers reach the real bottom */
-function fixGap(){
-  const standalone=navigator.standalone||matchMedia('(display-mode: standalone)').matches;
-  let g=0;
-  if(standalone&&innerHeight>innerWidth){const sh=Math.max(screen.width,screen.height);g=Math.max(0,Math.min(90,sh-innerHeight))}
-  document.documentElement.style.setProperty('--gap',g+'px');
+/* iOS home-screen bug: after the keyboard opens, the viewport stays ~59pt short (black band, bar floats/crops).
+   Fix = force WebKit to re-measure by flipping a full-height fixed layer off/on once the keyboard closes. */
+const STANDALONE=navigator.standalone||matchMedia('(display-mode: standalone)').matches;
+let maxVH=innerHeight;
+function expectedVH(){return STANDALONE&&innerHeight>innerWidth?Math.max(maxVH,Math.max(screen.width,screen.height)):maxVH}
+function healViewport(){
+  if(expectedVH()-innerHeight<=4)return;
+  const sc=document.getElementById('scroller');if(!sc)return;
+  const st=sc.scrollTop;
+  sc.style.display='none';void sc.offsetHeight;sc.style.display='';
+  sc.scrollTop=st;
+  /* nudge the document too — some iOS builds only recover on a scroll of the root */
+  scrollTo(0,1);scrollTo(0,0);
 }
-fixGap();addEventListener('orientationchange',()=>setTimeout(fixGap,300));
+addEventListener('resize',()=>{maxVH=Math.max(maxVH,innerHeight)});
+document.addEventListener('focusout',e=>{if(e.target.matches&&e.target.matches('input,textarea,select'))setTimeout(healViewport,140)});
+addEventListener('pageshow',()=>setTimeout(healViewport,60));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(healViewport,60)});
+addEventListener('orientationchange',()=>setTimeout(healViewport,300));
+setTimeout(healViewport,300);
+function fixGap(){} /* legacy no-op */
 /* while a panel is open, only the panel scrolls */
 document.addEventListener('touchmove',e=>{if(!wrap.hidden&&!e.target.closest('.sheet')&&!e.target.closest('.menu'))e.preventDefault()},{passive:false});
 function openSheet(html){
