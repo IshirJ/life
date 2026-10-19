@@ -59,7 +59,12 @@ svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:var(--ic
 html,body{height:100%;overflow:hidden;overscroll-behavior:none;touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 input,textarea,.notes,[contenteditable]{-webkit-user-select:text;user-select:text}
-#scroller{position:fixed;inset:0 0 calc(-1 * var(--gap)) 0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;scrollbar-width:none}
+#bgcurve{position:fixed;inset:-4% -10%;width:120%;height:108%;z-index:0;pointer-events:none;will-change:transform}
+#bgcurve svg{position:absolute;inset:0;width:100%;height:100%}
+#bgcurve .glow{filter:blur(22px);opacity:.42}
+#bgcurve .line{filter:blur(1.8px);opacity:.75}
+:root[data-theme="light"] #bgcurve .glow{opacity:.28}
+#scroller{z-index:1;position:fixed;inset:0 0 calc(-1 * var(--gap)) 0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;scrollbar-width:none}
 #scroller::-webkit-scrollbar{display:none}
 #scroller.locked{overflow:hidden}
 body.panel .dock{transform:translateY(130%);opacity:0;pointer-events:none}
@@ -336,7 +341,7 @@ h2 em{font-style:italic}
 
 /* openers: glass panels that come from their button */
 .wrap{position:fixed;inset:0 0 calc(-1 * var(--gap)) 0;z-index:20}
-.scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgb(255 255 255 / .05),rgb(10 8 5 / .30));-webkit-backdrop-filter:blur(2px) saturate(1.2);backdrop-filter:blur(2px) saturate(1.2);opacity:0;transition:opacity .34s ease;touch-action:none}
+.scrim{will-change:opacity;position:absolute;inset:0;background:linear-gradient(180deg,rgb(255 255 255 / .05),rgb(10 8 5 / .30));-webkit-backdrop-filter:blur(2px) saturate(1.2);backdrop-filter:blur(2px) saturate(1.2);opacity:0;transition:opacity .34s ease;touch-action:none}
 .sheet.morph{transition:none}
 .sheet.morph #sheetBody>*{transition:opacity .3s ease,transform .4s cubic-bezier(.22,1,.36,1)}
 .sheet{position:absolute;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;
@@ -605,6 +610,7 @@ button.av:active{transform:scale(.92)}
 :root[data-motion="off"] *,:root[data-motion="off"] *::before,:root[data-motion="off"] *::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
 </style>
 
+<div id="bgcurve" aria-hidden="true"><svg class="glow" viewBox="0 0 100 100" preserveAspectRatio="none"><defs><linearGradient id="bgg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)"/><stop offset=".55" stop-color="var(--sage-soft)"/><stop offset="1" stop-color="var(--accent)"/></linearGradient></defs><path fill="none" stroke="url(#bgg1)" stroke-linecap="round" vector-effect="non-scaling-stroke" stroke-width="46" d="M82 -4 C 18 14, 104 34, 50 52 S -2 80, 64 104"/></svg><svg class="line" viewBox="0 0 100 100" preserveAspectRatio="none"><defs><linearGradient id="bgg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)"/><stop offset=".55" stop-color="var(--sage-soft)"/><stop offset="1" stop-color="var(--accent)"/></linearGradient></defs><g fill="none" stroke="url(#bgg2)" stroke-linecap="round"><path vector-effect="non-scaling-stroke" stroke-width="4" d="M82 -4 C 18 14, 104 34, 50 52 S -2 80, 64 104"/><path vector-effect="non-scaling-stroke" stroke-width="1.5" opacity=".45" d="M88 -4 C 30 18, 110 40, 58 56 S 6 84, 72 104"/></g></svg></div>
 <div id="scroller"><div class="app">
   <header class="top" id="top"></header>
   <div class="banner" id="sampleBar" hidden><span>These are example entries so you can see the layout.</span><button id="clearSamples">Remove examples</button></div>
@@ -1270,10 +1276,10 @@ function openSheet(html){
   const morph=mode==='m-top'&&lastTrigger&&lastTrigger.isConnected&&!noMotion();
   $$('#sheetBody>*').forEach((c,i)=>c.style.transitionDelay=((morph?.16:.06)+i*.025)+'s');
   if(morph){sh.classList.add('morph');sh.style.transform='none';sh.style.opacity='1';
-    const br=lastTrigger.getBoundingClientRect(),sr=sh.getBoundingClientRect(),rad=parseFloat(getComputedStyle(lastTrigger).borderRadius)||15;
-    const from=`inset(${br.top-sr.top}px ${sr.right-br.right}px ${sr.bottom-br.bottom}px ${br.left-sr.left}px round ${rad}px)`;
-    sh._from=from;sh._btn=lastTrigger;
-    try{sh.animate([{clipPath:from,webkitClipPath:from,opacity:.4},{clipPath:'inset(0 0 0 0 round 28px)',webkitClipPath:'inset(0 0 0 0 round 28px)',opacity:1}],{duration:560,easing:'cubic-bezier(.2,.9,.22,1)'})}catch(e){}
+    const br=lastTrigger.getBoundingClientRect(),sr=sh.getBoundingClientRect();
+    sh.style.transformOrigin=`${br.left+br.width/2-sr.left}px ${br.top+br.height/2-sr.top}px`;
+    sh._from=1;sh._btn=lastTrigger;sh.style.willChange='transform,opacity';
+    try{const a=sh.animate([{transform:'scale(.14)',opacity:0},{transform:'scale(1.012)',opacity:1,offset:.7},{transform:'scale(1)',opacity:1}],{duration:480,easing:'cubic-bezier(.22,1,.36,1)'});a.onfinish=()=>{sh.style.willChange=''}}catch(e){}
   }
   void sh.offsetWidth;
   requestAnimationFrame(()=>wrap.classList.add('open'));
@@ -1283,12 +1289,13 @@ function closeSheet(){
   const sh=$('.sheet');
   $$('#sheetBody>*').forEach(c=>c.style.transitionDelay='0s');
   if(sh.classList.contains('morph')&&sh._from){
-    if(sh._btn&&sh._btn.isConnected){const br=sh._btn.getBoundingClientRect(),sr=sh.getBoundingClientRect(),rad=parseFloat(getComputedStyle(sh._btn).borderRadius)||15;sh._from=`inset(${br.top-sr.top}px ${sr.right-br.right}px ${sr.bottom-br.bottom}px ${br.left-sr.left}px round ${rad}px)`}
-    try{sh.getAnimations().forEach(a=>a.cancel());sh.animate([{clipPath:'inset(0 0 0 0 round 28px)',webkitClipPath:'inset(0 0 0 0 round 28px)',opacity:1},{clipPath:sh._from,webkitClipPath:sh._from,opacity:0}],{duration:340,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'})}catch(e){}
+    if(sh._btn&&sh._btn.isConnected){const br=sh._btn.getBoundingClientRect(),sr=sh.getBoundingClientRect();sh.style.transformOrigin=`${br.left+br.width/2-sr.left}px ${br.top+br.height/2-sr.top}px`}
+    sh.style.willChange='transform,opacity';
+    try{sh.getAnimations().forEach(a=>a.cancel());sh.animate([{transform:'scale(1)',opacity:1},{transform:'scale(.14)',opacity:0}],{duration:300,easing:'cubic-bezier(.4,0,.6,1)',fill:'forwards'})}catch(e){}
   }
   wrap.classList.add('closing');wrap.classList.remove('open');document.body.classList.remove('panel');
   setTimeout(()=>{if(!wrap.classList.contains('open')){wrap.hidden=true;wrap.classList.remove('closing');SC.classList.remove('locked');
-    sh.classList.remove('morph');sh.style.transform='';sh.style.opacity='';sh._from=null;sh.getAnimations?.().forEach(a=>a.cancel())}},360);
+    sh.classList.remove('morph');sh.style.transform='';sh.style.opacity='';sh.style.willChange='';sh._from=null;sh.getAnimations?.().forEach(a=>a.cancel())}},360);
 }
 function toast(msg){$$('.toast').forEach(t=>t.remove());const t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>{t.style.transition='opacity .3s';t.style.opacity='0';setTimeout(()=>t.remove(),300)},1500)}
 const sheetHead=(title,back)=>`<div class="sh-h"><div class="lhs">${back?`<button class="back" data-back="${back}">${ic('chev','i chev')}Back</button>`:`<h3>${title}</h3>`}</div><button type="button" class="x" data-close aria-label="Close">${ic('close')}</button></div>${back?`<h3 style="margin:-6px 0 18px">${title}</h3>`:''}`;
@@ -1384,7 +1391,7 @@ function openAdd(){
 function openSearch(){
   openSheet(`${sheetHead('<em>Search</em>')}
     <label class="fld" for="q"><span>Search everything</span><input id="q" type="search" autocomplete="off" placeholder="back, chicken, problem set"></label><div id="results"><p class="hint">Searches every class, task, food, note and injury.</p></div>`);
-  const q=$('#q');setTimeout(()=>q.focus(),300);
+  const q=$('#q');setTimeout(()=>q.focus({preventScroll:true}),500);
   q.addEventListener('input',()=>{
     const s=q.value.trim().toLowerCase();
     if(!s){$('#results').innerHTML='<p class="hint">Searches every class, task, food, note and injury.</p>';return}
@@ -1394,7 +1401,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='14';
+const APP_VER='17';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -1993,7 +2000,7 @@ document.addEventListener('click',e=>{
 /* header: floats as glass once you scroll, hides while scrolling down, returns when you scroll up */
 let lastY=0,ticking=false,hdrFloat=false,hdrAway=false,accum=0;
 SC.addEventListener('scroll',()=>{if(ticking)return;ticking=true;requestAnimationFrame(()=>{
-  const y=SC.scrollTop,dy=y-lastY,top=$('#top');lastY=y;ticking=false;if(!top)return;
+  const y=SC.scrollTop,dy=y-lastY,top=$('#top');lastY=y;ticking=false;const bc=document.getElementById('bgcurve');if(bc)bc.style.transform=`translate3d(0,${Math.max(-innerHeight*.035,-y*.05).toFixed(1)}px,0)`;if(!top)return;
   const f=y>24;if(f!==hdrFloat){hdrFloat=f;top.classList.toggle('float',f)}
   accum=(dy>0)===(accum>0)?accum+dy:dy;
   let a=hdrAway;if(y<90)a=false;else if(accum>28)a=true;else if(accum<-18)a=false;
