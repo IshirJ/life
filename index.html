@@ -53,6 +53,9 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:var(--icon-w,2.1);stroke-linecap:round;stroke-linejoin:round;flex:none}
+/* iOS 26 home-screen bug (WebKit 301108): with a translucent status bar the web view is one status-bar
+   height short whenever the page is not taller than the screen. A page at least screen-tall gets the full view. */
+@media (display-mode: standalone){html{min-height:min(100lvh,calc(100% + env(safe-area-inset-top)))}body{min-height:inherit}}
 html,body{height:100%;overflow:hidden;overscroll-behavior:none;touch-action:manipulation;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 input,textarea,.notes,[contenteditable]{-webkit-user-select:text;user-select:text}
@@ -1171,7 +1174,7 @@ let NAV_DIR=0,FORCE_MODE=null;
    Fix = force WebKit to re-measure by flipping a full-height fixed layer off/on once the keyboard closes. */
 const STANDALONE=navigator.standalone||matchMedia('(display-mode: standalone)').matches;
 let maxVH=innerHeight;
-function expectedVH(){return STANDALONE&&innerHeight>innerWidth?Math.max(maxVH,Math.max(screen.width,screen.height)):maxVH}
+function expectedVH(){return maxVH}
 function healViewport(){
   if(expectedVH()-innerHeight<=4)return;
   const sc=document.getElementById('scroller');if(!sc)return;
