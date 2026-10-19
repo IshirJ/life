@@ -1475,7 +1475,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='28';
+const APP_VER='29';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -2201,7 +2201,7 @@ function buildSchedule(){
     if(n.digestOn){const due=of('task').filter(e=>!e.done&&e.due&&(e.due===d||(i===0&&e.due<d)));
       if(due.length)add('dg:'+d,atLocal(d,n.digest),`${due.length} task${due.length>1?'s':''} due${i===0&&due.some(e=>e.due<d)?' or late':''}`,due.slice(0,3).map(e=>e.title).join(' · '))}
     if(n.classes){of('class').filter(e=>(e.days||[]).includes(wd)&&e.start).forEach(e=>add(`c:${e.id}:${d}`,new Date(atLocal(d,e.start)-6e5),e.title,`Starts ${fmtT(e.start)}${e.place?' · '+e.place:''}`));
-      of('meeting').filter(e=>e.date===d&&e.time).forEach(e=>add('m:'+e.id,new Date(atLocal(d,e.time)-6e5),e.title,`Meeting at ${fmtT(e.time)}${e.with?' · '+e.with:''}`))}
+      of('meeting').filter(e=>e.time&&meetingOn(e,d)).forEach(e=>add(`m:${e.id}:${d}`,new Date(atLocal(d,e.time)-6e5),e.title,`Meeting at ${fmtT(e.time)}${e.with?' · '+e.with:''}`))}
     if(n.events)extOn(d).filter(e=>!e.allDay&&e.start).forEach(e=>add(`x:${e.xid}`,new Date(atLocal(d,e.start)-6e5),e.title,`Starts ${fmtT(e.start)}${e.place?' · '+e.place:''}`));
     if(n.food&&!(i===0&&of('food').some(e=>e.date===d)))add('f:'+d,atLocal(d,n.foodTime),'Log today’s food','Nothing logged yet today.',APP_URL+'#log=food');
   }
@@ -2241,7 +2241,7 @@ async function loadExt(force){
 function dayItems(d){
   const wd=wdOf(d);
   return[...of('class').filter(e=>(e.days||[]).includes(wd)).map(e=>[e.start||'',e]),
-         ...of('meeting').filter(e=>e.date===d).map(e=>[e.time||'',e]),
+         ...of('meeting').filter(e=>meetingOn(e,d)).map(e=>[e.time||'',e]),
          ...extOn(d).map(e=>[e.allDay?'':e.start,e])].sort((a,b)=>a[0].localeCompare(b[0])).map(x=>x[1]);
 }
 function openExt(xid){
