@@ -353,8 +353,7 @@ h2 em{font-style:italic}
 .scrim{will-change:opacity;position:absolute;inset:0;background:linear-gradient(180deg,rgb(255 255 255 / .05),rgb(10 8 5 / .34));opacity:0;transition:opacity .34s ease;touch-action:none}
 .sheet.morph{transition:none}
 .wrap.blurred .scrim{-webkit-backdrop-filter:blur(2px) saturate(1.2);backdrop-filter:blur(2px) saturate(1.2)}
-.sheet.opening{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:color-mix(in srgb,var(--surface) 97%,transparent)!important}
-.sheet{transition-property:transform,opacity,background-color}
+.sheet{transition-property:transform,opacity}
 .sheet.morph #sheetBody>*{transition:opacity .3s ease,transform .4s cubic-bezier(.22,1,.36,1)}
 .sheet{position:absolute;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;
   background:color-mix(in srgb,var(--surface) calc(var(--glass-tint) * 1%),transparent);
@@ -1342,7 +1341,7 @@ function openSheet(html){
   sh.className='sheet '+mode;
   $('#sheetBody').innerHTML=html;sh.scrollTop=0;
   wrap.hidden=false;SC.classList.add('locked');document.body.classList.add('panel');
-  wrap.classList.remove('blurred');sh.classList.add('opening');clearTimeout(sh._ot);sh._ot=setTimeout(()=>{sh.classList.remove('opening');wrap.classList.add('blurred')},noMotion()?0:430);
+  sh.classList.remove('opening');wrap.classList.add('blurred');
   if(mode==='m-zoom'){const top=innerHeight/2-sh.offsetHeight/2;sh.style.transformOrigin=`${Math.round(origin[0]-sh.offsetLeft)}px ${Math.round(origin[1]-top)}px`}
   else if(mode==='m-top'){sh.style.transformOrigin=`${Math.round(origin-sh.offsetLeft)}px 0`}
   else sh.style.transformOrigin=origin;
@@ -1366,8 +1365,8 @@ function closeSheet(){
     sh.style.willChange='transform,opacity';
     try{sh.getAnimations().forEach(a=>a.cancel());sh.animate([{transform:'scale(1)',opacity:1},{transform:'scale(.6)',opacity:0}],{duration:240,easing:'cubic-bezier(.4,0,.8,.6)',fill:'forwards'})}catch(e){}
   }
-  wrap.classList.add('closing');wrap.classList.remove('open','blurred');sh.classList.add('opening');document.body.classList.remove('panel');
-  setTimeout(()=>{if(!wrap.classList.contains('open')){wrap.hidden=true;sh.classList.remove('opening');wrap.classList.remove('closing');SC.classList.remove('locked');
+  wrap.classList.add('closing');wrap.classList.remove('open');document.body.classList.remove('panel');
+  setTimeout(()=>{if(!wrap.classList.contains('open')){wrap.hidden=true;wrap.classList.remove('blurred');wrap.classList.remove('closing');SC.classList.remove('locked');
     sh.classList.remove('morph');sh.style.transform='';sh.style.opacity='';sh.style.willChange='';sh._from=null;sh.getAnimations?.().forEach(a=>a.cancel())}},360);
 }
 function toast(msg){$$('.toast').forEach(t=>t.remove());msg=String(msg).replace(/^(\w+Error|Error):\s*/,'');const t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>{t.style.transition='opacity .3s';t.style.opacity='0';setTimeout(()=>t.remove(),300)},Math.min(5000,1500+msg.length*30))}
@@ -1475,7 +1474,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='29';
+const APP_VER='30';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
