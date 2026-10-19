@@ -1,0 +1,19 @@
+name: Check life-sync worker
+on: workflow_dispatch
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe (read-only, never pairs)
+        run: |
+          U=https://life-sync.ishir1089.workers.dev
+          O=https://ishirj.github.io
+          for spec in "GET /" "GET /vapid" "GET /status" "OPTIONS /pair" "OPTIONS /status"; do
+            m=${spec%% *}; p=${spec#* }
+            if [ "$m" = OPTIONS ]; then
+              out=$(curl -s -i -m 20 -X OPTIONS "$U$p" -H "Origin: $O" -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: content-type,x-life-key" | tr -d '\r' | head -c 700)
+            else
+              out=$(curl -s -i -m 20 "$U$p" -H "Origin: $O" | tr -d '\r' | head -c 700)
+            fi
+            echo "::notice title=$spec::$(echo "$out" | sed ':a;N;$!ba;s/%/%25/g;s/\n/%0A/g')"
+          done
