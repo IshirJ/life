@@ -13,8 +13,15 @@ const wrangler = join(root, 'node_modules', '.bin', 'wrangler');
 const cwd = mkdtempSync(join(tmpdir(), 'kv-'));
 
 function run(args) {
-  return execFileSync(wrangler, args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] });
+  try {
+    return execFileSync(wrangler, args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  } catch (e) {
+    throw new Error(`wrangler ${args.join(' ')} failed:\n${(e.stdout || '').slice(-1500)}\n${(e.stderr || '').slice(-1500)}`);
+  }
 }
+// GitHub shows ::error:: lines as annotations on the run page
+const annotate = (m) => console.log('::error::' + String(m).replace(/%/g, '%25').replace(/\r?\n/g, '%0A'));
+process.on('uncaughtException', (e) => { annotate(e.message || e); process.exit(1); });
 
 function list() {
   const out = run(['kv', 'namespace', 'list']);
