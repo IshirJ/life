@@ -19,6 +19,7 @@
 <style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
 </head>
 <body>
+<script>try{var _d=JSON.parse(localStorage.getItem('ishiros.life.v1')||'null'),_t=_d&&_d.settings&&_d.settings.theme;if(_t==='light'||_t==='dark')document.documentElement.dataset.theme=_t;if(_d&&_d.settings&&_d.settings.accent)document.documentElement.style.setProperty('--accent',_d.settings.accent)}catch(e){}</script>
 <style>
 /* Layout: one-column phone app. Every tab opens with a glass "hero" card (number + art), then sectioned cards.
    Floating glass tab bar with labels + round add button. Openers come from their button (side panel, drop-down, bottom sheet, zoom).
@@ -1306,7 +1307,11 @@ const viewSig=k=>[DATA_VER,today(),k,state.sub[k]||'',k==='mind'?state.folder:''
 function buildPane(k){artN=k.length*100;const pane=document.createElement('div');pane.className='pane';pane.innerHTML=viewFor(k);VIEWS[k]={pane,sig:viewSig(k)};return pane}
 function getPane(k,fresh){const c=VIEWS[k];return!fresh&&c&&c.sig===viewSig(k)?c.pane:buildPane(k)}
 let warmT=null;
-function warmViews(){clearTimeout(warmT);const todo=Object.keys(TABS).filter(k=>k!==state.tab&&!(VIEWS[k]&&VIEWS[k].sig===viewSig(k)));
+/* heavy background work waits until the startup animation is finished, so it never stutters */
+var SPLASHING=false;const AFTER_SPLASH=[];
+function afterSplash(fn){if(SPLASHING)AFTER_SPLASH.push(fn);else fn()}
+function flushAfterSplash(){SPLASHING=false;let d=0;while(AFTER_SPLASH.length){const f=AFTER_SPLASH.shift();setTimeout(()=>{try{f()}catch(e){}},d);d+=120}}
+function warmViews(){if(SPLASHING){if(!AFTER_SPLASH.includes(warmViews))AFTER_SPLASH.push(warmViews);return}clearTimeout(warmT);const todo=Object.keys(TABS).filter(k=>k!==state.tab&&!(VIEWS[k]&&VIEWS[k].sig===viewSig(k)));
   if(!todo.length)return;const go=()=>{const k=todo.shift();if(k&&k!==state.tab)getPane(k);if(todo.length)warmT=setTimeout(()=>(window.requestIdleCallback||setTimeout)(go),60)};
   warmT=setTimeout(()=>(window.requestIdleCallback||setTimeout)(go),400)}
 function render(animate,first,switchDir){
@@ -1517,7 +1522,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='41';
+const APP_VER='44';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -3143,15 +3148,18 @@ function runSplash(){
   const ease=u=>u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2,easeIn=u=>u*u*u,cl=v=>Math.max(0,Math.min(1,v)),PTS=90;
   const t0=performance.now(),tRound=T_SWIRL,tSwoosh=T_SWIRL+T_ROUND,tFlick=tSwoosh+T_SWOOSH;
   let flew=false,shown=false,flick=false,raf=0;
+  let vt=0,last=0;
   function frame(now){
-    const ms=now-t0,t=ms/1000;x.clearRect(0,0,W,H);
+    /* animation clock: if the phone hiccups, pause instead of jumping ahead */
+    if(!last)last=now;vt+=Math.min(34,Math.max(0,now-last));last=now;
+    const ms=vt,t=ms/1000;x.clearRect(0,0,W,H);
     const r=ease(cl((ms-tRound)/T_ROUND));                 /* 0→1: gather into one ring */
     let front=-1;
     cur.forEach((c,i)=>{
-      const grow=ease(cl((ms-i*45)/T_IN));
+      const grow=1-Math.pow(1-cl((ms-i*45)/T_IN),3);if(grow<.02&&r<=0)return;
       const sw=cl((ms-tSwoosh-i*22)/(T_SWOOSH/c.rate));   /* each streak at its own speed */
       if(sw>=1)return;
-      const swE=easeIn(sw),n=Math.max(2,Math.round(PTS*(r>0?1:grow)));
+      const swE=easeIn(sw),n=Math.max(2,Math.round(PTS*(r>0?1:grow))),fade=r>0?1:Math.min(1,grow*1.6);
       const rx=c.rx+(ex*c.ring-c.rx)*r,ry=c.ry+(ey*c.ring-c.ry)*r,spin=t*c.spd*(1+r*4),span=c.span+(TAU*.92-c.span)*r;
       let fx=0,fy=0,mx=0,my=0;const mid=n>>1;x.beginPath();
       for(let j=0;j<n;j++){const s=j/(PTS-1),th=c.a+s*span+spin,w=1+c.wob*(1-r)*Math.sin(2*th+t*1.1+c.ph);
@@ -3163,8 +3171,8 @@ function runSplash(){
         if(!j){fx=px;fy=py;x.moveTo(px,py)}else x.lineTo(px,py);if(j===mid){mx=px;my=py}}
       const d=Math.hypot(mx-fx,my-fy)>4,g=x.createLinearGradient(fx,fy,d?mx:fx+1,d?my:fy+1);g.addColorStop(0,c.pal[0]);g.addColorStop(1,c.pal[1]);x.strokeStyle=g;
       const boost=1+sw*1.6*c.bright;
-      x.globalAlpha=Math.min(1,.15*boost);x.lineWidth=c.w*(5+sw*6);x.stroke();
-      x.globalAlpha=Math.min(1,(.78)*(1-sw*.3));x.lineWidth=c.w*(1+sw*.8);x.stroke();
+      x.globalAlpha=Math.min(1,.15*boost)*fade;x.lineWidth=c.w*(5+sw*6);x.stroke();
+      x.globalAlpha=Math.min(1,(.78)*(1-sw*.3))*fade;x.lineWidth=c.w*(1+sw*.8);x.stroke();
       if(sw>0){const leftEdge=Math.min(fx,mx);front=Math.max(front,leftEdge)}
     });
     x.globalAlpha=1;
@@ -3257,15 +3265,17 @@ function runSplash(){
 /* ===================== boot ===================== */
 load();
 const splash=document.getElementById('splash'),splashBg=document.getElementById('splashBg');
+SPLASHING=!(noMotion()||LOCKED_BLOB);
 if(!LOCKED_BLOB&&db.settings.startTab&&TABS[db.settings.startTab])state.tab=db.settings.startTab;
 if(LOCKED_BLOB){db.settings={...DEF,lockMin:LOCKED_BLOB.lockMin||5};showLock('unlock')}
 else{applyLook();render(false)}
-function endSplash(){splash.remove();splashBg.remove();const h=$('#hi');if(h)h.style.visibility=''}
+function endSplash(){if(!splash.isConnected&&!SPLASHING)return;splash.remove();splashBg.remove();const h=$('#hi');if(h)h.style.visibility='';flushAfterSplash()}
 if(noMotion()||LOCKED_BLOB){endSplash()}
 else runSplash();
-setTimeout(loadFoods,2500);
-dailySnap();handleHash();adaptCheck();
-setTimeout(()=>{if(!$('#lock')&&syncOn()){refreshStatus();loadExt();loadMail();loadHealth();cloudBackup(false);pushSchedule(false)}},2500);
+handleHash();
+afterSplash(()=>{dailySnap();adaptCheck()});
+afterSplash(()=>setTimeout(()=>{if(!$('#lock')&&syncOn()){refreshStatus();loadExt();loadMail();loadHealth();cloudBackup(false);pushSchedule(false)}},300));
+afterSplash(()=>setTimeout(loadFoods,1500));
 </script>
 
 <script>
