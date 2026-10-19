@@ -1,5 +1,5 @@
 /* Offline cache for the app itself only. Your entries live in this phone's storage and are never put in this cache. */
-const VERSION='life-v31';
+const VERSION='life-v32';
 const SHELL=['./','./index.html','./foods.txt','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
 const CDN=['https://cdn.jsdelivr.net/','https://fonts.googleapis.com/','https://fonts.gstatic.com/'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(VERSION).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()))});
@@ -10,7 +10,7 @@ self.addEventListener('fetch',e=>{
   const sameApp=url.origin===location.origin&&url.pathname.startsWith(new URL('./',self.registration.scope).pathname);
   if(sameApp){
     /* app files: try the network first so updates arrive, fall back to the cache when offline */
-    e.respondWith(fetch(req).then(r=>{if(r.ok){const c=r.clone();caches.open(VERSION).then(x=>x.put(req,c))}return r}).catch(()=>caches.match(req).then(r=>r||caches.match('./index.html'))));
+    e.respondWith(fetch(req,{cache:'no-cache'}).then(r=>{if(r.ok){const c=r.clone();caches.open(VERSION).then(x=>x.put(req,c))}return r}).catch(()=>caches.match(req).then(r=>r||caches.match('./index.html'))));
     return;
   }
   if(CDN.some(p=>req.url.startsWith(p))){
