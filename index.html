@@ -1475,7 +1475,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='26';
+const APP_VER='28';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -1585,7 +1585,7 @@ function openAbout(){
     <div class="about"><p><b>Life</b> · version ${APP_VER}. Your classes, work, food, health and ideas in one place.</p>
     <p><b>Updates</b> install by themselves. If something looks old, swipe the app away and open it again.</p>
     <p><b>Privacy.</b> No account and no server. Your data never leaves this phone unless you copy a backup.</p>
-    <p><b>Food data.</b> USDA FoodData Central (SR Legacy, via TempoLife, CC-BY-4.0), IFCT 2017 India (MIT) and Open Food Facts (ODbL) for barcodes.</p>
+    <p><b>Food data.</b> 75,000 built-in foods: USDA FoodData Central (SR Legacy, FNDDS, Foundation; public domain), IFCT 2017 India, tempo-food-db by TempoLife (CC-BY-4.0), <a href="https://www.opennutrition.app" target="_blank" rel="noopener">OpenNutrition</a> (ODbL 1.0) and © Open Food Facts contributors (ODbL). The food list is shared under the ODbL. Online search adds USDA branded foods and Open Food Facts.</p>
     <p><a href="https://github.com/IshirJ/life">Source on GitHub</a></p></div>`);
 }
 function openGoals(){
@@ -1807,7 +1807,7 @@ function searchFoods(q){
     if(!words.every(w=>x.lc.includes(w)))continue;
     const nl=x.n.toLowerCase();
     let sc=nl.startsWith(words[0])?0:x.lc.split(/[\s,()]+/).includes(words[0])?4:9;
-    sc+=x.n.length/25+(x.n.split(',').length-1)*.8+(x.s==='IN'?-1.5:0)+(/\b(raw|cooked|boiled)\b/.test(nl)?-.5:0)+(/[A-Z]{4,}/.test(x.n)?2:0);
+    sc+=x.n.length/25+(x.n.split(',').length-1)*.8+(x.s==='IN'?-1.5:x.s==='ONB'?3:x.s==='ONR'?1.5:0)+(/\b(raw|cooked|boiled)\b/.test(nl)?-.5:0)+(/[A-Z]{4,}/.test(x.n)?2:0);
     out.push([sc,x]);
   }
   return out.sort((a,b)=>a[0]-b[0]).slice(0,40).map(o=>o[1]);
@@ -1823,7 +1823,8 @@ function recentFoods(){
     out.push(e.per100?{name:e.title,per100:e.per100,grams:num(e.grams)||100,src:'Recent'}:{name:e.title,k:num(e.kcal),p:num(e.protein),f:num(e.fat),c:num(e.carbs),src:'Recent'});if(out.length>=12)break}
   return out;
 }
-const fromDb=x=>({name:x.n,per100:{k:x.k,p:x.p,f:x.f,c:x.c},grams:100,src:x.s==='IN'?'India (IFCT)':'USDA'});
+const SRCL={IN:'India (IFCT)',US:'USDA',TL:'TempoLife',FNDDS:'USDA FNDDS',FDN:'USDA Foundation',ON:'OpenNutrition',ONR:'OpenNutrition · Restaurant',ONB:'OpenNutrition · Brand'};
+const fromDb=x=>({name:x.n,per100:{k:x.k,p:x.p,f:x.f,c:x.c},grams:100,src:SRCL[x.s]||x.s||'Database'});
 function initials(n){return(n.replace(/[^A-Za-z ]/g,'').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('')||'·').toUpperCase()}
 const KCOL=[['#FF9F6B','#D9552E'],['#93C97A','#4A8A3E'],['#F5CB6B','#C98A14'],['#7CB7DE','#3A72A8'],['#C9A7E8','#7D55B5'],['#62C7BE','#1F7C80']];
 function foodRow(it,key){
@@ -1833,12 +1834,13 @@ function foodRow(it,key){
   return`<li data-fkey="${key}"><div class="frow"><span class="fi" style="--c1:${col[0]};--c2:${col[1]}">${esc(initials(it.name))}</span><div class="ft"><b>${esc(it.name)}</b><span>${m}${it.src?` · ${esc(it.src)}`:''}</span></div><button class="fav${isFav(it)?' on':''}" data-fav="${key}" aria-pressed="${isFav(it)}" aria-label="Favourite ${esc(it.name)}">${ic('star')}</button><button class="addc${open?' on':''}" data-fopen="${key}" aria-label="Add ${esc(it.name)}" aria-expanded="${open}">${ic('plus')}</button></div>${open?servPanel(it,key):''}</li>`;
 }
 function servPanel(it,key){
+  const cr=/OpenNutrition/.test(it.src||'')?`<p class="small" style="margin:0">Data: <a href="https://www.opennutrition.app" target="_blank" rel="noopener">OpenNutrition</a>${/Brand/.test(it.src)?' · © Open Food Facts contributors':''} (ODbL)</p>`:'';
   if(!it.per100)return`<div class="serv"><div class="macro">1 serving · ${Math.round(it.k)} kcal</div><div class="line"><label class="cap" for="sq-${key}">Servings</label><input id="sq-${key}" type="number" inputmode="decimal" step="any" value="1" data-sq></div><button class="primary" style="height:46px" data-fadd="${key}">Add to log</button></div>`;
   const g=it.grams||100,v=per(it,g);
   return`<div class="serv"><div class="line"><label class="cap" for="uq-${key}">Amount</label><input id="uq-${key}" type="number" inputmode="decimal" step="any" value="1" data-uq style="width:76px"><div class="units">${UNITS.map(([u])=>`<button data-unit="${u}" aria-pressed="false">${u}</button>`).join('')}</div></div><div class="unote small"></div><div class="chipsrow">${[50,100,150,200,250].map(n=>`<button data-grams="${n}" aria-pressed="${n===g}">${n} g</button>`).join('')}${it.servingG?`<button data-grams="${it.servingG}">1 serving</button>`:''}</div>
     <div class="line"><label class="cap" for="sg-${key}">Grams</label><input id="sg-${key}" type="number" inputmode="decimal" step="any" value="${g}" data-sg></div>
     <div class="macro" data-live>${Math.round(v.k)} kcal · ${v.p.toFixed(1)}P ${v.f.toFixed(1)}F ${v.c.toFixed(1)}C</div>
-    <button class="primary" style="height:46px" data-fadd="${key}">Add to log</button></div>`;
+    <button class="primary" style="height:46px" data-fadd="${key}">Add to log</button>${cr}</div>`;
 }
 let FITEMS={};
 function listFoods(items,prefix){return`<ul class="fres">${items.map((it,i)=>{const k=prefix+i;FITEMS[k]=it;return foodRow(it,k)}).join('')}</ul>`}
@@ -1857,7 +1859,7 @@ function flBody(){
       +(res.length?`<div class="cap" style="margin:12px 0 6px">Built-in database</div>${listFoods(res,'s')}`:`<p class="hint">No match in the built-in database.</p>`);
     if(FL.online&&FL.online.q===FL.q){h+=FL.online.err?`<div class="notice" style="margin-top:12px">${FL.online.err}</div>`:FL.online.items?`<div class="cap" style="margin:16px 0 6px">${syncOn()?'More foods · USDA + Open Food Facts':'Packaged foods · Open Food Facts'}</div>${FL.online.items.length?listFoods(FL.online.items,'o'):'<p class="hint">No packaged foods found.</p>'}`:`<p class="hint">${syncOn()?'Searching USDA and Open Food Facts…':'Searching packaged foods…'}</p>`}
     else if(!syncOn())h+=`<button class="secondary" style="width:100%;margin-top:14px" data-online>Search packaged foods online</button>`;
-    return h+`<p class="small">Food data: USDA FoodData Central, IFCT 2017 (India), TempoLife (tempolife.app, CC-BY-4.0) and Open Food Facts.</p>`;
+    return h+`<p class="small">Food data: USDA FoodData Central (public domain) · IFCT 2017 (India) · TempoLife (CC-BY-4.0) · <a href="https://www.opennutrition.app" target="_blank" rel="noopener">OpenNutrition</a> (ODbL) · © Open Food Facts contributors (ODbL).</p>`;
   }
   if(FL.tab==='scan')return`<div class="scanbox" id="scanbox"><video id="scanvid" playsinline muted></video><div class="frame"></div></div>
     <div class="sh-actions"><button class="primary" id="scanStart">${ic('search')}Start camera</button></div>
@@ -2917,7 +2919,7 @@ else{
     setTimeout(()=>{if(splash.isConnected)endSplash()},av?1780:850);
   },1350);
 }
-loadFoods();
+setTimeout(loadFoods,2500);
 dailySnap();handleHash();
 setTimeout(()=>{if(!$('#lock')&&syncOn()){refreshStatus();loadExt();loadMail();loadHealth();cloudBackup(false);pushSchedule(false)}},2500);
 </script>
