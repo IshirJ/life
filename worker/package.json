@@ -1,0 +1,19 @@
+{
+  "name": "life-sync",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Single-user Cloudflare Worker backend for the Life app",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node --test",
+    "deploy": "wrangler deploy",
+    "dry-run": "wrangler deploy --dry-run --outdir dist"
+  },
+  "devDependencies": {
+    "wrangler": "4.148.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

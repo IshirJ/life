@@ -1445,7 +1445,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='21';
+const APP_VER='22';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -2161,7 +2161,7 @@ const atLocal=(d,t)=>new Date(`${d}T${t||'09:00'}:00`);
 function nextDow(dow,time){const x=new Date();for(let i=0;i<8;i++){const d=addDays(i),dt=atLocal(d,time);if(new Date(d+'T12:00').getDay()===dow&&dt>x)return dt}return null}
 function buildSchedule(){
   const n=NS(),out=[],now=Date.now(),lim=now+7*864e5;
-  const add=(id,dt,title,body,url)=>{if(!dt)return;const t=dt.getTime();if(t>now-6e4&&t<lim)out.push({id,at:dt.toISOString(),title,body:body||'',url:url||APP_URL,tag:id.split(':')[0]})};
+  const add=(id,dt,title,body,url)=>{if(!dt)return;const t=dt.getTime();if(t>now-6e4&&t<lim)out.push({id,at:dt.toISOString(),title,body:body||'',url:url||APP_URL,tag:id})};
   for(let i=0;i<7;i++){const d=addDays(i),wd=wdOf(d);
     if(n.reminders)of('reminder').filter(e=>!e.done&&e.due===d).forEach(e=>add('r:'+e.id,atLocal(d,e.time||'09:00'),e.title,'Reminder'));
     if(n.digestOn){const due=of('task').filter(e=>!e.done&&e.due&&(e.due===d||(i===0&&e.due<d)));
@@ -2272,7 +2272,8 @@ function widgetSummary(){
   const td=today(),food=of('food').filter(e=>e.date===td),k=sumKcal(food),g=db.settings,h=hday(td);
   const due=of('task').filter(e=>!e.done&&e.due&&dayDiff(e.due)<=0).length+of('reminder').filter(e=>!e.done&&e.due&&dayDiff(e.due)<=0).length;
   const ws=weights(),tr=trendSeries(ws),last=tr[tr.length-1];
-  return{name:firstName(),kcal:Math.round(k),kcalGoal:g.kcal,kcalLeft:Math.round(g.kcal-k),protein:Math.round(sumProt(food)),proteinGoal:g.protein,due,next:nextUp(),steps:h&&h.steps?Math.round(num(h.steps)):null,sleepMin:h&&h.sleepMin?Math.round(num(h.sleepMin)):null,weightTrend:last?+last.t.toFixed(1):null,updated:Date.now()};
+  const nx=nextUp(),nowM=new Date().getHours()*60+new Date().getMinutes(),evs=dayItems(td).filter(e=>{const t=(e.type==='class'||e.type==='ext')?e.start:e.time;return t&&toMin(t)>=nowM}).slice(0,4).map(e=>({title:e.title,time:(e.type==='class'||e.type==='ext')?e.start:e.time}));
+  return{name:firstName(),kcal:Math.round(k),kcalGoal:g.kcal,kcalLeft:Math.round(g.kcal-k),protein:Math.round(sumProt(food)),proteinGoal:g.protein,proteinTarget:g.protein,due,next:nx,nextEvent:nx?{title:nx.title,time:nx.day==='Today'?(evs[0]?evs[0].time:nx.time):nx.day+' '+nx.time}:null,events:evs,steps:h&&h.steps?Math.round(num(h.steps)):null,sleepMin:h&&h.sleepMin?Math.round(num(h.sleepMin)):null,weightTrend:last?+last.t.toFixed(1):null,updated:Date.now()};
 }
 async function pushWidget(force){
   if(!syncOn()||!SYNC.widgetOn||LOCKED_BLOB&&!LOCK.key)return;
