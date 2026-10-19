@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; connect-src 'self' https://world.openfoodfacts.org https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; connect-src 'self' https://*.workers.dev https://world.openfoodfacts.org https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="theme-color" content="#131311">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -341,8 +341,11 @@ h2 em{font-style:italic}
 
 /* openers: glass panels that come from their button */
 .wrap{position:fixed;inset:0 0 calc(-1 * var(--gap)) 0;z-index:20}
-.scrim{will-change:opacity;position:absolute;inset:0;background:linear-gradient(180deg,rgb(255 255 255 / .05),rgb(10 8 5 / .30));-webkit-backdrop-filter:blur(2px) saturate(1.2);backdrop-filter:blur(2px) saturate(1.2);opacity:0;transition:opacity .34s ease;touch-action:none}
+.scrim{will-change:opacity;position:absolute;inset:0;background:linear-gradient(180deg,rgb(255 255 255 / .05),rgb(10 8 5 / .34));opacity:0;transition:opacity .34s ease;touch-action:none}
 .sheet.morph{transition:none}
+.wrap.blurred .scrim{-webkit-backdrop-filter:blur(2px) saturate(1.2);backdrop-filter:blur(2px) saturate(1.2)}
+.sheet.opening{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:color-mix(in srgb,var(--surface) 97%,transparent)!important}
+.sheet{transition-property:transform,opacity,background-color}
 .sheet.morph #sheetBody>*{transition:opacity .3s ease,transform .4s cubic-bezier(.22,1,.36,1)}
 .sheet{position:absolute;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;
   background:color-mix(in srgb,var(--surface) calc(var(--glass-tint) * 1%),transparent);
@@ -586,6 +589,41 @@ button.av:active{transform:scale(.92)}
 .countgrid b{display:block;color:var(--ink);font-size:18px}
 .about p{margin:0 0 12px;line-height:1.5}
 .about a{color:var(--accent);font-weight:700}
+
+.fav{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:var(--muted);flex:none;transition:color .2s}
+.fav svg.i{width:18px;height:18px}.fav.on{color:#F5B83D}.fav.on svg{fill:#F5B83D}
+.units{display:flex;gap:4px;flex-wrap:wrap;min-width:0}
+.units button{height:32px;padding:0 9px;border-radius:999px;background:color-mix(in srgb,var(--ink) 9%,transparent);font-weight:800;font-size:12px}
+.units button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.unote:empty{display:none}
+.bkb{flex-wrap:nowrap;gap:10px}.bkb>svg.i{width:20px;height:20px;color:var(--accent);flex:none}.bkb button{flex:none;white-space:nowrap}.bkb .ghost{background:none;color:var(--muted);padding:8px;display:grid;place-items:center}.bkb .ghost svg.i{width:16px;height:16px}
+.k-ext{--c1:#6FC3F0;--c2:#2D7FB8}.k-gmail{--c1:#F28B82;--c2:#C5221F}.k-outlook{--c1:#5EA8F2;--c2:#0F62C4}.k-workout{--c1:#93C97A;--c2:#4A8A3E}
+.mailrow a.rowbtn{color:inherit;text-decoration:none;min-width:0;flex:1}
+.dot-on{width:8px;height:8px;border-radius:50%;background:var(--good);flex:none}
+.cdot{width:12px;height:12px;border-radius:50%;flex:none}
+.tplrow{display:flex;gap:8px;align-items:center}.tplrow .navrow{margin-top:10px}
+.ib.sm{width:44px;height:44px;margin-top:10px;border-radius:14px}
+.wkex{border-radius:var(--r-m);padding:12px;margin:0 0 10px}
+.wkh{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.wkname{flex:1;min-width:0;height:40px;font-weight:800;font-size:16px;padding:0 12px}
+.wkset{display:grid;grid-template-columns:22px minmax(0,1fr) minmax(0,1fr) 40px;gap:8px;align-items:end;margin-top:6px;transition:opacity .2s}
+.wkset.tplset{grid-template-columns:repeat(3,minmax(0,1fr))}
+.wkset label{display:flex;flex-direction:column;gap:3px;font:400 10px var(--mono);color:var(--muted);text-transform:uppercase;min-width:0}
+.wkset input{height:40px;padding:0 10px;width:100%;min-width:0;font-weight:700}
+.wkset .sn{font:700 13px var(--mono);color:var(--muted);padding-bottom:12px;text-align:center}
+.wkset .tick{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--ink) 9%,transparent);color:var(--muted)}
+.wkset .tick[aria-pressed="true"]{background:var(--good);color:#fff}
+.wkset.done input{opacity:.6}
+.wkfoot{display:flex;gap:14px;align-items:center;margin-top:10px}.wkfoot .cap{margin-left:auto}
+.wkline{display:flex;gap:10px;align-items:center;padding:7px 2px;border-top:1px solid var(--line);font-size:14px}
+.wkline .sn{font:700 12px var(--mono);color:var(--muted);width:18px}
+.rvcard{border-radius:var(--r-m);padding:14px;margin:0 0 10px}
+.rvgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 0 10px}
+.rvgrid b{display:block;font-size:20px;font-weight:800}.rvgrid span{font-size:11.5px;color:var(--muted);line-height:1.25;display:block}
+.rvlist{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.rvlist li{display:flex;gap:8px;align-items:center;min-width:0;overflow-wrap:anywhere}.rvlist svg.i{width:16px;height:16px;color:var(--good);flex:none}
+.rvlist.miss .link{text-align:left;color:var(--late)}
+.htiles{margin-top:8px}
  /* startup */
 #splashBg{position:fixed;inset:0 0 calc(-1 * var(--gap)) 0;z-index:79;background:var(--bg);transition:opacity .6s ease}
 #splash{position:fixed;inset:0;z-index:80;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;pointer-events:none}
@@ -747,7 +785,7 @@ function load(){
   try{const r=localStorage.getItem(KEY);if(r){const d=JSON.parse(r);if(d&&d.enc){LOCKED_BLOB=d;return}if(Array.isArray(d.entries)){db=d;db.settings={...DEF,...(db.settings||{})};return}}}catch(e){}
   db.entries=seed();
 }
-function save(){DATA_VER++;if(window.LOCK&&LOCK.key){LOCK.saveEnc();return}try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}}
+function save(){DATA_VER++;if(typeof afterSave==='function')afterSave();if(typeof LOCK!=='undefined'&&LOCK.key){LOCK.saveEnc();return}try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){if(typeof storageFail==='function')storageFail()}}
 const of=t=>db.entries.filter(e=>e.type===t);
 const find=id=>db.entries.find(e=>e.id===id);
 
@@ -787,6 +825,7 @@ function metaOf(e){
   return['',''];
 }
 const tile=(t,cls='')=>`<span class="ico k-${t} ${cls}">${ic(t)}</span>`;
+
 function lead(e){
   if(e.type==='task'||e.type==='reminder')
     return`<button class="chk${e.done?' on':''}" data-chk="${e.id}" aria-label="${e.done?'Mark not done':'Mark done'}"><i><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg></i></button>`;
@@ -960,9 +999,9 @@ function statsGrid(){
 function timeline(items){
   if(!items.length)return emptyBox('Nothing scheduled.');
   return`<div class="tl">${items.map(e=>{
-    const t=e.type==='class'?e.start:e.time;
-    const sub=e.type==='class'?[e.place,e.end?`until ${fmtT(e.end)}`:''].filter(Boolean).join(' · '):[e.with].filter(Boolean).join(' · ');
-    return`<div class="tli"><div class="tm">${esc(fmtTime(t))||'—'}<small>${esc(ampm(t))}</small></div>
+    const cl=e.type==='class'||e.type==='ext',t=cl?e.start:e.time;
+    const sub=cl?[e.place,e.end&&!e.allDay?`until ${fmtT(e.end)}`:''].filter(Boolean).join(' · '):[e.with].filter(Boolean).join(' · ');
+    return`<div class="tli"><div class="tm">${e.allDay?'All<small>day</small>':`${esc(fmtTime(t))||'—'}<small>${esc(ampm(t))}</small>`}</div>
       <div class="tcard card-s">${tile(e.type)}<button class="rowbtn" data-open="${e.id}"><span class="rt">${esc(e.title)}</span>${sub?`<span class="rs">${esc(sub)}</span>`:''}</button></div></div>`;
   }).join('')}</div>`;
 }
@@ -975,16 +1014,19 @@ function chipsAdd(keys){return`<div class="chips">${keys.map(k=>`<button class="
 function chipsSub(tab){const cur=state.sub[tab];return`<div class="chips" role="tablist">${TABS[tab].subs.map(([k,l])=>`<button class="chip${k===cur?' on':''}" role="tab" aria-selected="${k===cur}" data-sub="${k}">${tile(k)}${l}</button>`).join('')}</div>`}
 
 /* ---------- views ---------- */
-const TODAY_SECS=[['chips','Quick-add buttons','Food, task, workout and more under the big card'],['progress','Your progress','Protein, active minutes, weight'],['due','Due this week','Open tasks and reminders'],['sched','Today’s schedule','Classes and meetings today'],['eaten','Eaten today','Everything you logged today'],['streak','Logging streak','The activity heatmap'],['weight','Weight','Trend chart and goal'],['inj','Injuries','Only shows when one is current']];
+const TODAY_SECS=[['mail','Unread mail','Outlook and Gmail, when connected'],['chips','Quick-add buttons','Food, task, workout and more under the big card'],['progress','Your progress','Protein, active minutes, weight'],['due','Due this week','Open tasks and reminders'],['sched','Today’s schedule','Classes and meetings today'],['eaten','Eaten today','Everything you logged today'],['streak','Logging streak','The activity heatmap'],['weight','Weight','Trend chart and goal'],['inj','Injuries','Only shows when one is current']];
 function viewToday(){
   const td=today();
   const due=db.entries.filter(e=>(e.type==='task'||e.type==='reminder')&&!e.done&&e.due&&dayDiff(e.due)<=7).sort(byDue);
   const food=of('food').filter(e=>e.date===td);
   const inj=of('injury').filter(e=>e.status!=='Healed');
   const H=new Set(db.settings.todayHide||[]),on=k=>!H.has(k);
-  return heroCard(td)
+  const bk=typeof meta!=='undefined'&&Date.now()-(meta.lastFile||0)>7*864e5&&!(meta.snoozeBk>Date.now());
+  return(bk?`<div class="banner bkb">${ic('cloud')}<span style="flex:1;min-width:0">${meta.lastFile?`Last backup ${ago(meta.lastFile)}.`:'No backup yet.'} Deleting Life from the Home Screen deletes your data.</span><button data-bk="save">Save to Files</button><button data-bk="later" class="ghost" aria-label="Remind me in 2 days">${ic('close')}</button></div>`:'')
+    +heroCard(td)
     +(on('chips')?chipsAdd(['food','task','workout','weight','reminder','note','idea','scrap']):'')
-    +(on('progress')?section('Your <em>progress</em>',tiles()):'')
+    +(on('progress')?section('Your <em>progress</em>',tiles()+healthTiles(),`<button class="link" id="reviewBtn">${ic('review')}Week</button>`):'')
+    +(on('mail')?mailSection():'')
     +(on('due')?section('Due <em>this week</em>',list(due,'Nothing due in the next 7 days.'),`<button class="link" data-goto="work:task">All tasks</button>`):'')
     +(on('sched')?section('Today’s <em>schedule</em>',timeline(dayItems(td)),`<button class="link" data-goto="plan">Week</button>`):'')
     +(on('eaten')?section('Eaten <em>today</em>',list(food,'Nothing logged yet.'),`<span class="cap num">${fmtN(sumKcal(food))} kcal</span>`):'')
@@ -994,7 +1036,7 @@ function viewToday(){
 }
 /* ---------- schedule: day / week / month with filters ---------- */
 const calView=()=>db.settings.calView||'day';
-const calF=()=>({class:true,meeting:true,due:true,...(db.settings.calF||{})});
+const calF=()=>({class:true,meeting:true,due:true,ext:true,...(db.settings.calF||{})});
 const calItems=d=>dayItems(d).filter(e=>calF()[e.type]);
 const dueOn=d=>calF().due?db.entries.filter(e=>(e.type==='task'||e.type==='reminder')&&!e.done&&e.due===d):[];
 const anchor=()=>state.wsel||today();
@@ -1002,13 +1044,13 @@ const shiftDays=(d,n)=>{const x=new Date(d+'T00:00');x.setDate(x.getDate()+n);re
 function weekDays(d){const x=new Date(d+'T00:00');x.setDate(x.getDate()-((x.getDay()+6)%7));return[...Array(7)].map((_,i)=>{const y=new Date(x);y.setDate(x.getDate()+i);return iso(y)})}
 const toMin=t=>{if(!t)return null;const[h,m]=t.split(':').map(Number);return h*60+m};
 function hourGrid(days,wide){
-  const items=days.map(d=>calItems(d).map(e=>{const st=toMin(e.type==='class'?e.start:e.time);let en=e.type==='class'?toMin(e.end):null;if(st!==null&&(en===null||en<=st))en=st+60;return{e,st,en}}).filter(x=>x.st!==null));
+  const items=days.map(d=>calItems(d).filter(e=>!e.allDay).map(e=>{const cl=e.type==='class'||e.type==='ext';const st=toMin(cl?e.start:e.time);let en=cl?toMin(e.end):null;if(st!==null&&(en===null||en<=st))en=st+60;return{e,st,en}}).filter(x=>x.st!==null));
   const all=items.flat();
   const h0=wide?Math.min(6,...all.map(x=>Math.floor(x.st/60))):Math.min(8,...all.map(x=>Math.floor(x.st/60))),h1=wide?Math.max(23,...all.map(x=>Math.ceil(x.en/60))):Math.max(18,...all.map(x=>Math.ceil(x.en/60)));
   const PH=wide?48:34,H=(h1-h0)*PH,sel=anchor(),nowM=new Date().getHours()*60+new Date().getMinutes();
   const hours=[...Array(h1-h0)].map((_,i)=>`<span style="top:${i*PH}px">${C24()?pad(h0+i):(((h0+i)%12)||12)+(h0+i<12?'a':'p')}</span>`).join('');
   const cols=days.map((d,di)=>`<div class="wcol${!wide&&d===sel?' on':''}"${wide?'':` data-wday="${d}"`}>${items[di].map(({e,st,en})=>{const top=(st-h0*60)/60*PH,ht=Math.max(wide?28:18,(en-st)/60*PH-2);
-      const t=e.type==='class'?e.start:e.time,sub=[fmtT(t)+(e.type==='class'&&e.end?`–${fmtT(e.end)}`:''),e.place||e.with].filter(Boolean).join(' · ');
+      const cl=e.type==='class'||e.type==='ext',t=cl?e.start:e.time,sub=[fmtT(t)+(cl&&e.end?`–${fmtT(e.end)}`:''),e.place||e.with].filter(Boolean).join(' · ');
       return`<button class="blk${wide?' wide':''} k-${e.type}" data-open="${e.id}" style="top:${top.toFixed(1)}px;height:${ht.toFixed(1)}px" aria-label="${esc(e.title)} ${esc(fmtT(t))}">${esc(e.title)}${wide?`<small>${esc(sub)}</small>`:''}</button>`}).join('')}${d===today()&&nowM>=h0*60&&nowM<=h1*60?`<i class="nowline" style="top:${((nowM-h0*60)/60*PH).toFixed(1)}px"></i>`:''}</div>`).join('');
   const body=`<div class="wk-body" style="height:${H}px"><div class="wk-hours">${hours}</div><div class="wk-cols" style="--ph:${PH}px;grid-template-columns:repeat(${days.length},minmax(0,1fr))">${cols}</div></div>`;
   return wide?`<div class="day-scroll" data-h0="${h0}" data-ph="${PH}" style="max-height:${Math.round(6.5*PH)+16}px">${body}</div>`:body;
@@ -1040,7 +1082,7 @@ function calCard(){
 function calControls(){
   const v=calView(),f=calF();
   return`<div class="cal-ctl"><div class="seg2" role="group" aria-label="Calendar view">${[['day','Day'],['week','Week'],['month','Month']].map(([k,l])=>`<button data-calview="${k}" aria-pressed="${v===k}">${l}</button>`).join('')}</div></div>
-  <div class="cal-f" role="group" aria-label="Show">${[['class','Classes','k-class'],['meeting','Meetings','k-meeting'],['due','Due','due']].map(([k,l,c])=>`<button data-calf="${k}" aria-pressed="${!!f[k]}"><i class="${c}"></i>${l}</button>`).join('')}</div>`;
+  <div class="cal-f" role="group" aria-label="Show">${[['class','Classes','k-class'],['meeting','Meetings','k-meeting'],['due','Due','due'],...((typeof SYNC!=='undefined'&&(SYNC.cals||[]).length)?[['ext','Calendars','k-ext']]:[])].map(([k,l,c])=>`<button data-calf="${k}" aria-pressed="${!!f[k]}"><i class="${c}"></i>${l}</button>`).join('')}</div>`;
 }
 function dayPane(){
   const d=anchor(),n=dayDiff(d),label=n===0?'Today':n===1?'Tomorrow':n===-1?'Yesterday':`${wdOf(d)}, ${fmtDate(d)}`;
@@ -1112,7 +1154,7 @@ function viewHealth(){
   }
   if(k==='weight'){
     const ws=weights(),last=ws[ws.length-1],d=weightDelta(ws);
-    return chipsSub('health')+heroBanner('Weight',last?esc(last.value):'—',last?`lb on ${esc(fmtLong(last.date))}`:'no weigh-ins yet',[['7-day change',d===null?'—':`${d>0?'+':'−'}${Math.abs(d).toFixed(1)}`],['Goal',db.settings.goalWeight===''?'—':db.settings.goalWeight],['Weigh-ins',ws.length]],'#8FE3DA',
+    return chipsSub('health')+heroBanner('Weight',last?esc(last.value):'—',last?`lb on ${esc(fmtLong(last.date))}`:'no weigh-ins yet',[['Rate / week',d===null?'—':`${d>0?'+':'−'}${Math.abs(d).toFixed(2)}`],['Goal',db.settings.goalWeight===''?'—':db.settings.goalWeight],['Weigh-ins',ws.length]],'#8FE3DA',
       `<div class="hero-actions"><button class="pill light" data-add="weight">${ic('weight')}Weigh in</button><button class="pill glassy" data-goto="settings">${ic('gear')}Set goal</button></div>`)
       +section('Trend',weightCard())+section('Weigh-ins',list([...ws].reverse(),'No weigh-ins yet.'));
   }
@@ -1120,7 +1162,8 @@ function viewHealth(){
     const a=of('workout').sort(byDateDesc),wk=a.filter(e=>e.date&&dayDiff(e.date)>-7&&dayDiff(e.date)<=0);
     const mins=wk.reduce((s,e)=>s+num(e.minutes),0);
     return chipsSub('health')+heroBanner('Training · 7 days',`${mins}`,`minutes, of your <b>${db.settings.active}</b> min goal`,[['Sessions',wk.length],['All time',a.length]],'#B9F0A0',
-      `<div class="hero-actions"><button class="pill light" data-add="workout">${ic('workout')}Log workout</button><button class="pill glassy" data-goto="health:weight">${ic('weight')}Weight</button></div>`)
+      `<div class="hero-actions"><button class="pill light" data-add="workout">${ic('workout')}Start workout</button><button class="pill glassy" data-add-simple="workout">${ic('plus')}Quick log</button></div>`)
+      +exerciseSection()
       +section('At a <em>glance</em>',statsGrid())
       +heatmap('train','Activity · <em>minutes</em>',s=>a.filter(e=>e.date===s).reduce((t,e)=>t+num(e.minutes),0),'min')
       +section('History',list(a,'No workouts logged yet.'));
@@ -1190,7 +1233,7 @@ function buildTabs(){
   $('#tabs').innerHTML=Object.keys(TABS).map(k=>`<button data-tab="${k}" aria-label="${TABS[k].title}">${ic(k)}<span>${TABS[k].label}</span></button>`).join('');
 }
 const viewFor=k=>k==='today'?viewToday():k==='plan'?viewPlan():k==='work'?viewWork():k==='health'?viewHealth():viewMind();
-const viewSig=k=>[DATA_VER,today(),k,state.sub[k]||'',k==='mind'?state.folder:'',state.heatRange,k==='plan'?state.wsel||'':'',state.day,db.settings.calView||'',JSON.stringify(db.settings.calF||{}),db.settings.clock24,(db.settings.todayHide||[]).join()].join('|');
+const viewSig=k=>[DATA_VER,today(),k,state.sub[k]||'',k==='mind'?state.folder:'',state.heatRange,k==='plan'?state.wsel||'':'',state.day,db.settings.calView||'',JSON.stringify(db.settings.calF||{}),db.settings.clock24,(db.settings.todayHide||[]).join(),typeof meta!=='undefined'?[meta.lastFile,meta.snoozeBk,SYNC.mailOn,SYNC.healthOn,(SYNC.cals||[]).length].join():''].join('|');
 function buildPane(k){artN=k.length*100;const pane=document.createElement('div');pane.className='pane';pane.innerHTML=viewFor(k);VIEWS[k]={pane,sig:viewSig(k)};return pane}
 function getPane(k,fresh){const c=VIEWS[k];return!fresh&&c&&c.sig===viewSig(k)?c.pane:buildPane(k)}
 let warmT=null;
@@ -1270,11 +1313,12 @@ function openSheet(html){
   sh.className='sheet '+mode;
   $('#sheetBody').innerHTML=html;sh.scrollTop=0;
   wrap.hidden=false;SC.classList.add('locked');document.body.classList.add('panel');
+  wrap.classList.remove('blurred');sh.classList.add('opening');clearTimeout(sh._ot);sh._ot=setTimeout(()=>{sh.classList.remove('opening');wrap.classList.add('blurred')},noMotion()?0:520);
   if(mode==='m-zoom'){const top=innerHeight/2-sh.offsetHeight/2;sh.style.transformOrigin=`${Math.round(origin[0]-sh.offsetLeft)}px ${Math.round(origin[1]-top)}px`}
   else if(mode==='m-top'){sh.style.transformOrigin=`${Math.round(origin-sh.offsetLeft)}px 0`}
   else sh.style.transformOrigin=origin;
   const morph=mode==='m-top'&&lastTrigger&&lastTrigger.isConnected&&!noMotion();
-  $$('#sheetBody>*').forEach((c,i)=>c.style.transitionDelay=((morph?.16:.06)+i*.025)+'s');
+  $$('#sheetBody>*').forEach((c,i)=>c.style.transitionDelay=morph?'0s':(.06+i*.025)+'s');
   if(morph){sh.classList.add('morph');sh.style.transform='none';sh.style.opacity='1';
     const br=lastTrigger.getBoundingClientRect(),sr=sh.getBoundingClientRect();
     sh.style.transformOrigin=`${br.left+br.width/2-sr.left}px ${br.top+br.height/2-sr.top}px`;
@@ -1293,8 +1337,8 @@ function closeSheet(){
     sh.style.willChange='transform,opacity';
     try{sh.getAnimations().forEach(a=>a.cancel());sh.animate([{transform:'scale(1)',opacity:1},{transform:'scale(.14)',opacity:0}],{duration:300,easing:'cubic-bezier(.4,0,.6,1)',fill:'forwards'})}catch(e){}
   }
-  wrap.classList.add('closing');wrap.classList.remove('open');document.body.classList.remove('panel');
-  setTimeout(()=>{if(!wrap.classList.contains('open')){wrap.hidden=true;wrap.classList.remove('closing');SC.classList.remove('locked');
+  wrap.classList.add('closing');wrap.classList.remove('open','blurred');sh.classList.add('opening');document.body.classList.remove('panel');
+  setTimeout(()=>{if(!wrap.classList.contains('open')){wrap.hidden=true;sh.classList.remove('opening');wrap.classList.remove('closing');SC.classList.remove('locked');
     sh.classList.remove('morph');sh.style.transform='';sh.style.opacity='';sh.style.willChange='';sh._from=null;sh.getAnimations?.().forEach(a=>a.cancel())}},360);
 }
 function toast(msg){$$('.toast').forEach(t=>t.remove());const t=document.createElement('div');t.className='toast';t.setAttribute('role','status');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>{t.style.transition='opacity .3s';t.style.opacity='0';setTimeout(()=>t.remove(),300)},1500)}
@@ -1382,7 +1426,7 @@ function openDetail(id){
 }
 function openAdd(){
   const t=TABS[state.tab];
-  if(t.subs)return openForm(state.sub[state.tab]);
+  if(t.subs)return state.sub[state.tab]==='workout'?openWorkoutStart():openForm(state.sub[state.tab]);
   const btn=k=>`<button class="tilt" data-add="${k}">${tile(k)}${TYPES[k].label}</button>`;
   const rest=ADDABLE.filter(k=>!t.add.includes(k));
   openSheet(`${sheetHead('Add <em>anything</em>')}
@@ -1401,7 +1445,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='17';
+const APP_VER='21';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -1451,6 +1495,7 @@ function openSettings(){
     ${navrow('home','task','Home screen',`Opens on ${TABS[g.startTab||'today'].title} · ${TODAY_SECS.length-hid} of ${TODAY_SECS.length} sections shown`)}
     ${navrow('sched','class','Schedule',`${({day:'Day',week:'Week',month:'Month'})[g.calView||'day']} view · day starts ${fmtT(pad(g.dayStart||9)+':00')} · ${g.clock24?'24':'12'}-hour clock`)}
     ${navrow('look','idea','Look &amp; feel','Colours, theme, fonts, animations, sounds')}
+    ${navrow('conn','ext','Connections',syncOn()?'Server on · notifications, calendars, mail, health, widget':'Notifications, calendars, email, Fitbit, widget')}
     <div class="set-grp">Data &amp; privacy</div>
     ${navrow('security','injury','Passcode &amp; privacy',LOCK.key?'Passcode on · data encrypted':'Passcode off')}
     ${navrow('backup','note','Backup &amp; restore','Copy or restore everything as text')}
@@ -1471,7 +1516,7 @@ function openProfile(){
     <div class="qa" style="grid-template-columns:repeat(2,minmax(0,1fr))"><label class="fld" for="pFt"><span>Height ft</span><input id="pFt" type="number" inputmode="numeric" value="${ft}"></label><label class="fld" for="pIn"><span>Height in</span><input id="pIn" type="number" inputmode="decimal" step="any" value="${inch}"></label></div>
     <label class="fld" for="pSchool"><span>School</span><input id="pSchool" value="${esc(pf.school||'')}" placeholder="e.g. Virginia Tech"></label>
     <label class="fld" for="pMajor"><span>Program</span><input id="pMajor" value="${esc(pf.major||'')}" placeholder="e.g. Industrial &amp; Systems Engineering"></label>
-    <label class="fld" for="pYear"><span>Year</span>${selectHTML('pyear',['','Freshman','Sophomore','Junior','Senior','Graduate','Working'],pf.year||'','pYear')}</label>
+    <label class="fld" for="pYear"><span>Year</span>${selectHTML('pyear',[['','Not set'],'Freshman','Sophomore','Junior','Senior','Graduate','Working'],pf.year||'','pYear')}</label>
     <label class="fld" for="pEmail"><span>Email</span><input id="pEmail" type="email" value="${esc(pf.email||'')}" autocomplete="email"></label>
     <label class="fld" for="pBio"><span>About me / notes</span><textarea id="pBio" rows="3">${esc(pf.bio||'')}</textarea></label>
     <p class="small">Stays on this phone only, like everything else in Life.</p>
@@ -1502,7 +1547,7 @@ function openData(){
     <div class="countgrid">${Object.keys(TYPES).filter(k=>k!=='folder').map(k=>`<div>${esc(TYPES[k].label)}<b class="num">${by[k]||0}</b></div>`).join('')}<div>Saved foods<b class="num">${lib().length}</b></div></div>
     ${hasSample?`<div class="sh-actions"><button class="secondary" id="clearSamples2" style="flex:1">Remove example entries</button></div>`:''}
     <div class="sh-actions"><button class="danger" id="wipeAll" style="flex:1">Delete all my data</button></div>
-    <p class="small">Make a backup first. Deleting can’t be undone.</p>`);
+    <p class="small">Deletes every entry, saved food, workout template and your profile. Settings and passcode stay. Make a backup first; this can’t be undone.</p>`);
 }
 function openAbout(){
   openSheet(`${sheetHead('About <em>Life</em>','settings')}
@@ -1532,6 +1577,7 @@ function openBackup(){
     <div class="sh-actions"><button class="danger" id="doImp" style="flex:1">Replace my data with this backup</button></div>`);
 }
 function applySet(k,v){
+  if(k.startsWith('n_')){const n=NS();n[k.slice(2)]=v;SYNC.notif=n;saveSync();pushSchedule(true);return}
   const g=db.settings;
   if(k==='clock24')g.clock24=v==='1';else if(k==='dayStart')g.dayStart=Number(v);else g[k]=v;
   save();render(false);
@@ -1627,8 +1673,8 @@ document.addEventListener('click',ev=>{
   if(d.thide){const H=new Set(db.settings.todayHide||[]);H.has(d.thide)?H.delete(d.thide):H.add(d.thide);db.settings.todayHide=[...H];save();el.setAttribute('aria-pressed',String(!H.has(d.thide)));if(state.tab==='today')render(false);return}
   if(d.calf2){const f=calF();f[d.calf2]=!f[d.calf2];db.settings.calF=f;save();el.setAttribute('aria-pressed',String(f[d.calf2]));if(state.tab==='plan')render(false);return}
   if(d.snd){db.settings.sound=d.snd==='1';save();el.parentElement.querySelectorAll('[data-snd]').forEach(b=>b.setAttribute('aria-pressed',String(b===el)));if(db.settings.sound)tick();return}
-  if(d.panel){NAV_DIR=1;const P={look:()=>openSheet(lookPanel()),security:openSecurity,backup:openBackup,goals:openGoals,profile:openProfile,home:openHome,sched:openSched,data:openData,about:openAbout};(P[d.panel]||openBackup)();return}
-  if(d.back){NAV_DIR=-1;if(d.back==='settings')openSettings();else if(d.back.startsWith('open:'))openDetail(d.back.slice(5));return}
+  if(d.panel){NAV_DIR=1;const P={look:()=>openSheet(lookPanel()),security:openSecurity,backup:openBackup,goals:openGoals,profile:openProfile,home:openHome,sched:openSched,data:openData,about:openAbout,conn:openConn,notif:openNotif,cals:openCals,mail:openMail,health:openHealthConn,widget:openWidget};(P[d.panel]||openBackup)();return}
+  if(d.back){NAV_DIR=-1;if(d.back==='settings')openSettings();else if(d.back==='conn')openConn();else if(d.back.startsWith('open:'))openDetail(d.back.slice(5));return}
   if(d.tab){if(state.tab===d.tab){SC.scrollTo({top:0,behavior:'smooth'});return}const ks=Object.keys(TABS),dir=Math.sign(ks.indexOf(d.tab)-ks.indexOf(state.tab));state.tab=d.tab;if(d.tab!=='mind')state.folder=null;SC.scrollTop=0;render(true,false,dir);return}
   if(d.goto){if(d.goto==='settings'){openSettings();return}const[t,s]=d.goto.split(':');state.tab=t;if(s)state.sub[t]=s;SC.scrollTop=0;render(true);return}
   if(d.calview){db.settings.calView=d.calview;save();el.parentElement.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===el)));refreshCal(0);return}
@@ -1659,7 +1705,7 @@ document.addEventListener('click',ev=>{
     if(e.done)toast('Done');return}
   if(d.open){openDetail(d.open);return}
   if(d.edit){const e=find(d.edit);openForm(e.type,e.id);return}
-  if(d.add){d.add==='food'?openFoodLog():openForm(d.add);return}
+  if(d.add){d.add==='food'?openFoodLog():d.add==='workout'?openWorkoutStart():openForm(d.add);return}
   if('close' in d){closeSheet();return}
   switch(el.id){
     case'fab':state.tab==='health'&&state.sub.health==='food'?openFoodLog():openAdd();break;
@@ -1669,7 +1715,7 @@ document.addEventListener('click',ev=>{
     case'saveProfile':{const ft=num($('#pFt').value),inch=num($('#pIn').value),yr=$('#sheetBody input[name=pyear]');
       db.settings.profile={name:$('#pName').value.trim()||'Ishir Johari',birthday:$('#pBday').value,heightIn:ft||inch?ft*12+inch:'',school:$('#pSchool').value.trim(),major:$('#pMajor').value.trim(),year:yr?yr.value:'',email:$('#pEmail').value.trim(),bio:$('#pBio').value.trim()};
       save();render(false);toast('Profile saved');if($('#sheetBody [data-back]')){NAV_DIR=-1;openSettings()}else openProfile();break}
-    case'wipeAll':arm(el,'Tap again to delete everything',()=>{db.entries=[];db.lib=[];state.folder=null;save();render(false);toast('All data deleted');NAV_DIR=-1;openSettings()});break;
+    case'wipeAll':arm(el,'Tap again to delete everything',()=>{db.entries=[];db.lib=[];db.templates=[];db.settings.profile=null;state.folder=null;save();render(false);toast('All data deleted');NAV_DIR=-1;openSettings()});break;
     case'clearSamples':clearSamples();break;
     case'clearSamples2':arm(el,'Tap again to remove',()=>{clearSamples();closeSheet()});break;
     case'delBtn':arm(el,'Tap again to delete',()=>{const id=$('#entryForm').dataset.id,e=find(id);
@@ -1752,12 +1798,12 @@ function foodRow(it,key){
   const col=KCOL[[...it.name].reduce((a,c)=>a+c.charCodeAt(0),0)%KCOL.length];
   const m=it.per100?`${Math.round(it.per100.k)} kcal · ${it.per100.p}P ${it.per100.f}F ${it.per100.c}C / 100 g`:`${Math.round(it.k)} kcal · ${Math.round(it.p)}P ${Math.round(it.f)}F ${Math.round(it.c)}C${it.serving?` / ${esc(it.serving)}`:''}`;
   const open=FL.open===key;
-  return`<li data-fkey="${key}"><div class="frow"><span class="fi" style="--c1:${col[0]};--c2:${col[1]}">${esc(initials(it.name))}</span><div class="ft"><b>${esc(it.name)}</b><span>${m}${it.src?` · ${esc(it.src)}`:''}</span></div><button class="addc${open?' on':''}" data-fopen="${key}" aria-label="Add ${esc(it.name)}" aria-expanded="${open}">${ic('plus')}</button></div>${open?servPanel(it,key):''}</li>`;
+  return`<li data-fkey="${key}"><div class="frow"><span class="fi" style="--c1:${col[0]};--c2:${col[1]}">${esc(initials(it.name))}</span><div class="ft"><b>${esc(it.name)}</b><span>${m}${it.src?` · ${esc(it.src)}`:''}</span></div><button class="fav${isFav(it)?' on':''}" data-fav="${key}" aria-pressed="${isFav(it)}" aria-label="Favourite ${esc(it.name)}">${ic('star')}</button><button class="addc${open?' on':''}" data-fopen="${key}" aria-label="Add ${esc(it.name)}" aria-expanded="${open}">${ic('plus')}</button></div>${open?servPanel(it,key):''}</li>`;
 }
 function servPanel(it,key){
   if(!it.per100)return`<div class="serv"><div class="macro">1 serving · ${Math.round(it.k)} kcal</div><div class="line"><label class="cap" for="sq-${key}">Servings</label><input id="sq-${key}" type="number" inputmode="decimal" step="any" value="1" data-sq></div><button class="primary" style="height:46px" data-fadd="${key}">Add to log</button></div>`;
   const g=it.grams||100,v=per(it,g);
-  return`<div class="serv"><div class="chipsrow">${[50,100,150,200,250].map(n=>`<button data-grams="${n}" aria-pressed="${n===g}">${n} g</button>`).join('')}${it.servingG?`<button data-grams="${it.servingG}">1 serving</button>`:''}</div>
+  return`<div class="serv"><div class="line"><label class="cap" for="uq-${key}">Amount</label><input id="uq-${key}" type="number" inputmode="decimal" step="any" value="1" data-uq style="width:76px"><div class="units">${UNITS.map(([u])=>`<button data-unit="${u}" aria-pressed="false">${u}</button>`).join('')}</div></div><div class="unote small"></div><div class="chipsrow">${[50,100,150,200,250].map(n=>`<button data-grams="${n}" aria-pressed="${n===g}">${n} g</button>`).join('')}${it.servingG?`<button data-grams="${it.servingG}">1 serving</button>`:''}</div>
     <div class="line"><label class="cap" for="sg-${key}">Grams</label><input id="sg-${key}" type="number" inputmode="decimal" step="any" value="${g}" data-sg></div>
     <div class="macro" data-live>${Math.round(v.k)} kcal · ${v.p.toFixed(1)}P ${v.f.toFixed(1)}F ${v.c.toFixed(1)}C</div>
     <button class="primary" style="height:46px" data-fadd="${key}">Add to log</button></div>`;
@@ -1767,8 +1813,9 @@ function listFoods(items,prefix){return`<ul class="fres">${items.map((it,i)=>{co
 function flBody(){
   FITEMS={};
   if(FL.tab==='search'){
-    if(!FL.q.trim()){const r=recentFoods(),l=lib();
-      return(r.length?`<div class="cap" style="margin:4px 0 6px">Latest</div>${listFoods(r,'r')}`:'')
+    if(!FL.q.trim()){const r=recentFoods(),fv=lib().filter(x=>x.fav||x.recipe),l=lib().filter(x=>!x.fav&&!x.recipe);
+      return(fv.length?`<div class="cap" style="margin:4px 0 6px">${ic('star')} Favourites</div>${listFoods(fv,'v')}`:'')
+        +(r.length?`<div class="cap" style="margin:${fv.length?16:4}px 0 6px">Latest</div>${listFoods(r,'r')}`:'')
         +(l.length?`<div class="cap" style="margin:16px 0 6px">My foods</div>${listFoods(l,'l')}`:'')
         +(!r.length&&!l.length?`<p class="hint">Search ${FOODS?FOODS.length.toLocaleString():'7,000'}+ foods, including Indian dishes like paneer, dal and roti.</p>`:'');}
     if(!FOODS)return`<p class="hint">Loading the food database…</p>`;
@@ -1793,14 +1840,16 @@ function flBody(){
     <div class="sh-actions"><button class="secondary" id="qaSave">Add + save to My foods</button><button class="primary" id="qaAdd">Add</button></div>`;
   if(FL.tab==='library'){const l=lib(),c=FL.cart.length;
     return(c?`<div class="notice" style="margin-bottom:14px">Save the <b>${c} item${c>1?'s':''}</b> you've picked as a recipe you can log in one tap.<label class="fld" for="rcN" style="margin-top:12px"><span>Recipe name</span><input id="rcN" placeholder="e.g. Chicken rice bowl"></label><label class="fld" for="rcS"><span>Makes how many servings</span><input id="rcS" type="number" inputmode="numeric" value="1"></label><button class="primary" style="width:100%" id="rcSave">Save recipe</button></div>`:'')
-      +(l.length?listFoods(l,'l'):`<p class="hint">Foods you save from Quick add or barcode scans, and recipes you build, appear here.</p>`);}
-  return`<div class="notice"><b>Photo and description logging</b><br>Snap a meal or type "2 rotis, dal and a bowl of rice" and AI estimates it. This needs the link to your laptop (JARVIS on Claude Haiku), so it switches on after the app is installed from GitHub. Everything else here works today.</div>`;
+      +(l.filter(x=>x.recipe).length?`<div class="cap" style="margin:4px 0 6px">Favourite meals</div>${listFoods(l.filter(x=>x.recipe),'lm')}`:'')
+      +(l.filter(x=>!x.recipe).length?`<div class="cap" style="margin:14px 0 6px">Favourite &amp; saved foods</div>${listFoods(l.filter(x=>!x.recipe),'lf')}`:'')
+      +(l.length?'':`<p class="hint">Star any food to make it a favourite. Pick several foods, then come here to save them as a favourite meal you can log in one tap.</p>`);}
+  return`<div class="notice"><b>Coming later: AI logging</b><br>Photo or “2 rotis, dal and rice” logging needs an AI model behind your server, which isn’t set up yet. Use Search, Scan, Quick add or Copy yesterday for now.</div>`;
 }
 function flHeader(){
   const t=cartTotal(),g=db.settings,eaten=sumKcal(of('food').filter(e=>e.date===today()));
   return`<div class="fl-top">
     <div style="width:132px">${selectHTML('flmeal',['Breakfast','Lunch','Dinner','Snack'],FL.meal,'flMeal')}</div>
-    <span class="chipx ring2 num" title="Picked / left today">${fmtN(t.k)} / ${fmtN(Math.max(0,g.kcal-eaten))}</span><span class="grow"></span></div>
+    <span class="chipx ring2 num" title="Picked / left today">${fmtN(t.k)} / ${fmtN(Math.max(0,g.kcal-eaten))}</span><span class="grow"></span><button class="chipx" id="flCopy" aria-label="Copy yesterday’s food">${ic('copy')}Yesterday</button></div>
     <div class="fl-tabs" role="tablist">${[['search','Search','search'],['scan','Scan','task'],['quick','Quick add','plus'],['library','Library','folder'],['ai','AI','idea']].map(([k,l,i])=>`<button role="tab" aria-selected="${FL.tab===k}" data-ftab="${k}">${ic(i)}${l}</button>`).join('')}</div>
     <div class="cart">${FL.cart.map((c,i)=>`<span><em>${esc(c.name)} · ${Math.round(c.k)}</em><button data-cartdel="${i}" aria-label="Remove ${esc(c.name)}">${ic('close')}</button></span>`).join('')}</div>`;
 }
@@ -1906,7 +1955,7 @@ document.addEventListener('click',e=>{
     case'qaAdd':case'qaSave':{const k=num($('#qaK').value),p=num($('#qaP').value),f=num($('#qaF').value),c=num($('#qaC').value);
       const kk=k||Math.round(p*4+f*9+c*4);if(!kk){toast('Enter calories or macros');break}
       const it={name:$('#qaN').value.trim()||'Quick add',k:kk,p,f,c};
-      if(t.id==='qaSave'){lib().push({...it,id:uid()});save()}
+      if(t.id==='qaSave'){lib().push({...it,id:uid(),saved:true});save()}
       addToCart(it,1);break}
     case'rcSave':{const name=$('#rcN').value.trim();if(!name){toast('Name the recipe');break}const sv=Math.max(1,num($('#rcS').value)),tt=cartTotal();
       lib().push({id:uid(),name,recipe:true,k:Math.round(tt.k/sv),p:+(tt.p/sv).toFixed(1),f:+(tt.f/sv).toFixed(1),c:+(tt.c/sv).toFixed(1),serving:'1 serving',items:FL.cart.map(c=>c.name)});
@@ -1932,7 +1981,7 @@ const LOCK={key:null,salt:null,timer:null,
     return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:310000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])},
   async writeNow(){const iv=crypto.getRandomValues(new Uint8Array(12));
     const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},this.key,new TextEncoder().encode(JSON.stringify(db)));
-    try{localStorage.setItem(KEY,JSON.stringify({enc:1,v:1,salt:b64(this.salt),iv:b64(iv),ct:b64(ct),lockMin:db.settings.lockMin}))}catch(e){}},
+    try{localStorage.setItem(KEY,JSON.stringify({enc:1,v:1,salt:b64(this.salt),iv:b64(iv),ct:b64(ct),lockMin:db.settings.lockMin}))}catch(e){storageFail()}},
   saveEnc(){clearTimeout(this.timer);this.timer=setTimeout(()=>this.writeNow(),250)}
 };
 function failState(){try{return JSON.parse(localStorage.getItem(KEY+'.fail'))||{n:0,until:0}}catch(e){return{n:0,until:0}}}
@@ -2008,6 +2057,621 @@ SC.addEventListener('scroll',()=>{if(ticking)return;ticking=true;requestAnimatio
 /* external links never get access to this page */
 document.addEventListener('click',e=>{const a=e.target.closest('a[href^="http"]');if(a){a.rel='noopener noreferrer';a.target='_blank'}},true);
 
+/* ===================== ext: backup · sync · food+ · weight trend · workouts · weekly review ===================== */
+P.ext=P.cal;
+P.mail='<rect x="3.5" y="5.5" width="17" height="13" rx="3"/><path d="M4 7l8 6 8-6"/>';
+P.star='<path d="M12 3.8l2.5 5.1 5.6.8-4 4 .9 5.6-5-2.7-5 2.7.9-5.6-4-4 5.6-.8z"/>';
+P.bell=P.reminder;
+P.cloud='<path d="M7 18.5h10.5a4 4 0 0 0 .4-8A6 6 0 0 0 6.4 9.2 4.7 4.7 0 0 0 7 18.5z"/>';
+P.link='<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>';
+P.review='<path d="M4 19V9M10 19V5M16 19v-7M21 19H3"/>';
+P.copy='<rect x="8" y="8" width="12" height="12" rx="3"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>';
+const APP_URL=location.origin+location.pathname;
+const META_K='ishiros.meta',SYNC_K='ishiros.sync';
+const readJ=k=>{try{return JSON.parse(localStorage.getItem(k))||{}}catch(e){return{}}};
+const meta=readJ(META_K),SYNC=readJ(SYNC_K);
+function saveMeta(){try{localStorage.setItem(META_K,JSON.stringify(meta))}catch(e){}}
+function saveSync(){try{localStorage.setItem(SYNC_K,JSON.stringify(SYNC))}catch(e){}}
+const syncOn=()=>!!(SYNC.url&&SYNC.key);
+const ago=ts=>{if(!ts)return'never';const m=Math.round((Date.now()-ts)/6e4);return m<2?'just now':m<60?`${m} min ago`:m<1440?`${Math.round(m/60)} h ago`:`${Math.round(m/1440)} d ago`};
+function copyText(t){const done=()=>toast('Copied');if(navigator.clipboard)navigator.clipboard.writeText(t).then(done,()=>toast('Couldn’t copy'));else toast('Copy isn’t available here')}
+
+/* ---------- storage safety ---------- */
+let storageWarned=0;
+function storageFail(){if(Date.now()-storageWarned>6e4){storageWarned=Date.now();toast('Couldn’t save: phone storage for Life is full. Back up, then delete old data.')}}
+function flushNow(){if(LOCK.key&&LOCK.timer){clearTimeout(LOCK.timer);LOCK.timer=null;LOCK.writeNow()}}
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist().catch(()=>{})}catch(e){}
+
+/* daily snapshots on this phone (IndexedDB), last 14 days. They hold exactly what is in storage, so they stay encrypted when a passcode is on */
+const SNAP={p:null,
+  open(){return this.p||(this.p=new Promise((res,rej)=>{if(!window.indexedDB)return rej(new Error('no idb'));const r=indexedDB.open('life-snaps',1);r.onupgradeneeded=()=>r.result.createObjectStore('s',{keyPath:'day'});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}))},
+  tx(mode,fn){return this.open().then(d=>new Promise((res,rej)=>{const t=d.transaction('s',mode),r=fn(t.objectStore('s'));t.oncomplete=()=>res(r&&r.result);t.onerror=()=>rej(t.error)}))},
+  async list(){return((await this.tx('readonly',s=>s.getAll()))||[]).sort((a,b)=>b.day.localeCompare(a.day))},
+  async put(){const raw=localStorage.getItem(KEY);if(!raw)return false;await this.tx('readwrite',s=>s.put({day:today(),ts:Date.now(),raw,n:db.entries.length,enc:raw.startsWith('{"enc"')}));
+    const all=await this.list();for(const x of all.slice(14))await this.tx('readwrite',s=>s.delete(x.day));return true},
+  get(day){return this.tx('readonly',s=>s.get(day))}
+};
+function dailySnap(){if(meta.snapDay===today())return;SNAP.put().then(ok=>{if(ok){meta.snapDay=today();saveMeta()}}).catch(()=>{})}
+
+/* backup files: plain JSON, or the encrypted blob when a passcode is on */
+function backupText(){return LOCK.key?(localStorage.getItem(KEY)||''):JSON.stringify(db)}
+async function exportFile(){
+  flushNow();await new Promise(r=>setTimeout(r,LOCK.key?300:0));
+  const name=`life-backup-${today()}.json`,f=new File([backupText()],name,{type:'application/json'});
+  const ok=()=>{meta.lastFile=Date.now();delete meta.snoozeBk;saveMeta();DATA_VER++;toast('Backup saved');if(state.tab==='today')render(false)};
+  if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:'Life backup'});ok();return}catch(e){if(e&&e.name==='AbortError')return}}
+  const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);ok();
+}
+function restoreText(text,btn){
+  let d;try{d=JSON.parse(text)}catch(e){toast('That file isn’t a Life backup');return}
+  if(d&&d.enc){arm(btn,'Tap again to restore (needs that backup’s passcode)',()=>{try{localStorage.setItem(KEY,text)}catch(e){storageFail();return}location.reload()});return}
+  if(!d||!Array.isArray(d.entries)){toast('That file isn’t a Life backup');return}
+  arm(btn,`Tap again to replace with ${d.entries.length} entries`,()=>{d.entries=d.entries.filter(e=>e&&TYPES[e.type]&&e.id);db={entries:d.entries,lib:d.lib||[],templates:d.templates||[],settings:{...DEF,...db.settings,...(d.settings||{})}};save();applyLook();closeSheet();render(false);toast(`Restored ${db.entries.length} entries`)});
+}
+function openBackup(){
+  const bkDue=Date.now()-(meta.lastFile||0)>7*864e5;
+  openSheet(`${sheetHead('Backup &amp; <em>restore</em>','settings')}
+    <div class="pstats"><div><span class="cap">Files</span><b style="font-size:15px">${ago(meta.lastFile)}</b></div><div><span class="cap">Server</span><b style="font-size:15px">${syncOn()?ago(meta.lastCloud):'off'}</b></div><div><span class="cap">Snapshots</span><b style="font-size:15px" id="snapN">…</b></div></div>
+    ${bkDue?'<div class="notice" style="margin-bottom:12px">Save a backup to Files at least once a week. Deleting Life from the Home Screen deletes everything in it.</div>':''}
+    <div class="sh-actions" style="margin-top:0"><button class="primary" id="bkFile" style="flex:1">${ic('copy')}Save backup to Files</button></div>
+    <div class="sh-actions" style="margin-top:8px"><label class="secondary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">Restore from a file<input type="file" id="bkPick" accept="application/json,.json,text/plain" hidden></label></div>
+    ${syncOn()?`<div class="cap" style="margin:18px 0 6px">Your server · automatic daily copy</div><div class="sh-actions" style="margin-top:0"><button class="secondary" id="bkCloud" style="flex:1">Back up now</button><button class="secondary" id="bkCloudGet" style="flex:1">Restore latest</button></div>`:`<p class="small">Connect your server in Settings → Connections and Life also backs up there automatically every day.</p>`}
+    <div class="cap" style="margin:18px 0 6px">Daily snapshots on this phone</div><div id="snapList"><p class="hint">Loading…</p></div>
+    <details style="margin-top:16px"><summary class="cap" style="cursor:pointer">Copy as text</summary>
+    <label class="fld" for="exp" style="margin-top:10px"><span>Backup text · ${db.entries.length} entries</span><textarea id="exp" readonly rows="3">${esc(backupText())}</textarea></label>
+    <div class="sh-actions"><button class="secondary" id="copyExp">Copy backup</button></div>
+    <label class="fld" for="imp" style="margin-top:12px"><span>Paste a backup to restore</span><textarea id="imp" rows="3"></textarea></label>
+    <div class="sh-actions"><button class="danger" id="doImp2" style="flex:1">Replace my data with this backup</button></div></details>`);
+  SNAP.list().then(l=>{const el=$('#snapList');if(!el)return;$('#snapN').textContent=l.length;
+    el.innerHTML=l.length?l.map(s=>`<div class="trow" style="cursor:default"><span>${esc(fmtLong(s.day))}<small>${s.n} entries${s.enc?' · encrypted':''} · ${ago(s.ts)}</small></span><button class="link" data-snap="${s.day}">Restore</button></div>`).join(''):'<p class="hint">The first snapshot is taken today.</p>'}).catch(()=>{const el=$('#snapList');if(el)el.innerHTML='<p class="hint">Snapshots aren’t available in this browser.</p>';const n=$('#snapN');if(n)n.textContent='—'});
+}
+async function cloudBackup(force){
+  if(!syncOn()||(!force&&meta.cloudDay===today()))return;
+  try{flushNow();await api('/backup',{method:'PUT',body:backupText(),raw:true});meta.cloudDay=today();meta.lastCloud=Date.now();saveMeta();if(force)toast('Backed up to your server')}catch(e){if(force)toast('Server backup failed: '+e.message)}
+}
+
+/* ---------- server (Cloudflare Worker) client ---------- */
+async function api(path,opt={}){
+  const h={'X-Life-Key':SYNC.key,...(opt.headers||{})};if(opt.body&&!opt.raw)h['Content-Type']='application/json';if(opt.raw)h['Content-Type']='text/plain';
+  const r=await fetch(SYNC.url.replace(/\/+$/,'')+path,{method:opt.method||'GET',body:opt.body,headers:h});
+  if(!r.ok){let m=r.status+'';try{const j=await r.json();m=j.error||j.message||m}catch(e){}throw new Error(m)}
+  const ct=r.headers.get('content-type')||'';return ct.includes('json')?r.json():r.text();
+}
+const SV={status:null};
+async function refreshStatus(){if(!syncOn())return null;try{SV.status=await api('/status')}catch(e){SV.status={error:e.message}}return SV.status}
+const b64uBytes=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return Uint8Array.from(atob(s),c=>c.charCodeAt(0))};
+
+/* notifications: Life works out the exact times, your server sends them */
+const NDEF={on:false,reminders:true,digestOn:true,digest:'08:00',classes:true,events:false,food:false,foodTime:'20:00',review:true,backup:true};
+const NS=()=>({...NDEF,...(SYNC.notif||{})});
+async function enablePush(){
+  if(!syncOn()){toast('Connect your server first');return false}
+  if(!('Notification' in window)||!('serviceWorker' in navigator)||!('PushManager' in window)){toast('Open Life from the Home Screen icon (iOS 16.4 or newer) to turn on notifications');return false}
+  const p=await Notification.requestPermission();if(p!=='granted'){toast('Notifications are off for Life in iPhone Settings → Notifications');return false}
+  try{const reg=await navigator.serviceWorker.ready;const v=await (await fetch(SYNC.url.replace(/\/+$/,'')+'/vapid')).json();
+    let sub=await reg.pushManager.getSubscription();
+    if(sub&&meta.vapid&&meta.vapid!==v.publicKey){await sub.unsubscribe();sub=null}
+    sub=sub||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64uBytes(v.publicKey)});
+    meta.vapid=v.publicKey;saveMeta();
+    await api('/push/subscription',{method:'PUT',body:JSON.stringify({subscription:sub.toJSON()})});
+    SYNC.notif={...NS(),on:true};saveSync();await pushSchedule(true);return true}
+  catch(e){toast('Couldn’t turn on notifications: '+e.message);return false}
+}
+const atLocal=(d,t)=>new Date(`${d}T${t||'09:00'}:00`);
+function nextDow(dow,time){const x=new Date();for(let i=0;i<8;i++){const d=addDays(i),dt=atLocal(d,time);if(new Date(d+'T12:00').getDay()===dow&&dt>x)return dt}return null}
+function buildSchedule(){
+  const n=NS(),out=[],now=Date.now(),lim=now+7*864e5;
+  const add=(id,dt,title,body,url)=>{if(!dt)return;const t=dt.getTime();if(t>now-6e4&&t<lim)out.push({id,at:dt.toISOString(),title,body:body||'',url:url||APP_URL,tag:id.split(':')[0]})};
+  for(let i=0;i<7;i++){const d=addDays(i),wd=wdOf(d);
+    if(n.reminders)of('reminder').filter(e=>!e.done&&e.due===d).forEach(e=>add('r:'+e.id,atLocal(d,e.time||'09:00'),e.title,'Reminder'));
+    if(n.digestOn){const due=of('task').filter(e=>!e.done&&e.due&&(e.due===d||(i===0&&e.due<d)));
+      if(due.length)add('dg:'+d,atLocal(d,n.digest),`${due.length} task${due.length>1?'s':''} due${i===0&&due.some(e=>e.due<d)?' or late':''}`,due.slice(0,3).map(e=>e.title).join(' · '))}
+    if(n.classes){of('class').filter(e=>(e.days||[]).includes(wd)&&e.start).forEach(e=>add(`c:${e.id}:${d}`,new Date(atLocal(d,e.start)-6e5),e.title,`Starts ${fmtT(e.start)}${e.place?' · '+e.place:''}`));
+      of('meeting').filter(e=>e.date===d&&e.time).forEach(e=>add('m:'+e.id,new Date(atLocal(d,e.time)-6e5),e.title,`Meeting at ${fmtT(e.time)}${e.with?' · '+e.with:''}`))}
+    if(n.events)extOn(d).filter(e=>!e.allDay&&e.start).forEach(e=>add(`x:${e.xid}`,new Date(atLocal(d,e.start)-6e5),e.title,`Starts ${fmtT(e.start)}${e.place?' · '+e.place:''}`));
+    if(n.food&&!(i===0&&of('food').some(e=>e.date===d)))add('f:'+d,atLocal(d,n.foodTime),'Log today’s food','Nothing logged yet today.',APP_URL+'#log=food');
+  }
+  if(n.review)add('wr:'+today(),nextDow(0,'19:00'),'Your weekly review is ready','See what you ate, trained, finished and missed.',APP_URL+'#review');
+  if(n.backup&&now-(meta.lastFile||0)>5*864e5)add('bk:'+today(),nextDow(0,'18:00'),'Back up Life','Save a backup to Files. It takes 5 seconds.',APP_URL+'#backup');
+  return out.sort((a,b)=>a.at.localeCompare(b.at)).slice(0,300);
+}
+let schedT=null;
+async function pushSchedule(force){
+  if(!syncOn()||!NS().on)return;
+  const items=buildSchedule(),h=JSON.stringify(items);
+  if(!force&&h===meta.schedHash&&meta.schedDay===today())return;
+  try{await api('/schedule',{method:'PUT',body:JSON.stringify({items})});meta.schedHash=h;meta.schedDay=today();saveMeta()}catch(e){}
+}
+function queueSchedule(){clearTimeout(schedT);schedT=setTimeout(()=>pushSchedule(false),4000)}
+
+/* external calendars (Outlook / iCloud ICS feeds through your server) */
+const CALC=(()=>{try{return JSON.parse(localStorage.getItem('ishiros.cache.cal'))||{ev:[],at:0}}catch(e){return{ev:[],at:0}}})();
+function extOn(d){
+  if(!syncOn())return[];
+  const out=[];
+  for(const v of CALC.ev||[]){
+    const sd=(v.start||'').slice(0,10),ed=(v.end||v.start||'').slice(0,10);
+    if(v.allDay){if(d>=sd&&(d<ed||d===sd))out.push({id:'ext:'+v.id,xid:v.id,type:'ext',title:v.title||'(busy)',allDay:true,start:'',end:'',place:v.location||'',cal:v.cal,date:d});continue}
+    if(sd!==d)continue;
+    out.push({id:'ext:'+v.id,xid:v.id,type:'ext',title:v.title||'(busy)',start:(v.start||'').slice(11,16),end:ed===d?(v.end||'').slice(11,16):'23:59',place:v.location||'',cal:v.cal,date:d});
+  }
+  return out;
+}
+async function loadExt(force){
+  if(!syncOn()||!(SYNC.cals||[]).length)return;
+  if(!force&&Date.now()-(CALC.at||0)<15*6e4)return;
+  try{const r=await api(`/calendar?from=${addDays(-35)}&to=${addDays(70)}`);CALC.ev=r.events||[];CALC.err=r.errors||[];CALC.at=Date.now();
+    try{localStorage.setItem('ishiros.cache.cal',JSON.stringify(CALC))}catch(e){}
+    DATA_VER++;if(state.tab==='plan'||state.tab==='today')render(false);queueSchedule()}catch(e){CALC.err=[{cal:'all',message:e.message}]}
+}
+function dayItems(d){
+  const wd=wdOf(d);
+  return[...of('class').filter(e=>(e.days||[]).includes(wd)).map(e=>[e.start||'',e]),
+         ...of('meeting').filter(e=>e.date===d).map(e=>[e.time||'',e]),
+         ...extOn(d).map(e=>[e.allDay?'':e.start,e])].sort((a,b)=>a[0].localeCompare(b[0])).map(x=>x[1]);
+}
+function openExt(xid){
+  const v=(CALC.ev||[]).find(x=>x.id===xid);if(!v)return;
+  const cal=(SYNC.cals||[]).find(c=>c.id===v.cal);
+  const when=v.allDay?`${fmtLong(v.start.slice(0,10))} · all day`:`${fmtLong(v.start.slice(0,10))} · ${fmtT(v.start.slice(11,16))}${v.end?'–'+fmtT(v.end.slice(11,16)):''}`;
+  openSheet(`<div class="sh-h"><div class="lhs"><span class="cap">${esc(cal?cal.name:'Calendar')}</span></div><button type="button" class="x" data-close aria-label="Close">${ic('close')}</button></div>
+    <div class="dhead">${tile('ext')}<div style="min-width:0"><h3>${esc(v.title||'(busy)')}</h3><div class="rs" style="white-space:normal;margin-top:4px">${esc(when)}</div></div></div>
+    ${v.location?`<ul class="kv"><li><span class="cap">Where</span><b>${esc(v.location)}</b></li></ul>`:''}
+    <p class="small">From your ${esc(cal?cal.name:'linked')} calendar. Edit it there; Life refreshes every 15 minutes.</p>`);
+}
+const _openDetail=openDetail;
+openDetail=function(id){if(String(id).startsWith('ext:'))return openExt(String(id).slice(4));const e=find(id);if(e&&e.type==='workout'&&e.ex)return openWorkoutDetail(e);return _openDetail(id)};
+
+/* email (Outlook via Microsoft Graph, Gmail via your Apps Script) */
+const MAILC=(()=>{try{return JSON.parse(localStorage.getItem('ishiros.cache.mail'))||{items:[],at:0}}catch(e){return{items:[],at:0}}})();
+async function loadMail(force){
+  if(!syncOn()||!(SYNC.mailOn))return;
+  if(!force&&Date.now()-(MAILC.at||0)<10*6e4)return;
+  try{const r=await api('/mail');const sig=JSON.stringify((r.items||[]).map(x=>x.id));const changed=sig!==JSON.stringify((MAILC.items||[]).map(x=>x.id));
+    MAILC.items=r.items||[];MAILC.err=r.errors||[];MAILC.at=Date.now();try{localStorage.setItem('ishiros.cache.mail',JSON.stringify(MAILC))}catch(e){}
+    if(changed){DATA_VER++;if(state.tab==='today')render(false)}}catch(e){MAILC.err=[{source:'server',message:e.message}]}
+}
+function mailSection(){
+  if(!syncOn()||!SYNC.mailOn)return'';
+  const it=(MAILC.items||[]).slice(0,6);
+  const rows=it.map(m=>`<li class="row mailrow"><span class="ico ${m.source==='gmail'?'k-gmail':'k-outlook'}">${ic('mail')}</span><a class="rowbtn" href="${esc(m.link||'#')}" target="_blank" rel="noopener noreferrer"><span class="rt">${esc(m.subject||'(no subject)')}</span><span class="rs">${esc((m.from||'').replace(/<.*>/,'').trim())} · ${esc(m.source==='gmail'?'Gmail':'Outlook')} · ${esc(relTime(m.date))}</span></a><button class="link" data-mailtask="${esc(m.id)}" aria-label="Make a task">${ic('task')}</button></li>`).join('');
+  return section('Unread <em>mail</em>',it.length?`<ul class="list card-s">${rows}</ul>`:emptyBox(MAILC.at?'Inbox zero. Nice.':'Checking your inbox…'),`<span class="cap num">${(MAILC.items||[]).length} unread</span>`);
+}
+const relTime=s=>{const t=new Date(s).getTime();if(!t)return'';const m=(Date.now()-t)/6e4;return m<60?`${Math.max(1,Math.round(m))}m`:m<1440?`${Math.round(m/60)}h`:fmtDate(iso(new Date(t)))};
+
+/* health: Fitbit (Google Health API) + Apple Health (MacroFactor etc.) through your server */
+const HC=(()=>{try{return JSON.parse(localStorage.getItem('ishiros.cache.health'))||{days:[],at:0}}catch(e){return{days:[],at:0}}})();
+const hday=d=>(HC.days||[]).find(x=>x.date===d)||null;
+async function loadHealth(force){
+  if(!syncOn()||!SYNC.healthOn)return;
+  if(!force&&Date.now()-(HC.at||0)<30*6e4)return;
+  try{const r=await api('/health?days=30');HC.days=r.days||[];HC.err=r.errors||[];HC.sources=r.sources||{};HC.at=Date.now();try{localStorage.setItem('ishiros.cache.health',JSON.stringify(HC))}catch(e){}
+    importHealth();DATA_VER++;if(['today','health'].includes(state.tab))render(false)}catch(e){HC.err=[{source:'server',message:e.message}]}
+}
+/* weigh-ins from Apple Health fill days you didn't weigh in by hand; MacroFactor daily totals become one food entry per day (optional) */
+function importHealth(){
+  let ch=false;
+  for(const d of HC.days||[]){
+    if(SYNC.whImport!==false&&num(d.weightLb)>0&&!of('weight').some(e=>e.date===d.date&&!e.src)){
+      const ex=of('weight').find(e=>e.date===d.date&&e.src==='health');const v=+num(d.weightLb).toFixed(1);
+      if(!ex){db.entries.push({id:uid(),type:'weight',src:'health',value:v,date:d.date,created:Date.now()});ch=true}else if(num(ex.value)!==v){ex.value=v;ch=true}}
+    if(SYNC.mfImport&&num(d.kcal)>0){
+      const ex=of('food').find(e=>e.date===d.date&&e.src==='mf');const o={kcal:Math.round(num(d.kcal)),protein:+num(d.protein).toFixed(1),fat:+num(d.fat).toFixed(1),carbs:+num(d.carbs).toFixed(1)};
+      if(!ex){db.entries.push({id:uid(),type:'food',src:'mf',title:'MacroFactor · day total',meal:'Snack',date:d.date,created:Date.now(),...o});ch=true}
+      else if(ex.kcal!==o.kcal||ex.protein!==o.protein){Object.assign(ex,o);ch=true}}
+  }
+  if(ch)save();
+}
+
+/* widget summary for the Scriptable home-screen widget */
+let widgetAt=0;
+function nextUp(){const nowM=new Date().getHours()*60+new Date().getMinutes();
+  for(const[d,lbl]of[[today(),'Today'],[addDays(1),'Tomorrow']]){const it=dayItems(d).find(e=>{const t=(e.type==='class'||e.type==='ext')?e.start:e.time;if(!t)return false;return d!==today()||toMin(t)>=nowM});
+    if(it){const t=(it.type==='class'||it.type==='ext')?it.start:it.time;return{title:it.title,time:fmtT(t),day:lbl,place:it.place||''}}}return null}
+function widgetSummary(){
+  const td=today(),food=of('food').filter(e=>e.date===td),k=sumKcal(food),g=db.settings,h=hday(td);
+  const due=of('task').filter(e=>!e.done&&e.due&&dayDiff(e.due)<=0).length+of('reminder').filter(e=>!e.done&&e.due&&dayDiff(e.due)<=0).length;
+  const ws=weights(),tr=trendSeries(ws),last=tr[tr.length-1];
+  return{name:firstName(),kcal:Math.round(k),kcalGoal:g.kcal,kcalLeft:Math.round(g.kcal-k),protein:Math.round(sumProt(food)),proteinGoal:g.protein,due,next:nextUp(),steps:h&&h.steps?Math.round(num(h.steps)):null,sleepMin:h&&h.sleepMin?Math.round(num(h.sleepMin)):null,weightTrend:last?+last.t.toFixed(1):null,updated:Date.now()};
+}
+async function pushWidget(force){
+  if(!syncOn()||!SYNC.widgetOn||LOCKED_BLOB&&!LOCK.key)return;
+  if(!force&&Date.now()-widgetAt<10*6e4)return;widgetAt=Date.now();
+  try{await api('/widget',{method:'PUT',body:JSON.stringify({summary:widgetSummary()})})}catch(e){}
+}
+
+/* everything that should follow a change to your data */
+function afterSave(){queueSchedule();if(meta.snapDay!==today())setTimeout(dailySnap,1500);if(Date.now()-widgetAt>10*6e4)setTimeout(()=>pushWidget(false),5000)}
+function syncOnHide(){pushWidget(true);pushSchedule(false)}
+let lastWake=Date.now();
+function onWake(){
+  if(Date.now()-lastWake>5*6e4){DATA_VER++;if(!$('#lock'))render(false)}
+  lastWake=Date.now();dailySnap();
+  if(syncOn()&&!$('#lock')){loadExt();loadMail();loadHealth();cloudBackup(false);pushSchedule(false)}
+}
+addEventListener('pagehide',()=>{flushNow();syncOnHide()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){flushNow();syncOnHide()}else onWake()});
+setInterval(()=>{if(!document.hidden)onWake()},10*6e4);
+
+/* ---------- weight: trend line (exponential moving average) + real weekly rate ---------- */
+function dailyWeights(ws){const m=new Map();for(const e of ws){const a=m.get(e.date)||[];a.push(num(e.value));m.set(e.date,a)}return[...m].sort((a,b)=>a[0].localeCompare(b[0])).map(([date,a])=>({date,value:a.reduce((s,v)=>s+v,0)/a.length}))}
+/* trend_t = trend_(t-1) + α·(scale_t − trend_(t-1)),  α = 1 − 0.9^(days since last weigh-in)  → each day moves 10% toward the scale */
+function trendSeries(ws){let t=null,prev=null;return dailyWeights(ws).map(e=>{const v=e.value,d=new Date(e.date+'T00:00').getTime();if(t===null)t=v;else{const dd=Math.max(1,Math.round((d-prev)/864e5));t=t+(1-Math.pow(.9,dd))*(v-t)}prev=d;return{date:e.date,v,t}})}
+/* weekly rate = least-squares slope of the trend over the last 21 days × 7 */
+function trendRate(tr){const cut=new Date(addDays(-21)+'T00:00').getTime(),p=tr.map(x=>({x:new Date(x.date+'T00:00').getTime()/864e5,y:x.t})).filter(q=>q.x*864e5>=cut);
+  if(p.length<3||p[p.length-1].x-p[0].x<5)return null;const n=p.length,mx=p.reduce((s,q)=>s+q.x,0)/n,my=p.reduce((s,q)=>s+q.y,0)/n;
+  const sxx=p.reduce((s,q)=>s+(q.x-mx)**2,0);return sxx?p.reduce((s,q)=>s+(q.x-mx)*(q.y-my),0)/sxx*7:null}
+function weightDelta(ws){const r=trendRate(trendSeries(ws));if(r!==null)return r;const last=ws[ws.length-1],ref=[...ws].reverse().find(e=>e.date<=addDays(-7));return last&&ref?num(last.value)-num(ref.value):null}
+function chart(ws,W=320,H=140){
+  const tr=trendSeries(ws).slice(-45);
+  if(tr.length<2)return`<p class="hint" style="margin-top:12px">Log two weigh-ins to see your trend.</p>`;
+  const L=6,R=6,T=14,B=20,ts=tr.map(e=>new Date(e.date+'T00:00').getTime());
+  const goal=db.settings.goalWeight===''?null:num(db.settings.goalWeight);
+  const all=[...tr.map(e=>e.v),...tr.map(e=>e.t),...(goal&&Math.abs(goal-tr[tr.length-1].t)<15?[goal]:[])];
+  let mn=Math.min(...all),mx=Math.max(...all);if(mx-mn<1){mn-=.5;mx+=.5}
+  const t0=ts[0],t1=ts[ts.length-1],x=t=>L+(t1===t0?0:(t-t0)/(t1-t0))*(W-L-R),y=v=>T+(mx-v)/(mx-mn)*(H-T-B);
+  const pts=tr.map((e,i)=>`${x(ts[i]).toFixed(1)},${y(e.t).toFixed(1)}`),ex=x(t1),ey=y(tr[tr.length-1].t);
+  const grid=[0,.5,1].map(f=>{const yy=(T+f*(H-T-B)).toFixed(1);return`<line x1="${L}" x2="${W-R}" y1="${yy}" y2="${yy}" stroke="var(--line)" stroke-dasharray="2 5"/>`}).join('');
+  const gl=goal&&goal>=mn&&goal<=mx?`<line x1="${L}" x2="${W-R}" y1="${y(goal).toFixed(1)}" y2="${y(goal).toFixed(1)}" stroke="var(--good)" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${W-R}" y="${(y(goal)-5).toFixed(1)}" text-anchor="end" font-size="10" font-family="Space Mono, monospace" fill="var(--good)">GOAL ${goal}</text>`:'';
+  return`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Trend weight from ${tr[0].t.toFixed(1)} to ${tr[tr.length-1].t.toFixed(1)} lb, scale weights shown as dots">
+    <defs><linearGradient id="wg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".24"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
+    ${grid}${gl}
+    <path d="M${x(t0)},${H-B} L${pts.join(' L')} L${ex},${H-B} Z" fill="url(#wg)"/>
+    ${tr.map((e,i)=>`<circle cx="${x(ts[i]).toFixed(1)}" cy="${y(e.v).toFixed(1)}" r="2.6" fill="var(--muted)" opacity=".75"/>`).join('')}
+    <polyline class="line" points="${pts.join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${ex}" cy="${ey}" r="6" fill="var(--surface)" stroke="var(--accent)" stroke-width="3"/>
+    <text x="${L}" y="${H-4}" font-size="10" font-family="Space Mono, monospace" fill="var(--muted)">${esc(fmtDate(tr[0].date).toUpperCase())}</text>
+    <text x="${W-R}" y="${H-4}" text-anchor="end" font-size="10" font-family="Space Mono, monospace" fill="var(--muted)">${esc(fmtDate(tr[tr.length-1].date).toUpperCase())}</text></svg>`;
+}
+function weightCard(){
+  const ws=weights(),tr=trendSeries(ws),last=tr[tr.length-1],rate=trendRate(tr);
+  const g=db.settings.goalWeight,eta=last&&g!==''&&rate&&Math.sign(num(g)-last.t)===Math.sign(rate)&&Math.abs(rate)>.05?Math.ceil(Math.abs(num(g)-last.t)/Math.abs(rate)):null;
+  return`<section class="wcard card-s">
+    <div class="wtop"><div><div class="cap">Trend weight</div><div class="wnum num">${last?last.t.toFixed(1):'—'}<small>LB</small></div>
+      <div class="goal">${last?`Scale ${last.v.toFixed(1)} lb on ${esc(fmtDate(last.date))}`:'No weigh-ins yet'}${g!==''&&last?` · goal ${esc(g)}${eta?`, about ${eta} wk at this rate`:''}`:''}</div></div>${rate===null?'':deltaPill(rate)}</div>
+    ${chart(ws)}
+    <p class="small" style="margin:6px 0 0">Line = trend (each day moves 10% toward the scale, so water swings don’t mislead you). Dots = scale readings. Rate = trend slope over 21 days.</p>
+  </section>`;
+}
+
+/* ---------- workouts: templates, sets × reps × weight, progress per exercise ---------- */
+const tpls=()=>(db.templates=db.templates||[]);
+const e1rm=(w,r)=>num(w)*(1+num(r)/30); /* Epley estimate of a one-rep max */
+function exHistory(){
+  const m={};
+  for(const e of of('workout').filter(x=>x.ex&&x.date).sort((a,b)=>a.date.localeCompare(b.date)))for(const x of e.ex){
+    const sets=(x.sets||[]).filter(s=>num(s.r)>0);if(!sets.length)continue;
+    const best=sets.reduce((b,s)=>e1rm(s.w,s.r)>e1rm(b.w,b.r)?s:b,sets[0]),vol=sets.reduce((t,s)=>t+num(s.r)*num(s.w),0);
+    const k=x.name.trim().toLowerCase();(m[k]=m[k]||{name:x.name.trim(),pts:[]}).pts.push({date:e.date,id:e.id,best,est:e1rm(best.w,best.r),vol,sets})}
+  return m;
+}
+const lastSets=name=>{const h=exHistory()[name.trim().toLowerCase()];return h?h.pts[h.pts.length-1].sets:null};
+let WK=null;
+function openWorkoutStart(){
+  const t=tpls();
+  openSheet(`${sheetHead('Start a <em>workout</em>')}
+    <button class="navrow" data-wkstart="">${tile('workout')}<span class="t">Empty workout<small>Add exercises as you go</small></span>${ic('chev','i chev')}</button>
+    ${t.length?`<div class="set-grp">Your templates</div>${t.map(x=>`<div class="tplrow"><button class="navrow" data-wkstart="${x.id}" style="flex:1">${tile('workout')}<span class="t">${esc(x.name)}<small>${esc(x.ex.map(e=>e.name).join(' · ')||'No exercises yet')}</small></span>${ic('chev','i chev')}</button><button class="ib sm" data-tpledit="${x.id}" aria-label="Edit ${esc(x.name)}">${ic('edit')}</button></div>`).join('')}`:''}
+    <div class="sh-actions"><button class="secondary" data-tpledit="new" style="flex:1">${ic('plus')}New template</button><button class="secondary" data-add-simple="workout" style="flex:1">Quick log</button></div>
+    <p class="small">Templates fill in your last weights for each exercise so you can beat them.</p>`);
+}
+function startWorkout(tplId,entryId){
+  const e=entryId?find(entryId):null,t=tplId?tpls().find(x=>x.id===tplId):null;
+  if(e)WK={mode:'log',id:e.id,title:e.title||'Workout',date:e.date||today(),minutes:e.minutes||'',notes:e.notes||'',ex:JSON.parse(JSON.stringify(e.ex||[]))};
+  else WK={mode:'log',id:null,title:t?t.name:'Workout',date:today(),minutes:'',notes:'',started:Date.now(),
+    ex:(t?t.ex:[]).map(x=>{const ls=lastSets(x.name);return{name:x.name,sets:Array.from({length:Math.max(1,num(x.sets)||3)},(_,i)=>({r:x.reps||'',w:ls&&ls[Math.min(i,ls.length-1)]?ls[Math.min(i,ls.length-1)].w:(x.weight||''),done:false}))}})};
+  showWK();
+}
+function editTemplate(id){
+  const t=id==='new'?null:tpls().find(x=>x.id===id);
+  WK={mode:'tpl',id:t?t.id:null,title:t?t.name:'',ex:t?t.ex.map(x=>({name:x.name,sets:[{r:x.reps||'',w:x.weight||''}],n:x.sets||3})):[]};
+  showWK();
+}
+function wkHTML(){
+  const tpl=WK.mode==='tpl',names=Object.values(exHistory()).map(h=>h.name);
+  const exs=WK.ex.map((x,i)=>{
+    const h=exHistory()[x.name.trim().toLowerCase()],best=h?Math.max(...h.pts.map(p=>p.est)):0;
+    const rows=tpl?`<div class="wkset tplset"><label>Sets<input type="number" inputmode="numeric" data-wkf="${i}.n" value="${esc(x.n||3)}"></label><label>Reps<input type="number" inputmode="numeric" data-wkf="${i}.0.r" value="${esc(x.sets[0].r)}"></label><label>lb<input type="number" inputmode="decimal" step="any" data-wkf="${i}.0.w" value="${esc(x.sets[0].w)}"></label></div>`
+      :x.sets.map((s,j)=>`<div class="wkset${s.done?' done':''}"><span class="sn">${j+1}</span><label>Reps<input type="number" inputmode="numeric" data-wkf="${i}.${j}.r" value="${esc(s.r)}"></label><label>lb<input type="number" inputmode="decimal" step="any" data-wkf="${i}.${j}.w" value="${esc(s.w)}"></label><button class="tick" data-wkdone="${i}.${j}" aria-pressed="${!!s.done}" aria-label="Set ${j+1} done">${ic('check')}</button></div>`).join('')
+        +`<div class="wkfoot"><button class="link" data-wkaddset="${i}">${ic('plus')}Set</button>${x.sets.length>1?`<button class="link" data-wkdelset="${i}">Remove last</button>`:''}${best?`<span class="cap">Best e1RM ${Math.round(best)}</span>`:''}</div>`;
+    return`<div class="wkex card-s"><div class="wkh"><input class="wkname" data-wkf="${i}.name" value="${esc(x.name)}" placeholder="Exercise" list="exNames"><button class="x" data-wkrm="${i}" aria-label="Remove exercise">${ic('close')}</button></div>${rows}</div>`}).join('');
+  return`${sheetHead(tpl?(WK.id?'Edit <em>template</em>':'New <em>template</em>'):(WK.id?'Edit <em>workout</em>':'<em>Workout</em>'))}
+    <div class="fl"><div class="fl-body" id="wkBody">
+    <label class="fld" for="wkTitle"><span>${tpl?'Template name':'Name'}</span><input id="wkTitle" value="${esc(WK.title)}" placeholder="${tpl?'e.g. Push day':'Workout'}"></label>
+    ${tpl?'':`<div class="qa" style="grid-template-columns:repeat(2,minmax(0,1fr))"><label class="fld" for="wkDate"><span>Date</span><input id="wkDate" type="date" value="${esc(WK.date)}"></label><label class="fld" for="wkMin"><span>Minutes</span><input id="wkMin" type="number" inputmode="numeric" value="${esc(WK.minutes)}" placeholder="${WK.started?'auto':''}"></label></div>`}
+    ${exs||'<p class="hint">Add your first exercise below.</p>'}
+    <datalist id="exNames">${names.map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
+    <div class="sh-actions" style="margin-top:6px"><button class="secondary" id="wkAddEx" style="flex:1">${ic('plus')}Add exercise</button></div>
+    ${tpl?'':`<label class="fld" for="wkNotes" style="margin-top:12px"><span>Notes</span><textarea id="wkNotes" rows="2">${esc(WK.notes)}</textarea></label>`}
+    </div><div class="fl-bottom">${tpl?(WK.id?'<button class="danger" id="tplDel">Delete</button>':'<span style="flex:1"></span>'):`<button class="secondary" id="wkAsTpl">Save as template</button>`}<button class="primary" id="wkSave" style="flex:1">${tpl?'Save template':'Finish'}</button></div></div>`;
+}
+function showWK(){FORCE_MODE='m-bottom tall';const open=!wrap.hidden&&wrap.classList.contains('open');if(open)NAV_DIR=1;openSheet(wkHTML())}
+function wkRefresh(){const b=$('#wkBody'),st=b?b.scrollTop:0;$('#sheetBody').innerHTML=wkHTML();const nb=$('#wkBody');if(nb)nb.scrollTop=st}
+function wkCommitInputs(){const t=$('#wkTitle');if(t)WK.title=t.value;const d=$('#wkDate');if(d)WK.date=d.value;const m=$('#wkMin');if(m)WK.minutes=m.value;const n=$('#wkNotes');if(n)WK.notes=n.value}
+function saveWK(asTpl){
+  wkCommitInputs();
+  const ex=WK.ex.map(x=>({...x,name:x.name.trim()})).filter(x=>x.name);
+  if(WK.mode==='tpl'||asTpl){
+    const name=(WK.title||'').trim();if(!name){toast('Name the template');return}
+    const t={id:WK.mode==='tpl'&&WK.id?WK.id:uid(),name,ex:ex.map(x=>({name:x.name,sets:WK.mode==='tpl'?num(x.n)||3:x.sets.length,reps:x.sets[0]?x.sets[0].r:'',weight:x.sets[0]?x.sets[0].w:''}))};
+    const i=tpls().findIndex(x=>x.id===t.id);if(i>=0)tpls()[i]=t;else tpls().push(t);save();toast(asTpl?'Saved as a template':'Template saved');if(!asTpl){NAV_DIR=-1;openWorkoutStart()}return}
+  if(!ex.length&&!WK.minutes){toast('Add an exercise or minutes');return}
+  const mins=num(WK.minutes)||(WK.started?Math.max(1,Math.round((Date.now()-WK.started)/6e4)):'');
+  const o={title:(WK.title||'Workout').trim(),date:WK.date||today(),minutes:mins,notes:(WK.notes||'').trim(),ex:ex.map(x=>({name:x.name,sets:x.sets.filter(s=>num(s.r)>0||num(s.w)>0).map(s=>({r:num(s.r),w:num(s.w)}))}))};
+  const prs=[];const hist=exHistory();
+  for(const x of o.ex){const h=hist[x.name.toLowerCase()],prev=h?Math.max(...h.pts.filter(p=>p.id!==WK.id).map(p=>p.est),0):0;const b=Math.max(0,...x.sets.map(s=>e1rm(s.w,s.r)));if(prev&&b>prev+.01)prs.push(x.name)}
+  if(WK.id){Object.assign(find(WK.id),o)}else db.entries.push({id:uid(),type:'workout',created:Date.now(),...o});
+  save();closeSheet();render(false);tick();toast(prs.length?`New best: ${prs.slice(0,2).join(', ')}`:'Workout saved');WK=null;
+}
+function openWorkoutDetail(e){
+  const vol=e.ex.reduce((t,x)=>t+x.sets.reduce((s,y)=>s+num(y.r)*num(y.w),0),0);
+  openSheet(`<div class="sh-h"><div class="lhs"><span class="cap">Workout · ${esc(fmtLong(e.date))}</span></div><button type="button" class="x" data-close aria-label="Close">${ic('close')}</button></div>
+    <div class="dhead">${tile('workout')}<div style="min-width:0"><h3>${esc(e.title||'Workout')}</h3><div class="rs" style="margin-top:4px">${e.minutes?`${e.minutes} min · `:''}${e.ex.length} exercise${e.ex.length===1?'':'s'} · ${fmtN(vol)} lb volume</div></div></div>
+    ${e.ex.map(x=>`<div class="wkex card-s"><button class="wkh link" data-exprog="${esc(x.name)}" style="justify-content:space-between;width:100%"><b>${esc(x.name)}</b>${ic('chev','i chev r')}</button>${x.sets.map((s,j)=>`<div class="wkline"><span class="sn">${j+1}</span><span class="num">${s.r} × ${s.w||0} lb</span><span class="cap">e1RM ${Math.round(e1rm(s.w,s.r))}</span></div>`).join('')}</div>`).join('')}
+    ${e.notes?`<div class="notes">${esc(e.notes)}</div>`:''}
+    <div class="sh-actions"><button class="secondary" data-wkedit="${e.id}">${ic('edit')}Edit</button><button class="primary" data-wkagain="${e.id}">Do it again</button></div>`);
+}
+function openExProgress(name){
+  const h=exHistory()[name.trim().toLowerCase()];if(!h){toast('No sets logged for this exercise yet');return}
+  const p=h.pts.slice(-30),W=320,H=140,L=8,R=8,T=14,B=20,vs=p.map(x=>x.est);let mn=Math.min(...vs),mx=Math.max(...vs);if(mx-mn<5){mn-=2.5;mx+=2.5}
+  const ts=p.map(x=>new Date(x.date+'T00:00').getTime()),t0=ts[0],t1=ts[ts.length-1],X=t=>L+(t1===t0?.5:(t-t0)/(t1-t0))*(W-L-R),Y=v=>T+(mx-v)/(mx-mn)*(H-T-B);
+  const pts=p.map((x,i)=>`${X(ts[i]).toFixed(1)},${Y(x.est).toFixed(1)}`).join(' ');
+  const best=p.reduce((b,x)=>x.est>b.est?x:b,p[0]);
+  NAV_DIR=1;openSheet(`${sheetHead(esc(h.name),'')}
+    <div class="pstats"><div><span class="cap">Best e1RM</span><b class="num">${Math.round(best.est)}</b></div><div><span class="cap">Top set</span><b class="num" style="font-size:16px">${best.best.r}×${best.best.w}</b></div><div><span class="cap">Sessions</span><b class="num">${h.pts.length}</b></div></div>
+    ${p.length>1?`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Estimated one-rep max over time"><polyline class="line" points="${pts}" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>${p.map((x,i)=>`<circle cx="${X(ts[i]).toFixed(1)}" cy="${Y(x.est).toFixed(1)}" r="3.4" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>`).join('')}<text x="${L}" y="${H-4}" font-size="10" font-family="Space Mono, monospace" fill="var(--muted)">${esc(fmtDate(p[0].date).toUpperCase())}</text><text x="${W-R}" y="${H-4}" text-anchor="end" font-size="10" font-family="Space Mono, monospace" fill="var(--muted)">${esc(fmtDate(p[p.length-1].date).toUpperCase())}</text></svg>`:'<p class="hint">Log this exercise again to see a progress line.</p>'}
+    <p class="small">e1RM = weight × (1 + reps ÷ 30), the Epley estimate of your one-rep max. It lets sets with different reps be compared.</p>
+    <div class="cap" style="margin:14px 0 6px">History</div>
+    ${[...h.pts].reverse().slice(0,12).map(x=>`<div class="wkline"><span class="cap" style="width:64px">${esc(fmtDate(x.date))}</span><span class="num" style="flex:1">${x.sets.map(s=>`${s.r}×${s.w}`).join('  ')}</span><span class="cap">${Math.round(x.est)}</span></div>`).join('')}`);
+}
+function exerciseSection(){
+  const h=Object.values(exHistory()).sort((a,b)=>b.pts[b.pts.length-1].date.localeCompare(a.pts[a.pts.length-1].date));
+  if(!h.length)return'';
+  return section('Your <em>lifts</em>',`<ul class="list card-s">${h.slice(0,12).map(x=>{const l=x.pts[x.pts.length-1],f=x.pts[0],d=l.est-f.est;
+    return`<li class="row"><span class="ico k-workout">${ic('workout')}</span><button class="rowbtn" data-exprog="${esc(x.name)}"><span class="rt">${esc(x.name)}</span><span class="rs">Last ${l.best.r}×${l.best.w} lb · e1RM ${Math.round(l.est)}${x.pts.length>1?` · ${d>=0?'+':'−'}${Math.abs(Math.round(d))} since ${esc(fmtDate(f.date))}`:''}</span></button></li>`}).join('')}</ul>`);
+}
+
+/* ---------- weekly review ---------- */
+let RV=0;
+function weekRange(off){const d=weekDays(shiftDays(today(),off*7));return d}
+function openReview(off=0){
+  RV=off;const days=weekRange(off),a=days[0],z=days[6],inW=d=>d&&d>=a&&d<=z,g=db.settings,td=today();
+  const past=days.filter(d=>d<=td),nd=Math.max(1,past.length);
+  const food=of('food').filter(e=>inW(e.date)),fd=[...new Set(food.map(e=>e.date))];
+  const kcalDay=d=>sumKcal(food.filter(e=>e.date===d)),protDay=d=>sumProt(food.filter(e=>e.date===d));
+  const avgK=fd.length?fd.reduce((s,d)=>s+kcalDay(d),0)/fd.length:0,avgP=fd.length?fd.reduce((s,d)=>s+protDay(d),0)/fd.length:0;
+  const onTarget=fd.filter(d=>Math.abs(kcalDay(d)-g.kcal)<=g.kcal*.1).length;
+  const wo=of('workout').filter(e=>inW(e.date)),mins=wo.reduce((s,e)=>s+num(e.minutes),0);
+  const vol=wo.reduce((t,e)=>t+(e.ex||[]).reduce((s,x)=>s+x.sets.reduce((q,y)=>q+num(y.r)*num(y.w),0),0),0);
+  const hist=exHistory(),prs=[];for(const k in hist){const p=hist[k].pts;let best=0;for(const x of p){if(inW(x.date)&&best&&x.est>best+.01)prs.push(`${hist[k].name} ${Math.round(x.est)}`);best=Math.max(best,x.est)}}
+  const done=db.entries.filter(e=>(e.type==='task'||e.type==='reminder')&&e.done&&e.doneAt&&inW(iso(new Date(e.doneAt))));
+  const missed=db.entries.filter(e=>(e.type==='task'||e.type==='reminder')&&!e.done&&e.due&&inW(e.due)&&e.due<td);
+  const tr=trendSeries(weights()),tIn=tr.filter(x=>inW(x.date)),tw0=tIn[0],tw1=tIn[tIn.length-1];
+  const hs=(HC.days||[]).filter(x=>inW(x.date)),avg=(k)=>{const v=hs.map(x=>num(x[k])).filter(Boolean);return v.length?v.reduce((s,q)=>s+q,0)/v.length:null};
+  const steps=avg('steps'),sleep=avg('sleepMin');
+  const bar=(v,goal)=>`<div class="mbar"><i style="width:${Math.min(100,goal?v/goal*100:0)}%"></i></div>`;
+  const label=off===0?'This week':off===-1?'Last week':`${fmtDate(a)} – ${fmtDate(z)}`;
+  FORCE_MODE='m-bottom tall';
+  const html=`${sheetHead('Weekly <em>review</em>')}
+    <div class="wk-top" style="margin-bottom:10px"><button class="wk-nav" data-rv="-1" aria-label="Previous week">${ic('chev','i chev l')}</button><b>${label}</b><button class="wk-nav" data-rv="1" aria-label="Next week" ${off>=0?'disabled':''}>${ic('chev','i chev r')}</button></div>
+    <div class="fl"><div class="fl-body">
+    <div class="rvcard card-s"><div class="cap">Food</div>
+      <div class="rvgrid"><div><b class="num">${fd.length}/${nd}</b><span>days logged</span></div><div><b class="num">${fmtN(avgK)}</b><span>avg kcal · goal ${fmtN(g.kcal)}</span></div><div><b class="num">${fmtN(avgP)}g</b><span>avg protein · goal ${g.protein}</span></div></div>
+      ${bar(avgP,g.protein)}<p class="small">${fd.length?`${onTarget} of ${fd.length} logged days within 10% of your calorie goal.`:'Nothing logged this week.'}</p></div>
+    <div class="rvcard card-s"><div class="cap">Training</div>
+      <div class="rvgrid"><div><b class="num">${wo.length}</b><span>sessions</span></div><div><b class="num">${fmtN(mins)}</b><span>min · goal ${g.active}</span></div><div><b class="num">${vol>=1e4?(vol/1e3).toFixed(1)+'k':fmtN(vol)}</b><span>lb lifted</span></div></div>
+      ${bar(mins,g.active)}${prs.length?`<p class="small"><b>New bests:</b> ${esc(prs.slice(0,4).join(' · '))}</p>`:''}</div>
+    <div class="rvcard card-s"><div class="cap">Body</div>
+      <div class="rvgrid"><div><b class="num">${tw1?tw1.t.toFixed(1):'—'}</b><span>trend lb</span></div><div><b class="num">${tw0&&tw1&&tw0!==tw1?((tw1.t-tw0.t)>0?'+':'−')+Math.abs(tw1.t-tw0.t).toFixed(1):'—'}</b><span>change this week</span></div><div><b class="num">${steps?fmtN(steps):sleep?(sleep/60).toFixed(1)+'h':'—'}</b><span>${steps?'avg steps':sleep?'avg sleep':'steps (connect Fitbit)'}</span></div></div></div>
+    <div class="rvcard card-s"><div class="cap">Finished · ${done.length}</div>${done.length?`<ul class="rvlist">${done.slice(0,8).map(e=>`<li>${ic('check')}${esc(e.title)}</li>`).join('')}</ul>`:'<p class="small">Nothing ticked off yet.</p>'}</div>
+    <div class="rvcard card-s"><div class="cap">Missed · ${missed.length}</div>${missed.length?`<ul class="rvlist miss">${missed.slice(0,8).map(e=>`<li><button class="link" data-open="${e.id}">${esc(e.title)} · due ${esc(fmtDate(e.due))}</button></li>`).join('')}</ul>`:'<p class="small">Nothing missed. Good week.</p>'}</div>
+    </div></div>`;
+  if(!wrap.hidden&&wrap.classList.contains('open')&&$('#sheetBody .rvcard')){$('#sheetBody').innerHTML=html;anim($('#sheetBody .fl'),{x:[-NAV_DIR*24,0],opacity:[.001,1]},{duration:.35});NAV_DIR=0}else openSheet(html);
+}
+
+/* ---------- food: copy yesterday, favourites, units ---------- */
+const UNITS=[['g',1],['oz',28.35],['cup',240],['tbsp',15],['tsp',5],['piece',null]];
+function unitG(u,it){const x=UNITS.find(q=>q[0]===u);if(!x)return 1;if(x[1])return x[1];return it.servingG||it.pieceG||null}
+function isFav(it){return lib().some(x=>x.fav&&x.name.toLowerCase()===it.name.toLowerCase())}
+function toggleFav(it){const i=lib().findIndex(x=>x.name.toLowerCase()===it.name.toLowerCase());
+  if(i>=0&&lib()[i].fav){if(lib()[i].recipe||lib()[i].saved)lib()[i].fav=false;else lib().splice(i,1);save();return false}
+  if(i>=0){lib()[i].fav=true}else{const c={...it,id:uid(),fav:true};delete c.src;lib().push(c)}save();return true}
+function copyYesterday(){
+  const y=addDays(-1),m=$('#flHead input[name=flmeal]'),meal=m?m.value:FL.meal;
+  let items=of('food').filter(e=>e.date===y&&e.meal===meal&&e.src!=='mf');if(!items.length)items=of('food').filter(e=>e.date===y&&e.src!=='mf');
+  if(!items.length){toast('Nothing logged yesterday');return}
+  for(const e of items)FL.cart.push({name:e.title,grams:e.grams||'',per100:e.per100||null,servings:e.per100?null:1,k:num(e.kcal),p:num(e.protein),f:num(e.fat),c:num(e.carbs)});
+  if(m)FL.meal=m.value;flRefresh();tick();toast(`Added ${items.length} from yesterday${items[0].meal===meal?' · '+meal.toLowerCase():''}`);
+}
+
+/* ---------- connections UI ---------- */
+const GH='https://github.com/IshirJ/life/blob/main/';
+function connRow(panel,icon,title,sub,on){return`<button class="navrow" data-panel="${panel}">${tile(icon)}<span class="t">${title}<small>${sub}</small></span>${on?'<span class="dot-on" aria-label="On"></span>':''}${ic('chev','i chev')}</button>`}
+function openConn(){
+  const s=SV.status&&!SV.status.error?SV.status:null,c=s?s.connections||{}:{};
+  openSheet(`${sheetHead('<em>Connections</em>','settings')}
+    <div class="notice" style="margin-bottom:12px">Notifications, calendars, email, Fitbit, Apple Health and the widget all go through <b>your own free server</b> (a Cloudflare Worker). Set it up once with the <a href="${GH}worker/README.md" target="_blank" rel="noopener">step-by-step guide</a>.</div>
+    ${syncOn()?`<div class="trow" style="cursor:default"><span>Server connected<small>${esc(SYNC.url.replace(/^https?:\/\//,''))}${SV.status&&SV.status.error?` · <b style="color:var(--late)">${esc(SV.status.error)}</b>`:''}</small></span><button class="link" id="srvOff">Disconnect</button></div>`
+      :`<label class="fld" for="srvUrl"><span>Server address</span><input id="srvUrl" type="url" inputmode="url" placeholder="https://life-sync.yourname.workers.dev" autocomplete="off"></label>
+        <label class="fld" for="srvKey"><span>Key (only if this server is already paired)</span><input id="srvKey" autocomplete="off" placeholder="Leave empty the first time"></label>
+        <div class="sh-actions" style="margin-top:0"><button class="primary" id="srvGo" style="flex:1">${ic('link')}Connect</button></div>`}
+    <div class="set-grp">What it powers</div>
+    ${connRow('notif','reminder','Notifications',NS().on?'On · reminders, classes, morning digest':'Off',NS().on)}
+    ${connRow('cals','ext','Calendars',(SYNC.cals||[]).length?`${SYNC.cals.length} linked · ${(SYNC.cals||[]).map(c=>c.name).join(', ')}`:'Outlook and iPhone (iCloud) calendars',(SYNC.cals||[]).length>0)}
+    ${connRow('mail','mail','Email',SYNC.mailOn?`On${c.outlookMail?' · Outlook':''}${c.gmailUpdated?' · Gmail':''}`:'Outlook and Gmail unread',!!SYNC.mailOn)}
+    ${connRow('health','workout','Fitbit &amp; Apple Health',SYNC.healthOn?`On${c.googleHealth?' · Fitbit':''}${c.healthUpdated?' · Apple Health':''}`:'Steps, sleep, MacroFactor food and weight',!!SYNC.healthOn)}
+    ${connRow('widget','today','Home-screen widget',SYNC.widgetOn?'On · Scriptable':'Calories left, next class, tasks due',!!SYNC.widgetOn)}
+    ${syncOn()?`<div class="set-grp">This phone’s key</div><div class="trow" style="cursor:default"><span style="font-family:var(--mono);font-size:12px;word-break:break-all">${esc(SYNC.key)}</span><button class="link" data-copy="${esc(SYNC.key)}">Copy</button></div><p class="small">Treat the key like a password. Your Gmail script, Shortcut and widget use it.</p>`:''}`);
+  if(syncOn()&&!SV.status)refreshStatus().then(()=>{if($('#srvOff'))openConn()});
+}
+function needSrv(){return syncOn()?'':`<div class="notice">Connect your server first (Settings → Connections).</div>`}
+function copyRow(label,val){return`<div class="trow" style="cursor:default"><span>${label}<small style="font-family:var(--mono);word-break:break-all">${esc(val)}</small></span><button class="link" data-copy="${esc(val)}">Copy</button></div>`}
+function openNotif(){
+  const n=NS(),t=(k,l,s)=>trow(`data-nset="${k}"`,!!n[k],l,s);
+  const times=['06:00','07:00','07:30','08:00','08:30','09:00','10:00'].map(x=>[x,fmtT(x)]),ft=['18:00','19:00','20:00','21:00','22:00'].map(x=>[x,fmtT(x)]);
+  NAV_DIR=1;openSheet(`${sheetHead('<em>Notifications</em>','conn')}${needSrv()}
+    ${trow('id="nOn"',!!n.on,'Allow notifications','Your iPhone asks once. Life must be opened from the Home Screen icon.')}
+    <div class="set-grp">Send me</div>
+    ${t('reminders','Reminders','At the time you set on each reminder')}
+    ${t('classes','Classes and meetings','10 minutes before they start')}
+    ${t('events','Linked calendar events','10 minutes before (Outlook, iCloud)')}
+    ${t('digestOn','Morning digest','Tasks due today and anything late')}
+    <label class="fld" for="nDig"><span>Digest time</span>${selectHTML('set_n_digest',times,n.digest,'nDig')}</label>
+    ${t('food','Food nudge','Only on days you haven’t logged anything')}
+    <label class="fld" for="nFood"><span>Nudge time</span>${selectHTML('set_n_foodTime',ft,n.foodTime,'nFood')}</label>
+    ${t('review','Weekly review','Sundays at 7:00 PM')}
+    ${t('backup','Backup reminder','Sundays at 6:00 PM, only if you haven’t backed up that week')}
+    <div class="sh-actions"><button class="secondary" id="nTest" style="flex:1">Send a test</button></div>`);
+}
+function openCals(){
+  const cs=SYNC.cals||[],cols=['#4C9AFF','#36B37E','#FF8B00','#B286FD','#F26D8F','#1FB5AD'];
+  NAV_DIR=1;openSheet(`${sheetHead('<em>Calendars</em>','conn')}${needSrv()}
+    ${cs.map(c=>`<div class="trow" style="cursor:default"><i class="cdot" style="background:${esc(c.color)}"></i><span>${esc(c.name)}<small>${esc(c.url.replace(/^(webcal|https?):\/\//,'').slice(0,46))}…</small></span><button class="link" data-caldel="${esc(c.id)}">Remove</button></div>`).join('')}
+    ${CALC.err&&CALC.err.length?`<div class="notice" style="margin:10px 0">${CALC.err.map(e=>esc((cs.find(c=>c.id===e.cal)||{name:e.cal}).name+': '+e.message)).join('<br>')}</div>`:''}
+    <div class="set-grp">Add a calendar</div>
+    <label class="fld" for="calName"><span>Name</span><input id="calName" placeholder="e.g. Outlook"></label>
+    <label class="fld" for="calUrl"><span>Calendar link (.ics or webcal://)</span><input id="calUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://outlook.office365.com/owa/calendar/…/calendar.ics"></label>
+    <label class="fld" for="calCol"><span>Colour</span>${selectHTML('calcol',cols.map((c,i)=>[c,['Blue','Green','Orange','Purple','Pink','Teal'][i]]),cols[cs.length%cols.length],'calCol')}</label>
+    <div class="sh-actions" style="margin-top:0"><button class="primary" id="calAdd" style="flex:1">Add calendar</button></div>
+    <details style="margin-top:14px"><summary class="cap" style="cursor:pointer">Where do I get the link?</summary><div class="about" style="margin-top:10px">
+    <p><b>Outlook (work, school or Outlook.com):</b> on a computer, open outlook.com or outlook.office.com → Settings (gear) → Calendar → Shared calendars → <i>Publish a calendar</i> → choose your calendar and “Can view all details” → Publish → copy the <b>ICS</b> link. If your school blocks publishing, ask me to use the Outlook account connection instead.</p>
+    <p><b>iPhone calendar (iCloud):</b> Calendar app → Calendars → tap ⓘ next to a calendar → turn on <i>Public Calendar</i> → Share Link → Copy.</p>
+    <p><b>Gmail / Google Calendar:</b> calendar.google.com → Settings → your calendar → <i>Secret address in iCal format</i>.</p>
+    <p>Life refreshes linked calendars every 15 minutes. They are read-only here.</p></div></details>`);
+}
+function openMail(){
+  const s=SV.status&&SV.status.connections||{};
+  NAV_DIR=1;openSheet(`${sheetHead('<em>Email</em>','conn')}${needSrv()}
+    ${trow('id="mailOn"',!!SYNC.mailOn,'Show unread mail on Today','Up to 6 newest unread, tap ✓ to turn one into a task')}
+    <div class="set-grp">Outlook</div>
+    <p class="small">One-time setup: register a free app in Microsoft Entra (Azure) as described in the <a href="${GH}worker/README.md#outlook" target="_blank" rel="noopener">guide</a>, then paste its ID and secret here.</p>
+    <label class="fld" for="msId"><span>Application (client) ID</span><input id="msId" autocomplete="off" placeholder="${s.outlookMail?'saved':'xxxxxxxx-xxxx-…'}"></label>
+    <label class="fld" for="msSec"><span>Client secret value</span><input id="msSec" autocomplete="off" type="password"></label>
+    <div class="sh-actions" style="margin-top:0"><button class="secondary" id="msSave" style="flex:1">Save</button><button class="primary" id="msGo" style="flex:1">${s.outlookMail?'Reconnect':'Connect'} Outlook</button></div>
+    <div class="set-grp">Gmail</div>
+    <p class="small">Gmail sends its unread list to your server from a tiny Google Apps Script that runs as you, so no Google app review is needed. Open <a href="${GH}apps-script/Gmail.gs" target="_blank" rel="noopener">Gmail.gs</a>, paste it at script.google.com, fill in these two values, then run <b>setup</b> once.</p>
+    ${syncOn()?copyRow('WORKER_URL',SYNC.url.replace(/\/+$/,''))+copyRow('LIFE_KEY',SYNC.key):''}
+    <p class="small">Gmail last synced: ${ago(s.gmailUpdated)}.</p>`);
+}
+function openHealthConn(){
+  const s=SV.status&&SV.status.connections||{};
+  NAV_DIR=1;openSheet(`${sheetHead('Fitbit &amp; <em>Apple Health</em>','conn')}${needSrv()}
+    ${trow('id="hOn"',!!SYNC.healthOn,'Use health data','Steps and sleep on Today and in your weekly review')}
+    ${trow('id="whImp"',SYNC.whImport!==false,'Import weigh-ins','Fills days you didn’t weigh in by hand')}
+    ${trow('id="mfImp"',!!SYNC.mfImport,'MacroFactor calories as my food log','Adds one “day total” per day. Turn off if you log food in Life too.')}
+    <div class="set-grp">Fitbit (Google Health API)</div>
+    <p class="small">Fitbit’s old API was switched off on Oct 30, 2026, so Fitbit now connects through Google. Create a Google Cloud project as in the <a href="${GH}worker/README.md#fitbit" target="_blank" rel="noopener">guide</a> and paste its OAuth client here. While the Google project is in “testing”, Google makes you reconnect every 7 days.</p>
+    <label class="fld" for="gId"><span>OAuth client ID</span><input id="gId" autocomplete="off" placeholder="${s.googleHealth?'saved':'…apps.googleusercontent.com'}"></label>
+    <label class="fld" for="gSec"><span>Client secret</span><input id="gSec" autocomplete="off" type="password"></label>
+    <div class="sh-actions" style="margin-top:0"><button class="secondary" id="gSave" style="flex:1">Save</button><button class="primary" id="gGo" style="flex:1">${s.googleHealth?'Reconnect':'Connect'} Fitbit</button></div>
+    ${(HC.err||[]).some(e=>e.code==='reauth')?'<div class="notice">Fitbit needs reconnecting (Google’s 7-day test limit).</div>':''}
+    <div class="set-grp">Apple Health · MacroFactor</div>
+    <p class="small">MacroFactor writes your food and weight to Apple Health (MacroFactor → Settings → Apple Health → turn on writing). A Shortcut then sends Apple Health to your server every night. Build it with the steps in the <a href="${GH}worker/README.md#apple-health" target="_blank" rel="noopener">guide</a> using these values:</p>
+    ${syncOn()?copyRow('URL',SYNC.url.replace(/\/+$/,'')+'/ingest/health')+copyRow('Header X-Life-Key',SYNC.key):''}
+    <p class="small">Apple Health last received: ${ago(s.healthUpdated)} · Fitbit: ${s.googleHealth?'connected':'not connected'}.</p>`);
+}
+function openWidget(){
+  NAV_DIR=1;openSheet(`${sheetHead('Home-screen <em>widget</em>','conn')}${needSrv()}
+    ${trow('id="wOn"',!!SYNC.widgetOn,'Send a summary to the widget','Calories left, protein, next class, tasks due, steps. Updated when you use Life (at most every 10 min).')}
+    <div class="about"><p>Home-screen web apps can’t have widgets of their own, so this uses the free <b>Scriptable</b> app:</p>
+    <p>1. Install Scriptable from the App Store.<br>2. Open <a href="${GH}scriptable/LifeWidget.js" target="_blank" rel="noopener">LifeWidget.js</a>, copy everything, and paste it into a new Scriptable script named “Life”.<br>3. Replace WORKER_URL and LIFE_KEY at the top with the values below.<br>4. Long-press your Home Screen → + → Scriptable → pick a size → tap the widget → Script: Life.</p></div>
+    ${syncOn()?copyRow('WORKER_URL',SYNC.url.replace(/\/+$/,''))+copyRow('LIFE_KEY',SYNC.key):''}
+    <div class="sh-actions"><button class="secondary" id="wPush" style="flex:1">Update widget now</button></div>`);
+}
+async function connectServer(){
+  let url=($('#srvUrl').value||'').trim().replace(/\/+$/,'');const key=($('#srvKey').value||'').trim();
+  if(!/^https:\/\/[^/]+/.test(url)){toast('Enter the https:// address of your worker');return}
+  try{let k=key;
+    if(!k){const r=await fetch(url+'/pair',{method:'POST'});if(r.status===409){toast('This server is already paired. Paste its key.');return}if(!r.ok)throw new Error(r.status);k=(await r.json()).key}
+    SYNC.url=url;SYNC.key=k;saveSync();const st=await refreshStatus();if(st&&st.error){SYNC.key='';saveSync();toast('Key rejected: '+st.error);return}
+    toast('Server connected');openConn();cloudBackup(true);
+  }catch(e){toast('Couldn’t reach the server: '+e.message)}
+}
+async function putConfig(o){try{await api('/config',{method:'PUT',body:JSON.stringify(o)});return true}catch(e){toast('Server: '+e.message);return false}}
+function oauthGo(which){if(!syncOn()){toast('Connect your server first');return}location.href=`${SYNC.url.replace(/\/+$/,'')}/oauth/${which}/start?k=${encodeURIComponent(SYNC.key)}&return=${encodeURIComponent(APP_URL)}`}
+
+/* clicks for everything above (capture phase so the main handler doesn't also act) */
+document.addEventListener('click',async e=>{
+  const t=e.target.closest('[data-wkstart],[data-tpledit],[data-add-simple],[data-wkaddset],[data-wkdelset],[data-wkrm],[data-wkdone],[data-wkedit],[data-wkagain],[data-exprog],#wkAddEx,#wkSave,#wkAsTpl,#tplDel,[data-rv],[data-snap],#bkFile,#bkCloud,#bkCloudGet,#doImp2,[data-bk],[data-copy],[data-nset],#nOn,#nTest,[data-caldel],#calAdd,#mailOn,#msSave,#msGo,#hOn,#whImp,#mfImp,#gSave,#gGo,#wOn,#wPush,#srvGo,#srvOff,[data-mailtask],#flCopy,[data-fav],[data-unit],#reviewBtn');
+  if(!t)return;
+  const d=t.dataset;e.stopImmediatePropagation();if(t.tagName==='A')return;e.preventDefault();
+  if(d.wkstart!==undefined){NAV_DIR=1;startWorkout(d.wkstart||null);return}
+  if(d.tpledit){NAV_DIR=1;editTemplate(d.tpledit);return}
+  if(d.addSimple){openForm(d.addSimple);return}
+  if(d.wkaddset!==undefined){wkCommitInputs();const x=WK.ex[+d.wkaddset],l=x.sets[x.sets.length-1]||{};x.sets.push({r:l.r||'',w:l.w||'',done:false});wkRefresh();return}
+  if(d.wkdelset!==undefined){wkCommitInputs();WK.ex[+d.wkdelset].sets.pop();wkRefresh();return}
+  if(d.wkrm!==undefined){wkCommitInputs();WK.ex.splice(+d.wkrm,1);wkRefresh();return}
+  if(d.wkdone){const[i,j]=d.wkdone.split('.').map(Number),s=WK.ex[i].sets[j];s.done=!s.done;t.setAttribute('aria-pressed',String(s.done));t.closest('.wkset').classList.toggle('done',s.done);if(s.done){tick();anim(t,{scale:[.6,1]},{spring:true,k:600,d:14})}return}
+  if(d.wkedit){NAV_DIR=1;startWorkout(null,d.wkedit);return}
+  if(d.wkagain){const src=find(d.wkagain);WK={mode:'log',id:null,title:src.title,date:today(),minutes:'',notes:'',started:Date.now(),ex:src.ex.map(x=>({name:x.name,sets:x.sets.map(s=>({r:s.r,w:s.w,done:false}))}))};NAV_DIR=1;showWK();return}
+  if(d.exprog){openExProgress(d.exprog);return}
+  switch(t.id){
+    case'wkAddEx':wkCommitInputs();WK.ex.push({name:'',sets:[{r:'',w:'',done:false}],n:3});wkRefresh();setTimeout(()=>{const ins=$$('#wkBody .wkname');ins[ins.length-1]?.focus();const b=$('#wkBody');if(b)b.scrollTop=b.scrollHeight},30);return;
+    case'wkSave':saveWK(false);return;
+    case'wkAsTpl':saveWK(true);return;
+    case'tplDel':arm(t,'Tap again to delete',()=>{db.templates=tpls().filter(x=>x.id!==WK.id);save();NAV_DIR=-1;openWorkoutStart()});return;
+    case'reviewBtn':openReview(0);return;
+    case'bkFile':exportFile();return;
+    case'bkCloud':cloudBackup(true);return;
+    case'bkCloudGet':try{const txt=await api('/backup');restoreText(typeof txt==='string'?txt:JSON.stringify(txt),t)}catch(err){toast('No server backup yet')}return;
+    case'doImp2':restoreText($('#imp').value,t);return;
+    case'nOn':if(NS().on){SYNC.notif={...NS(),on:false};saveSync();t.setAttribute('aria-pressed','false');api('/schedule',{method:'PUT',body:JSON.stringify({items:[]})}).catch(()=>{});meta.schedHash='';saveMeta();toast('Notifications off')}else if(await enablePush()){t.setAttribute('aria-pressed','true');toast('Notifications on')}return;
+    case'nTest':try{await api('/push/test',{method:'POST'});toast('Sent. It should arrive in a few seconds.')}catch(err){toast('Test failed: '+err.message)}return;
+    case'calAdd':{const name=$('#calName').value.trim()||'Calendar',url=$('#calUrl').value.trim(),color=$('#sheetBody input[name=calcol]').value;
+      if(!/^(https?|webcal):\/\//.test(url)){toast('Paste the calendar’s .ics or webcal:// link');return}
+      const cals=[...(SYNC.cals||[]),{id:uid(),name,url,color}];if(await putConfig({calendars:cals,tz:Intl.DateTimeFormat().resolvedOptions().timeZone})){SYNC.cals=cals;saveSync();toast('Calendar linked');loadExt(true);openCals()}return}
+    case'mailOn':SYNC.mailOn=!SYNC.mailOn;saveSync();t.setAttribute('aria-pressed',String(SYNC.mailOn));DATA_VER++;if(SYNC.mailOn)loadMail(true);return;
+    case'msSave':{const id=$('#msId').value.trim(),sec=$('#msSec').value.trim();if(!id||!sec){toast('Paste both the ID and the secret');return}if(await putConfig({ms:{clientId:id,clientSecret:sec}}))toast('Saved. Now tap Connect.');return}
+    case'msGo':oauthGo('ms');return;
+    case'hOn':SYNC.healthOn=!SYNC.healthOn;saveSync();t.setAttribute('aria-pressed',String(SYNC.healthOn));DATA_VER++;if(SYNC.healthOn)loadHealth(true);return;
+    case'whImp':SYNC.whImport=SYNC.whImport===false;saveSync();t.setAttribute('aria-pressed',String(SYNC.whImport!==false));return;
+    case'mfImp':SYNC.mfImport=!SYNC.mfImport;saveSync();t.setAttribute('aria-pressed',String(SYNC.mfImport));if(SYNC.mfImport){importHealth();render(false)}else{const n=of('food').filter(x=>x.src==='mf').length;db.entries=db.entries.filter(x=>!(x.type==='food'&&x.src==='mf'));if(n)save();render(false)}return;
+    case'gSave':{const id=$('#gId').value.trim(),sec=$('#gSec').value.trim();if(!id||!sec){toast('Paste both the client ID and secret');return}if(await putConfig({google:{clientId:id,clientSecret:sec}}))toast('Saved. Now tap Connect.');return}
+    case'gGo':oauthGo('google');return;
+    case'wOn':SYNC.widgetOn=!SYNC.widgetOn;saveSync();t.setAttribute('aria-pressed',String(SYNC.widgetOn));if(SYNC.widgetOn)pushWidget(true);return;
+    case'wPush':await pushWidget(true);toast('Widget updated');return;
+    case'srvGo':connectServer();return;
+    case'srvOff':arm(t,'Tap again to disconnect',()=>{for(const k of Object.keys(SYNC))delete SYNC[k];saveSync();SV.status=null;openConn()});return;
+    case'flCopy':copyYesterday();return;
+  }
+  if(d.rv){NAV_DIR=+d.rv;openReview(RV+(+d.rv));return}
+  if(d.snap){arm(t,'Tap again to restore this day',async()=>{const s=await SNAP.get(d.snap);if(!s){toast('Snapshot missing');return}try{localStorage.setItem(KEY,s.raw)}catch(err){storageFail();return}location.reload()});return}
+  if(d.bk){if(d.bk==='save')exportFile();else{meta.snoozeBk=Date.now()+2*864e5;saveMeta();DATA_VER++;render(false)}return}
+  if(d.copy){copyText(d.copy);return}
+  if(d.nset){const n=NS();n[d.nset]=!n[d.nset];SYNC.notif=n;saveSync();t.setAttribute('aria-pressed',String(n[d.nset]));pushSchedule(true);return}
+  if(d.caldel){const cals=(SYNC.cals||[]).filter(c=>c.id!==d.caldel);if(await putConfig({calendars:cals})){SYNC.cals=cals;saveSync();CALC.ev=(CALC.ev||[]).filter(v=>v.cal!==d.caldel);DATA_VER++;render(false);openCals()}return}
+  if(d.mailtask){const m=(MAILC.items||[]).find(x=>x.id===d.mailtask);if(m){db.entries.push({id:uid(),type:'task',title:m.subject||'Email',notes:`From ${m.from||''}\n${m.link||''}`,due:today(),priority:'Normal',created:Date.now()});save();render(false);toast('Added to tasks')}return}
+  if(d.fav){const it=FITEMS[d.fav];if(!it)return;const on=toggleFav(it);t.classList.toggle('on',on);t.setAttribute('aria-pressed',String(on));anim(t,{scale:[.5,1]},{spring:true,k:600,d:12});toast(on?'Added to favourites':'Removed from favourites');return}
+  if(d.unit){const li=t.closest('li'),it=FITEMS[li.dataset.fkey],q=num(li.querySelector('[data-uq]').value)||1,gpu=unitG(d.unit,it);
+    li.querySelectorAll('[data-unit]').forEach(b=>b.setAttribute('aria-pressed',String(b===t)));li.dataset.unit=d.unit;
+    const note=li.querySelector('.unote');if(note)note.textContent=['cup','tbsp','tsp'].includes(d.unit)?'Volume uses water weight (1 cup ≈ 240 g). Oils, flour and rice differ, so weigh when it matters.':d.unit==='piece'&&!gpu?'This food has no piece size. Type the grams below.':'';
+    if(gpu){const inp=li.querySelector('[data-sg]');inp.value=+(q*gpu).toFixed(1);inp.dispatchEvent(new Event('input',{bubbles:true}))}return}
+},true);
+document.addEventListener('input',e=>{
+  const t=e.target;if(!t.matches)return;
+  if(t.matches('[data-wkf]')&&WK){const p=t.dataset.wkf.split('.');const x=WK.ex[+p[0]];if(p[1]==='name')x.name=t.value;else if(p[1]==='n')x.n=t.value;else x.sets[+p[1]][p[2]]=t.value;return}
+  if(t.matches('[data-uq]')){const li=t.closest('li'),it=FITEMS[li.dataset.fkey],gpu=unitG(li.dataset.unit||'g',it);if(gpu){const inp=li.querySelector('[data-sg]');inp.value=+(num(t.value)*gpu).toFixed(1);inp.dispatchEvent(new Event('input',{bubbles:true}))}}
+});
+/* deep links from notifications and OAuth returns */
+function handleHash(){
+  const h=location.hash;if(!h)return;history.replaceState(null,'',APP_URL);
+  if(h.startsWith('#connected=')){toast(`${h.includes('outlook')||h.includes('ms')?'Outlook':'Fitbit'} connected`);refreshStatus();setTimeout(()=>{lastTrigger=null;openSettings();setTimeout(openConn,60)},400);loadMail(true);loadHealth(true);return}
+  if(h.startsWith('#error=')){toast('Connection failed: '+decodeURIComponent(h.slice(7)).slice(0,80));return}
+  if(h==='#review'){setTimeout(()=>openReview(0),500);return}
+  if(h==='#backup'){setTimeout(()=>{openSettings();setTimeout(openBackup,60)},500);return}
+  if(h==='#log=food'){setTimeout(openFoodLog,500)}
+}
+function healthTiles(){
+  if(!syncOn()||!SYNC.healthOn)return'';
+  const h=hday(today())||{},y=hday(addDays(-1))||{},st=num(h.steps)||0,sl=num(h.sleepMin)||num(y.sleepMin)||0,hr=num(h.restingHr)||num(y.restingHr)||0;
+  if(!st&&!sl&&!hr)return`<p class="small" style="margin-top:8px">No health data yet${HC.at?` · checked ${ago(HC.at)}`:''}.</p>`;
+  return`<div class="tiles htiles">
+    <div class="tile card-s">${ring(st/10000,'workout')}<div><b class="num">${st?fmtN(st):'—'}</b><div class="cap">Steps</div></div></div>
+    <div class="tile card-s">${ring(sl/480,'today')}<div><b class="num">${sl?(sl/60).toFixed(1):'—'}<small>h</small></b><div class="cap">Sleep</div></div></div>
+    <div class="tile card-s">${ring(hr?.6:0,'health')}<div><b class="num">${hr||'—'}<small>bpm</small></b><div class="cap">Resting HR</div></div></div>
+  </div>`;
+}
+
 /* ===================== boot ===================== */
 load();
 const splash=document.getElementById('splash'),splashBg=document.getElementById('splashBg');
@@ -2039,6 +2703,8 @@ else{
   },1350);
 }
 loadFoods();
+dailySnap();handleHash();
+setTimeout(()=>{if(!$('#lock')&&syncOn()){refreshStatus();loadExt();loadMail();loadHealth();cloudBackup(false);pushSchedule(false)}},2500);
 </script>
 
 <script>
