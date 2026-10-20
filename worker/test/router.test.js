@@ -227,7 +227,7 @@ test('health GET merges Apple + Google (mocked), reauth on invalid_grant', async
         ? Response.json({ access_token: 'at', expires_in: 3600 })
         : Response.json({ error: 'invalid_grant' }, { status: 400 });
     }
-    if (url.includes('dailyRollUp')) {
+    if (url.includes('/steps/dataPoints:dailyRollUp')) {
       const body = JSON.parse(init.body);
       assert.equal(body.windowSizeDays, 1);
       return Response.json({ rollupDataPoints: [{ civilStartTime: { date: { year: y, month: m, day: d } }, steps: { countSum: '9876' } }] });
@@ -242,6 +242,15 @@ test('health GET merges Apple + Google (mocked), reauth on invalid_grant', async
       assert.match(decodeURIComponent(url), /daily_resting_heart_rate\.date >= "/);
       return Response.json({ dataPoints: [{ dailyRestingHeartRate: { date: { year: y, month: m, day: d }, beatsPerMinute: '58' } }] });
     }
+    if (url.includes('/total-calories/dataPoints:dailyRollUp')) {
+      return Response.json({ rollupDataPoints: [{ civilStartTime: { date: { year: y, month: m, day: d } }, totalCalories: { kcalSum: 1551.4 } }] });
+    }
+    if (url.includes('/heart-rate/dataPoints')) {
+      assert.match(decodeURIComponent(url), /heart_rate\.sample_time\.physical_time >= "/);
+      return Response.json({ dataPoints: [
+        { heartRate: { sampleTime: { physicalTime: new Date(Date.now() - 60000).toISOString() }, beatsPerMinute: '79' } },
+        { heartRate: { sampleTime: { physicalTime: new Date(Date.now() - 600000).toISOString() }, beatsPerMinute: '70' } } ] });
+    }
     return new Response('nope', { status: 404 });
   });
   try {
@@ -252,6 +261,8 @@ test('health GET merges Apple + Google (mocked), reauth on invalid_grant', async
     assert.equal(t.kcal, 1800);        // apple nutrition kept
     assert.equal(t.sleepMin, 420);
     assert.equal(t.restingHr, 58);
+    assert.equal(t.burnKcal, 1551);
+    assert.equal(h.latestHr.bpm, 79);
     assert.equal(t.apple.steps, 100);
     assert.ok(h.sources.google);
 

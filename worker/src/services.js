@@ -368,6 +368,43 @@ export async function googleRhr(env, config, startYmd) {
   return parseGoogleRhr(pages);
 }
 
+// Calories burned per day (total, incl. resting) — dailyRollUp; ranges are limited to 14 days.
+export async function googleCalories(env, config, startYmd, endYmdExcl) {
+  const data = await googleFetch(env, config, `${GH}/total-calories/dataPoints:dailyRollUp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ range: { start: civil(startYmd), end: civil(endYmdExcl) }, windowSizeDays: 1 }),
+  });
+  const out = {};
+  for (const p of data.rollupDataPoints || []) {
+    const dt = p.civilStartTime?.date;
+    const v = looseNumber(findKey(p, /kcal|calories/i));
+    if (dt && v != null && v > 0) out[fmtDate({ y: dt.year, m: dt.month, d: dt.day })] = Math.round(v);
+  }
+  return out;
+}
+
+// The most recent heart-rate sample (what the Fitbit app shows as "Heart rate"), from the last 30 minutes.
+export async function googleLatestHr(env, config, now = Date.now()) {
+  const since = new Date(now - 30 * 60000).toISOString().replace(/\.\d{3}Z$/, 'Z');
+  const filter = `heart_rate.sample_time.physical_time >= "${since}"`;
+  let best = null, token = '';
+  for (let i = 0; i < 3; i++) {
+    let qs = `filter=${encodeURIComponent(filter)}&pageSize=1000`;
+    if (token) qs += `&pageToken=${encodeURIComponent(token)}`;
+    const data = await googleFetch(env, config, `${GH}/heart-rate/dataPoints?${qs}`);
+    for (const p of data.dataPoints || []) {
+      const bpm = looseNumber(findKey(p, /^beatsPerMinute$/i));
+      const t = Date.parse(findKey(p, /^physicalTime$/i) || '');
+      if (bpm != null && !Number.isNaN(t) && (!best || t > best.t)) best = { bpm: Math.round(bpm), t };
+    }
+    token = data.nextPageToken;
+    if (!token) break;
+  }
+  return best;
+}
+
+const OPTIONAL_PARTS = new Set(['restingHr', 'calories', 'heartRate']);
 export async function getHealth(env, config, days = 30, now = Date.now(), fresh = false) {
   const tz = tzOf(config);
   days = Math.max(1, Math.min(90, Number(days) || 30));
@@ -392,8 +429,12 @@ export async function getHealth(env, config, days = 30, now = Date.now(), fresh 
         catch (e) { errors.push({ ...errorEntry('google', e), part: 'sleep' }); }
         try { google.rhr = await googleRhr(env, config, startYmd); any = true; }
         catch (e) { errors.push({ ...errorEntry('google', e), part: 'restingHr' }); }
+        try { google.kcal = await googleCalories(env, config, fromDayNum(todayDn - Math.min(days, 14) + 1), fromDayNum(todayDn + 1)); any = true; }
+        catch (e) { errors.push({ ...errorEntry('google', e), part: 'calories' }); }
+        try { google.hr = await googleLatestHr(env, config, now); }
+        catch (e) { errors.push({ ...errorEntry('google', e), part: 'heartRate' }); }
       }
-      if (any && !errors.some((x) => x.part !== 'restingHr')) await cachePut(ck, google, 5 * 60);
+      if (any && !errors.some((x) => !OPTIONAL_PARTS.has(x.part))) await cachePut(ck, google, 3 * 60);
       if (!any) google = null;
     }
   }
@@ -406,13 +447,14 @@ export async function getHealth(env, config, days = 30, now = Date.now(), fresh 
     map[date] = { date, ...vals, apple: vals };
   }
   if (google) {
-    const dates = new Set([...Object.keys(google.steps || {}), ...Object.keys(google.sleep || {}), ...Object.keys(google.rhr || {})]);
+    const dates = new Set([...Object.keys(google.steps || {}), ...Object.keys(google.sleep || {}), ...Object.keys(google.rhr || {}), ...Object.keys(google.kcal || {})]);
     for (const date of dates) {
       if (date < startKey) continue;
       const g = {};
       if (google.steps?.[date] != null) g.steps = google.steps[date];
       if (google.sleep?.[date] != null) g.sleepMin = google.sleep[date];
       if (google.rhr?.[date] != null) g.restingHr = google.rhr[date];
+      if (google.kcal?.[date] != null) g.burnKcal = google.kcal[date];
       const cur = map[date] || { date };
       for (const [k, v] of Object.entries(g)) if (preferGoogle || cur[k] == null) cur[k] = v;
       cur.google = g;
@@ -422,6 +464,7 @@ export async function getHealth(env, config, days = 30, now = Date.now(), fresh 
   return {
     days: Object.values(map).sort((a, b) => (a.date < b.date ? 1 : -1)),
     sources: { apple: apple?.updated || null, google: google ? google.ts : null },
+    latestHr: google?.hr || null,
     errors,
   };
 }
