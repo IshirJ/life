@@ -1561,7 +1561,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='45';
+const APP_VER='47';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -2238,19 +2238,22 @@ function openBackup(){
     <div class="pstats"><div><span class="cap">Files</span><b style="font-size:15px">${ago(meta.lastFile)}</b></div><div><span class="cap">Server</span><b style="font-size:15px">${syncOn()?ago(meta.lastCloud):'off'}</b></div><div><span class="cap">Snapshots</span><b style="font-size:15px" id="snapN">…</b></div></div>
     ${bkDue?'<div class="notice" style="margin-bottom:12px">Save a backup to Files at least once a week. Deleting Life from the Home Screen deletes everything in it.</div>':''}
     <div class="sh-actions" style="margin-top:0"><button class="primary" id="bkFile" style="flex:1">${ic('copy')}Save backup to Files</button></div>
-    <div class="sh-actions" style="margin-top:8px"><label class="secondary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">Restore from a file<input type="file" id="bkPick" accept="application/json,.json,text/plain" hidden></label></div>
-    ${syncOn()?`<div class="cap" style="margin:18px 0 6px">Your server · automatic daily copy</div><div class="sh-actions" style="margin-top:0"><button class="secondary" id="bkCloud" style="flex:1">Back up now</button><button class="secondary" id="bkCloudGet" style="flex:1">Restore latest</button></div>`:`<p class="small">Connect your server in Settings → Connections and Life also backs up there automatically every day.</p>`}
+    <div class="sh-actions" style="margin-top:8px"><label class="secondary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">Restore from a file<input type="file" id="bkPick" accept="application/json,.json,text/plain,*/*" hidden></label></div><div id="bkPicked"></div>
+    ${syncOn()?`<div class="cap" style="margin:18px 0 6px">Your server · automatic daily copy</div><div class="sh-actions" style="margin-top:0"><button class="secondary" id="bkCloud" style="flex:1">Back up now</button></div><div id="srvList"><p class="hint">Loading server copies…</p></div>`:`<p class="small">Connect your server in Settings → Connections and Life also backs up there automatically every day.</p>`}
     <div class="cap" style="margin:18px 0 6px">Daily snapshots on this phone</div><div id="snapList"><p class="hint">Loading…</p></div>
     <details style="margin-top:16px"><summary class="cap" style="cursor:pointer">Copy as text</summary>
     <label class="fld" for="exp" style="margin-top:10px"><span>Backup text · ${db.entries.length} entries</span><textarea id="exp" readonly rows="3">${esc(backupText())}</textarea></label>
     <div class="sh-actions"><button class="secondary" id="copyExp">Copy backup</button></div>
     <label class="fld" for="imp" style="margin-top:12px"><span>Paste a backup to restore</span><textarea id="imp" rows="3"></textarea></label>
     <div class="sh-actions"><button class="danger" id="doImp2" style="flex:1">Replace my data with this backup</button></div></details>`);
+  if(syncOn())api('/backup/list').then(l=>{const el=$('#srvList');if(!el)return;
+    el.innerHTML=(l&&l.length)?l.map(b=>`<div class="trow" style="cursor:default"><span>Server copy · ${esc(ago(b.ts))}<small>${esc(new Date(b.ts).toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}))} · ${Math.max(1,Math.round(b.size/1024))} KB</small></span><button class="link" data-srvslot="${b.slot}">Restore</button></div>`).join(''):'<p class="hint">No server copies yet.</p>'}).catch(e=>{const el=$('#srvList');if(el)el.innerHTML='<p class="hint">Couldn’t reach your server.</p>'});
   SNAP.list().then(l=>{const el=$('#snapList');if(!el)return;$('#snapN').textContent=l.length;
     el.innerHTML=l.length?l.map(s=>`<div class="trow" style="cursor:default"><span>${esc(fmtLong(s.day))}<small>${s.n} entries${s.enc?' · encrypted':''} · ${ago(s.ts)}</small></span><button class="link" data-snap="${s.day}">Restore</button></div>`).join(''):'<p class="hint">The first snapshot is taken today.</p>'}).catch(()=>{const el=$('#snapList');if(el)el.innerHTML='<p class="hint">Snapshots aren’t available in this browser.</p>';const n=$('#snapN');if(n)n.textContent='—'});
 }
 async function cloudBackup(force){
   if(!syncOn()||(!force&&meta.cloudDay===today()))return;
+  if(!force&&!db.entries.some(e=>!e.sample))return; /* a fresh/empty phone must never push over your real server copies */
   try{flushNow();await api('/backup',{method:'PUT',body:backupText(),raw:true});meta.cloudDay=today();meta.lastCloud=Date.now();saveMeta();if(force)toast('Backed up to your server')}catch(e){if(force)toast('Server backup failed: '+e.message)}
 }
 
@@ -2262,7 +2265,10 @@ async function api(path,opt={}){
   const ct=r.headers.get('content-type')||'';return ct.includes('json')?r.json():r.text();
 }
 const SV={status:null};
-async function refreshStatus(){if(!syncOn())return null;try{SV.status=await api('/status')}catch(e){SV.status={error:e.message}}return SV.status}
+async function refreshStatus(){if(!syncOn())return null;try{SV.status=await api('/status')}catch(e){SV.status={error:e.message}}
+  const sc=SV.status&&SV.status.calendars;if(Array.isArray(sc)&&sc.length){const have=new Set((SYNC.cals||[]).map(c=>c.id)),add=sc.filter(c=>!have.has(c.id));
+    if(add.length){SYNC.cals=[...(SYNC.cals||[]),...add];saveSync();try{loadExt(true)}catch(e){}}}
+  return SV.status}
 const b64uBytes=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return Uint8Array.from(atob(s),c=>c.charCodeAt(0))};
 
 /* notifications: Life works out the exact times, your server sends them */
@@ -2723,7 +2729,7 @@ function oauthGo(which){if(!syncOn()){toast('Connect your server first');return}
 
 /* clicks for everything above (capture phase so the main handler doesn't also act) */
 document.addEventListener('click',async e=>{
-  const t=e.target.closest('[data-wkstart],[data-tpledit],[data-add-simple],[data-wkaddset],[data-wkdelset],[data-wkrm],[data-wkdone],[data-wkedit],[data-wkagain],[data-exprog],#wkAddEx,#wkSave,#wkAsTpl,#tplDel,[data-rv],[data-snap],#bkFile,#bkCloud,#bkCloudGet,#doImp2,[data-bk],[data-copy],[data-nset],#nOn,#nTest,[data-caldel],#calAdd,#mailOn,#msSave,#msGo,#hOn,#whImp,#mfImp,#gSave,#gGo,#wOn,#wPush,#srvGo,#srvOff,[data-mailtask],#flCopy,[data-fav],[data-unit],#reviewBtn');
+  const t=e.target.closest('[data-wkstart],[data-tpledit],[data-add-simple],[data-wkaddset],[data-wkdelset],[data-wkrm],[data-wkdone],[data-wkedit],[data-wkagain],[data-exprog],#wkAddEx,#wkSave,#wkAsTpl,#tplDel,[data-rv],[data-snap],#bkFile,#bkCloud,#bkCloudGet,#bkDo,#doImp2,[data-bk],[data-copy],[data-nset],#nOn,#nTest,[data-caldel],#calAdd,#mailOn,#msSave,#msGo,#hOn,#whImp,#mfImp,#gSave,#gGo,#wOn,#wPush,#srvGo,#srvOff,[data-mailtask],#flCopy,[data-fav],[data-unit],#reviewBtn');
   if(!t)return;
   const d=t.dataset;e.stopImmediatePropagation();if(t.tagName==='A')return;e.preventDefault();
   if(d.wkstart!==undefined){NAV_DIR=1;startWorkout(d.wkstart||null);return}
@@ -2744,6 +2750,7 @@ document.addEventListener('click',async e=>{
     case'reviewBtn':openReview(0);return;
     case'bkFile':exportFile();return;
     case'bkCloud':cloudBackup(true);return;
+    case'bkDo':restoreText(PICKED||'',t);return;
     case'bkCloudGet':try{const txt=await api('/backup');restoreText(typeof txt==='string'?txt:JSON.stringify(txt),t)}catch(err){toast('No server backup yet')}return;
     case'doImp2':restoreText($('#imp').value,t);return;
     case'nOn':if(NS().on){SYNC.notif={...NS(),on:false};saveSync();t.setAttribute('aria-pressed','false');api('/schedule',{method:'PUT',body:JSON.stringify({items:[]})}).catch(()=>{});meta.schedHash='';saveMeta();toast('Notifications off')}else if(await enablePush()){t.setAttribute('aria-pressed','true');toast('Notifications on')}return;
@@ -3311,6 +3318,16 @@ function runSplashNow(){
   SC.addEventListener('scroll',onScroll,{passive:true});
   document.addEventListener('scroll',e=>{if(e.target&&e.target.classList&&(e.target.classList.contains('sheet')||e.target.classList.contains('fl-body')))onScroll(e)},{passive:true,capture:true});
 })();
+
+/* restore from a picked file (and from a specific server copy) */
+let PICKED=null;
+document.addEventListener('change',e=>{if(e.target.id!=='bkPick')return;const f=e.target.files&&e.target.files[0];if(!f)return;
+  f.text().then(txt=>{let n='?',ok=true;try{const d=JSON.parse(txt);if(d&&d.enc)n='encrypted';else if(d&&Array.isArray(d.entries))n=d.entries.length+' entries';else ok=false}catch(x){ok=false}
+    const el=$('#bkPicked');if(!el)return;if(!ok){el.innerHTML='<p class="hint">That file isn’t a Life backup.</p>';return}
+    PICKED=txt;el.innerHTML=`<div class="sh-actions" style="margin-top:8px"><button class="danger" id="bkDo" style="flex:1">Restore ${esc(f.name)} (${esc(n)})</button></div>`}).catch(()=>toast('Couldn’t read that file'));
+  e.target.value=''});
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-srvslot]');if(!b)return;e.stopPropagation();
+  try{const txt=await api('/backup?slot='+encodeURIComponent(b.dataset.srvslot));restoreText(typeof txt==='string'?txt:JSON.stringify(txt),b)}catch(err){toast('Couldn’t load that copy: '+err.message)}},true);
 
 /* ===================== boot ===================== */
 load();
