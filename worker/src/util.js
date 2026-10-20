@@ -89,6 +89,11 @@ export function corsHeaders(origin) {
 export function withCors(resp, origin) {
   const r = new Response(resp.body, resp);
   for (const [k, v] of Object.entries(corsHeaders(origin))) r.headers.set(k, v);
+  // basic hardening for every response
+  r.headers.set('X-Content-Type-Options', 'nosniff');
+  r.headers.set('Referrer-Policy', 'no-referrer');
+  r.headers.set('X-Frame-Options', 'DENY');
+  if (!r.headers.has('Cache-Control')) r.headers.set('Cache-Control', 'no-store');
   return r;
 }
 

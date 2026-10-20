@@ -366,3 +366,19 @@ test('sync: notebooks index, items, newer-wins and deletes', async () => {
   r = await call(env, req('/sync/notes/item?kind=page&id=p1', { key }));
   assert.equal(r.status, 404);
 });
+
+test('inbox: shortcuts post text, app reads and clears it', async () => {
+  const { env, key } = await paired();
+  let r = await call(env, req('/inbox', { key, method: 'POST', body: { text: '  40g   protein ' } }));
+  assert.equal(r.status, 200);
+  assert.equal((await r.json()).saved, '40g protein');
+  r = await call(env, req('/inbox', { key, method: 'POST', body: 'task email Bansal', headers: { 'Content-Type': 'text/plain' } }));
+  assert.equal(r.status, 200);
+  assert.equal((await call(env, req('/inbox', { method: 'POST', body: { text: 'x' } }))).status, 401);
+  assert.equal((await call(env, req('/inbox', { key, method: 'POST', body: { text: '' } }))).status, 400);
+  r = await call(env, req('/inbox', { key }));
+  const list = await r.json();
+  assert.deepEqual(list.map((x) => x.text), ['40g protein', 'task email Bansal']);
+  r = await call(env, req('/inbox', { key, method: 'DELETE', body: { ids: [list[0].id] } }));
+  assert.equal((await r.json()).left, 1);
+});

@@ -175,6 +175,30 @@ async function getNotesItem(env, url) {
   return new Response(v, { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
 }
 
+// ---------- quick-capture inbox ----------
+// Siri / Action button / share-sheet Shortcuts POST short text here; the app picks it up next time it opens.
+const INBOX_MAX = 300;
+async function postInbox(request, env) {
+  const ct = request.headers.get('Content-Type') || '';
+  let text = '';
+  if (ct.includes('json')) { const b = await readJson(request, 20000); text = b.text ?? b.input ?? ''; }
+  else text = (await request.text()).slice(0, 20000);
+  text = String(text).replace(/\s+/g, ' ').trim().slice(0, 2000);
+  if (!text) throw new HttpError(400, 'text required');
+  const list = (await kvGet(env, 'inbox')) || [];
+  const item = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), text, at: Date.now() };
+  list.push(item);
+  await kvPut(env, 'inbox', list.slice(-INBOX_MAX));
+  return json({ ok: true, saved: text });
+}
+async function deleteInbox(request, env) {
+  const b = await readJson(request, 50000);
+  const ids = new Set(Array.isArray(b.ids) ? b.ids.map(String) : []);
+  const list = ((await kvGet(env, 'inbox')) || []).filter((x) => !ids.has(x.id));
+  await kvPut(env, 'inbox', list);
+  return json({ ok: true, left: list.length });
+}
+
 // ---------- backup ----------
 async function putBackup(request, env) {
   const len = Number(request.headers.get('Content-Length') || 0);
@@ -348,6 +372,12 @@ async function route(request, env, url) {
       if (!w) return err(404, 'no widget data yet');
       return json({ ...w.summary, _updated: w.ts });
     }
+    case 'POST /inbox':
+      return postInbox(request, env);
+    case 'GET /inbox':
+      return json((await kvGet(env, 'inbox')) || []);
+    case 'DELETE /inbox':
+      return deleteInbox(request, env);
     case 'GET /sync':
       return getSync(env);
     case 'PUT /sync':

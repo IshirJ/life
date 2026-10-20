@@ -10,6 +10,7 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 const say=m=>{try{window.toast?toast(m):0}catch(e){}};
 const agoS=t=>{try{return window.ago?ago(t):''}catch(e){return''}};
+const safeImg=s=>/^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(String(s||''))?s:'';
 const fname=s=>(String(s||'Notebook').replace(/[^\w .-]+/g,'').trim()||'Notebook');
 
 /* ---------- storage ---------- */
@@ -228,13 +229,13 @@ function paintPage(el){
   const dpr=Math.min(2.5,devicePixelRatio||1),k=Math.min(dpr,4096/w,4096/h),kp=Math.min(k,1.5);
   const pc=el.querySelector('.nb-paper');pc.width=Math.round(w*kp);pc.height=Math.round(h*kp);pc.style.width=w+'px';pc.style.height=h+'px';
   paintPaper(pc.getContext('2d'),p.bg?'blank':pageTpl(p),S.book.paper.bg,pc.width,pc.height,pc.width/PW,new Date(p.u||Date.now()).toLocaleDateString());
-  const bgi=el.querySelector('.nb-bg');if(p.bg){if(bgi.getAttribute('src')!==p.bg)bgi.src=p.bg;bgi.hidden=false}else bgi.hidden=true;
+  const bgi=el.querySelector('.nb-bg');if(p.bg&&safeImg(p.bg)){if(bgi.getAttribute('src')!==p.bg)bgi.src=p.bg;bgi.hidden=false}else bgi.hidden=true;
   const c=el.querySelector('.nb-ink');c.width=Math.round(w*k);c.height=Math.round(h*k);c.style.width=w+'px';c.style.height=h+'px';
   const ctx=c.getContext('2d');ctx.setTransform(k*s,0,0,k*s,0,0);ctx.clearRect(0,0,PW,HH(p));drawAll(ctx,p);
   el._dirty=false;el._w=w;
-  el.querySelector('.nb-imgs').innerHTML=(p.imgs||[]).map(m=>`<img data-iid="${m.id}" src="${m.src}" style="left:${m.x*s}px;top:${m.y*s}px;width:${m.w*s}px;height:${m.h*s}px" alt="" draggable="false">`).join('');
+  el.querySelector('.nb-imgs').innerHTML=(p.imgs||[]).map(m=>`<img data-iid="${esc(m.id)}" src="${safeImg(m.src)}" style="left:${+m.x*s}px;top:${+m.y*s}px;width:${+m.w*s}px;height:${+m.h*s}px" alt="" draggable="false">`).join('');
   const ink=BGS[S.book.paper.bg][1];
-  el.querySelector('.nb-txts').innerHTML=(p.texts||[]).map(t=>`<div class="nb-txt" data-tid="${t.id}" contenteditable="${S.tool==='text'?'true':'false'}" spellcheck="true" style="left:${t.x*s}px;top:${t.y*s}px;width:${t.w*s}px;font-size:${t.size*s}px;font-weight:${t.bold?700:500};color:${esc(t.c||ink)}">${esc(t.txt)}</div>`).join('');
+  el.querySelector('.nb-txts').innerHTML=(p.texts||[]).map(t=>`<div class="nb-txt" data-tid="${esc(t.id)}" contenteditable="${S.tool==='text'?'true':'false'}" spellcheck="true" style="left:${+t.x*s}px;top:${+t.y*s}px;width:${+t.w*s}px;font-size:${+t.size*s}px;font-weight:${t.bold?700:500};color:${esc(t.c||ink)}">${esc(t.txt)}</div>`).join('');
   if(S.sel&&S.sel.pid===p.id)drawSel(el);
 }
 function repaint(pid){const el=$(`.nb-page[data-pid="${pid}"]`,V);if(el)paintPage(el)}
@@ -343,7 +344,7 @@ function drawSel(pageEl){$$('.nb-selbox,.nb-selbar',V).forEach(n=>n.remove());if
   if(S.sel.imgs.length===1&&!S.sel.strokes.length&&!S.sel.texts.length)box.innerHTML='<i class="nb-rz" data-nbrz="1"></i>';
   pageEl.appendChild(box);
   const bar=document.createElement('div');bar.className='nb-selbar';
-  bar.innerHTML=`<button data-nb="seldel">${svg('trash')}<span>Delete</span></button><button data-nb="seldup">${svg('copy')}<span>Duplicate</span></button>${S.sel.strokes.length?`<button data-nb="selcol"><i style="background:${colorOf('pen')}"></i><span>Recolour</span></button>`:''}`;
+  bar.innerHTML=`<button data-nb="seldel">${svg('trash')}<span>Delete</span></button><button data-nb="seldup">${svg('copy')}<span>Duplicate</span></button><button data-nb="selcard">${svg('book')}<span>Flashcard</span></button>${S.sel.strokes.length?`<button data-nb="selcol"><i style="background:${colorOf('pen')}"></i><span>Recolour</span></button>`:''}`;
   pageEl.appendChild(bar);const bw=bar.offsetWidth,above=b[1]*s-bar.offsetHeight-10;
   bar.style.left=Math.max(6,Math.min(pageEl.clientWidth-bw-6,(b[0]+b[2])/2*s-bw/2))+'px';bar.style.top=(above>6?above:b[3]*s+10)+'px'}
 function clearSel(){S.sel=null;$$('.nb-selbox,.nb-selbar',V).forEach(n=>n.remove())}
@@ -511,6 +512,10 @@ document.addEventListener('click',async e=>{
     case'exppng':closeModal(m);sharePage();return;
     case'print':closeModal(m);printBook();return;
     case'seldel':case'seldup':case'selcol':selAction(d.nb);return;
+    case'selcard':{const p=S.pages.find(x=>x.id===S.sel.pid),b=S.sel.box,full=await renderPageCanvas(p,S.book,1400),k=1400/PW;
+      const x0=Math.max(0,b[0]*k),y0=Math.max(0,b[1]*k),w=Math.min(full.width-x0,(b[2]-b[0])*k),h=Math.min(full.height-y0,(b[3]-b[1])*k),sc=Math.min(1,700/w),c=document.createElement('canvas');c.width=Math.round(w*sc);c.height=Math.round(h*sc);
+      c.getContext('2d').drawImage(full,x0,y0,w,h,0,0,c.width,c.height);const text=S.sel.texts.map(id=>(p.texts.find(t=>t.id===id)||{}).txt||'').join(' ').trim();
+      await flushAll();window.dispatchEvent(new CustomEvent('life-make-card',{detail:{img:c.toDataURL('image/jpeg',.78),deck:S.book.title,text}}));return}
   }
 });
 document.addEventListener('input',e=>{

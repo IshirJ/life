@@ -22,7 +22,9 @@ const C = {
 function or(a, b) { return a ? a : b; }
 
 async function load() {
-  const req = new Request(WORKER_URL.replace(/\/+$/, '') + '/widget?k=' + encodeURIComponent(LIFE_KEY));
+  // the key goes in a header, not the address, so it never ends up in logs
+  const req = new Request(WORKER_URL.replace(/\/+$/, '') + '/widget');
+  req.headers = { 'X-Life-Key': LIFE_KEY };
   req.timeoutInterval = 10;
   const data = await req.loadJSON();
   if (req.response && req.response.statusCode >= 400) throw new Error(or(data && data.error, 'HTTP ' + req.response.statusCode));
