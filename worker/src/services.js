@@ -314,7 +314,7 @@ export async function googleSleep(env, config, startYmd) {
   return res;
 }
 
-export async function getHealth(env, config, days = 30, now = Date.now()) {
+export async function getHealth(env, config, days = 30, now = Date.now(), fresh = false) {
   const tz = tzOf(config);
   days = Math.max(1, Math.min(90, Number(days) || 30));
   const today = parseYmd(todayIn(tz, now));
@@ -327,7 +327,7 @@ export async function getHealth(env, config, days = 30, now = Date.now()) {
   let google = null;
   if (gTok) {
     const ck = `gh:${days}:${fmtDate(today)}`;
-    google = await cacheGet(ck);
+    google = fresh ? null : await cacheGet(ck);
     if (!google) {
       google = { steps: {}, sleep: {}, ts: now };
       let any = false;
@@ -337,7 +337,7 @@ export async function getHealth(env, config, days = 30, now = Date.now()) {
         try { google.sleep = await googleSleep(env, config, startYmd); any = true; }
         catch (e) { errors.push({ ...errorEntry('google', e), part: 'sleep' }); }
       }
-      if (any && !errors.length) await cachePut(ck, google, 30 * 60);
+      if (any && !errors.length) await cachePut(ck, google, 5 * 60);
       if (!any) google = null;
     }
   }

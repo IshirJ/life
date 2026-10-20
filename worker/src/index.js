@@ -288,7 +288,7 @@ async function route(request, env, url) {
     case 'POST /ingest/health':
       return json(await ingestHealth(env, await readJson(request), await config()));
     case 'GET /health':
-      return json(await getHealth(env, await config(), url.searchParams.get('days') || 30));
+      return json(await getHealth(env, await config(), url.searchParams.get('days') || 30, Date.now(), url.searchParams.get('fresh') === '1'));
     case 'PUT /widget': {
       const body = await readJson(request);
       if (!body.summary || typeof body.summary !== 'object') return err(400, 'summary object required');
