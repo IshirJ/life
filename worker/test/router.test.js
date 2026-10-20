@@ -325,3 +325,44 @@ test('calendar route fetches ICS (mocked) and reports per-calendar errors', asyn
     assert.equal((await call(env, req('/calendar?from=bad&to=2026-10-20', { key }))).status, 400);
   } finally { f.restore(); cacheClear(); }
 });
+
+test('sync: versioned document with conflict detection', async () => {
+  const { env, key } = await paired();
+  let r = await call(env, req('/sync', { key }));
+  assert.deepEqual(await r.json(), { ver: 0, ts: 0, doc: null });
+  r = await call(env, req('/sync', { key, method: 'PUT', body: { base: 0, doc: { entries: [{ id: 'a', u: 1 }] } } }));
+  assert.equal(r.status, 200);
+  assert.equal((await r.json()).ver, 1);
+  r = await call(env, req('/sync', { key, method: 'PUT', body: { base: 0, doc: { entries: [] } } }));
+  assert.equal(r.status, 409);
+  assert.equal((await r.json()).ver, 1);
+  r = await call(env, req('/sync', { key }));
+  const d = await r.json();
+  assert.equal(d.ver, 1);
+  assert.equal(d.doc.entries[0].id, 'a');
+  r = await call(env, req('/sync', { key, method: 'PUT', body: { base: 1, doc: { nope: 1 } } }));
+  assert.equal(r.status, 400);
+});
+
+test('sync: notebooks index, items, newer-wins and deletes', async () => {
+  const { env, key } = await paired();
+  let r = await call(env, req('/sync/notes', { key, method: 'PUT', body: { items: [
+    { kind: 'book', id: 'b1', u: 10, data: { id: 'b1', title: 'Math' } },
+    { kind: 'page', id: 'p1', u: 10, data: { id: 'p1', strokes: [] } },
+  ] } }));
+  assert.equal(r.status, 200);
+  let idx = (await r.json()).index;
+  assert.equal(idx.books.b1.u, 10);
+  r = await call(env, req('/sync/notes/item?kind=book&id=b1', { key }));
+  assert.equal((await r.json()).title, 'Math');
+  // older write is ignored
+  await call(env, req('/sync/notes', { key, method: 'PUT', body: { items: [{ kind: 'book', id: 'b1', u: 5, data: { id: 'b1', title: 'Old' } }] } }));
+  r = await call(env, req('/sync/notes/item?kind=book&id=b1', { key }));
+  assert.equal((await r.json()).title, 'Math');
+  // delete leaves a tombstone
+  r = await call(env, req('/sync/notes', { key, method: 'PUT', body: { items: [{ kind: 'page', id: 'p1', u: 20, deleted: true }] } }));
+  idx = (await r.json()).index;
+  assert.equal(idx.pages.p1.d, 1);
+  r = await call(env, req('/sync/notes/item?kind=page&id=p1', { key }));
+  assert.equal(r.status, 404);
+});

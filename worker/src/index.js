@@ -129,6 +129,52 @@ export async function runCron(env, now = Date.now()) {
   return { sent, wrote };
 }
 
+// ---------- device sync ----------
+// The whole Life database is one document with a version number. A device sends the version it built on;
+// if someone else saved in between it gets 409 and merges first (merging happens on the device).
+const MAX_SYNC = 20 * 1024 * 1024;
+async function getSync(env) {
+  const meta = (await kvGet(env, 'sync:meta')) || { ver: 0, ts: 0 };
+  if (!meta.ver) return json({ ver: 0, ts: 0, doc: null });
+  const doc = await env.LIFE.get('sync:doc');
+  return new Response(`{"ver":${meta.ver},"ts":${meta.ts},"doc":${doc || 'null'}}`, { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+}
+async function putSync(request, env) {
+  const body = await readJson(request, MAX_SYNC);
+  if (!body.doc || typeof body.doc !== 'object' || !Array.isArray(body.doc.entries)) throw new HttpError(400, 'doc with entries required');
+  const meta = (await kvGet(env, 'sync:meta')) || { ver: 0, ts: 0 };
+  if (Number(body.base || 0) !== meta.ver) return json({ error: 'conflict', ver: meta.ver }, 409);
+  const next = { ver: meta.ver + 1, ts: Date.now() };
+  await env.LIFE.put('sync:doc', JSON.stringify(body.doc));
+  await kvPut(env, 'sync:meta', next);
+  return json({ ok: true, ...next });
+}
+// Notebooks sync item by item (pages can be big): an index of {id: updated} plus one key per book/page.
+async function getNotesIndex(env) { return (await kvGet(env, 'nb:index')) || { books: {}, pages: {} }; }
+async function putNotes(request, env) {
+  const body = await readJson(request, MAX_SYNC);
+  const items = Array.isArray(body.items) ? body.items.slice(0, 200) : [];
+  const idx = await getNotesIndex(env);
+  for (const it of items) {
+    const kind = it.kind === 'book' ? 'books' : it.kind === 'page' ? 'pages' : null;
+    if (!kind || !it.id || typeof it.id !== 'string' || it.id.length > 64) continue;
+    const u = Number(it.u) || Date.now();
+    const cur = idx[kind][it.id];
+    if (cur && cur.u > u) continue; // the server already has something newer
+    if (it.deleted) { idx[kind][it.id] = { u, d: 1 }; await env.LIFE.delete(`nb:${kind}:${it.id}`); }
+    else { idx[kind][it.id] = { u }; await env.LIFE.put(`nb:${kind}:${it.id}`, JSON.stringify(it.data)); }
+  }
+  await kvPut(env, 'nb:index', idx);
+  return json({ ok: true, index: idx });
+}
+async function getNotesItem(env, url) {
+  const kind = url.searchParams.get('kind') === 'book' ? 'books' : 'pages';
+  const id = url.searchParams.get('id') || '';
+  const v = await env.LIFE.get(`nb:${kind}:${id}`);
+  if (v == null) return err(404, 'not found');
+  return new Response(v, { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+}
+
 // ---------- backup ----------
 async function putBackup(request, env) {
   const len = Number(request.headers.get('Content-Length') || 0);
@@ -302,6 +348,16 @@ async function route(request, env, url) {
       if (!w) return err(404, 'no widget data yet');
       return json({ ...w.summary, _updated: w.ts });
     }
+    case 'GET /sync':
+      return getSync(env);
+    case 'PUT /sync':
+      return putSync(request, env);
+    case 'GET /sync/notes':
+      return json(await getNotesIndex(env));
+    case 'PUT /sync/notes':
+      return putNotes(request, env);
+    case 'GET /sync/notes/item':
+      return getNotesItem(env, url);
     case 'PUT /backup':
       return putBackup(request, env);
     case 'GET /backup':

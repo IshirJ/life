@@ -391,7 +391,7 @@ html[data-lay="tab"] .tabs button{height:64px;font-size:11px}html[data-lay="tab"
 html:not([data-lay="port"]) .fab{width:58px;height:58px}
 html:not([data-lay="port"]) .app{max-width:1500px;padding-left:calc(var(--railw) + env(safe-area-inset-left,0px) + 22px);padding-right:max(22px,env(safe-area-inset-right,0px));padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))}
 html:not([data-lay="port"]) .pane{columns:2 330px;column-gap:24px}
-html[data-lay="tab"] .pane{columns:3 340px;column-gap:26px}
+html[data-lay="tab"] .pane{columns:3 300px;column-gap:26px}
 html:not([data-lay="port"]) .pane>*{break-inside:avoid}
 html:not([data-lay="port"]) .pane>.chips,html:not([data-lay="port"]) .pane>.hero,html:not([data-lay="port"]) .pane>.banner,html:not([data-lay="port"]) .pane>.sec:has(.wk),html:not([data-lay="port"]) .pane>.sec:has(.abars),html:not([data-lay="port"]) .pane>.lay-wide{column-span:all}
 html:not([data-lay="port"]) .pane>.sec:first-of-type{margin-top:22px}
@@ -405,6 +405,81 @@ html[data-lay="land"] .top{margin-bottom:2px}
 .dock.relay-bottom{animation:relayBottom .6s cubic-bezier(.22,1.2,.36,1) both}
 @keyframes relaySide{from{transform:translateX(-110%);opacity:0}to{transform:none;opacity:1}}
 @keyframes relayBottom{from{transform:translateY(110%);opacity:0}to{transform:none;opacity:1}}
+/* notebooks: strip on Ideas, rail button on wide screens */
+.nbrail{display:none}
+html:not([data-lay="port"]) .nbrail{display:flex;flex-direction:column;align-items:center;gap:3px;width:100%;padding:10px 0;border-radius:24px;font-size:10px;font-weight:800;color:var(--bar-ink);
+  background:color-mix(in srgb,var(--bar) 74%,transparent);-webkit-backdrop-filter:blur(22px) saturate(1.8);backdrop-filter:blur(22px) saturate(1.8);box-shadow:inset 0 1px 0 rgb(255 255 255 / .18),inset 0 0 0 1px rgb(255 255 255 / .08)}
+.nbrail svg.i{width:22px;height:22px}
+.nbs{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:2px 16px 6px}.nbs::-webkit-scrollbar{display:none}
+html:not([data-lay="port"]) .nbs{margin:0;padding:2px 0 6px;flex-wrap:wrap;overflow:visible}
+.nbs-b{flex:none;width:132px;display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left}
+.nbs-c{width:132px;height:172px;border-radius:8px 16px 16px 8px;background:linear-gradient(135deg,color-mix(in srgb,var(--cv) 85%,#fff),var(--cv) 55%,color-mix(in srgb,var(--cv) 70%,#000));box-shadow:inset 7px 0 0 rgb(0 0 0 / .18),inset 9px 0 0 rgb(255 255 255 / .12),0 10px 22px rgb(0 0 0 / .3);margin-bottom:4px;display:grid;place-items:center}
+.nbs-plus{--cv:var(--surface2);border:1.5px dashed var(--line);box-shadow:none;background:var(--surface)}.nbs-plus svg.i{width:28px;height:28px;color:var(--muted)}
+.nbs-b b{font-size:14px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.nbs-b small{font-size:11.5px;color:var(--muted)}
+/* notebook editor */
+#nbView{position:fixed;inset:0;z-index:62;background:var(--bg);opacity:0;transform:scale(.985);transition:opacity .28s ease,transform .38s cubic-bezier(.22,1,.36,1);display:flex;flex-direction:column}
+#nbView.on{opacity:1;transform:none}
+#nbView svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nb-lib{flex:1;overflow-y:auto;padding:calc(env(safe-area-inset-top,0px) + 12px) max(18px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 30px) max(18px,env(safe-area-inset-left,0px));max-width:1200px;margin:0 auto;width:100%}
+.nb-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}.nb-top h2{flex:1;margin:0;font:500 30px/1.1 var(--serif)}.nb-top h2 em,.nb-mcard h3 em{color:var(--accent)}
+.nb-ib{width:44px;height:44px;border-radius:14px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;flex:none;color:var(--ink)}.nb-ib.sm{width:36px;height:36px;border-radius:12px}.nb-ib.sm svg{width:18px;height:18px}
+.nb-pill{display:flex;align-items:center;gap:6px;height:44px;padding:0 18px 0 14px;border-radius:999px;background:var(--ink);color:var(--bg);font-weight:800}
+.nb-search{display:flex;align-items:center;gap:8px;height:46px;padding:0 14px;border-radius:16px;background:var(--surface);border:1px solid var(--line);margin-bottom:20px;color:var(--muted)}
+.nb-search input{flex:1;min-width:0;background:none;border:0;outline:0;font:600 16px var(--ui);color:var(--ink)}
+.nb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:22px 18px}
+.nb-card{position:relative;cursor:pointer}.nb-cover{position:relative;aspect-ratio:1000/1414;border-radius:6px 14px 14px 6px;overflow:hidden;background:var(--cv);box-shadow:0 14px 30px rgb(0 0 0 / .35);transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+.nb-card:active .nb-cover{transform:scale(.96)}
+.nb-cover canvas{position:absolute;inset:7% 7% 7% 12%;width:81%;height:86%;border-radius:3px;box-shadow:0 2px 8px rgb(0 0 0 / .25)}
+.nb-spine{position:absolute;left:0;top:0;bottom:0;width:9%;background:linear-gradient(90deg,rgb(0 0 0 / .28),rgb(255 255 255 / .12) 70%,transparent)}
+.nb-meta{display:flex;flex-direction:column;gap:2px;margin-top:10px;padding-right:34px}.nb-meta b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.nb-meta small{font-size:12px;color:var(--muted)}
+.nb-card .nb-ib.sm{position:absolute;right:-4px;bottom:0;background:none;border:0}
+.nb-empty{grid-column:1/-1;color:var(--muted);text-align:center;padding:40px 0}.nb-foot{color:var(--muted);font-size:12.5px;text-align:center;margin-top:30px}
+.nb-ed{flex:1;display:flex;flex-direction:column;min-height:0}
+.nb-bar{flex:none;padding:calc(env(safe-area-inset-top,0px) + 8px) max(12px,env(safe-area-inset-right,0px)) 8px max(12px,env(safe-area-inset-left,0px));background:color-mix(in srgb,var(--surface) 80%,transparent);-webkit-backdrop-filter:blur(20px) saturate(1.5);backdrop-filter:blur(20px) saturate(1.5);border-bottom:1px solid var(--line);z-index:3}
+.nb-row{display:flex;align-items:center;gap:8px}.nb-row+.nb-row{margin-top:8px}.nb-flex{flex:1}
+.nb-title{font:500 20px/1.2 var(--serif);max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:6px 4px}
+.nb-tools{overflow-x:auto;scrollbar-width:none;gap:6px}.nb-tools::-webkit-scrollbar{display:none}
+.nb-tool{flex:none;height:42px;min-width:42px;padding:0 9px;border-radius:13px;display:flex;align-items:center;gap:6px;color:var(--muted);font-weight:700;font-size:12px}
+.nb-tool.on{background:var(--ink);color:var(--bg)}.nb-tool small{font-size:11.5px}
+.nb-sep{width:1px;height:26px;background:var(--line);flex:none;margin:0 4px}
+.nb-cols,.nb-szs{display:flex;gap:6px;align-items:center;flex:none}
+.nb-col{width:28px;height:28px;border-radius:50%;background:var(--c);flex:none;box-shadow:inset 0 0 0 1.5px rgb(255 255 255 / .2);position:relative;overflow:hidden;transition:transform .2s}
+.nb-col.on{transform:scale(1.12);box-shadow:0 0 0 2.5px var(--bg),0 0 0 4.5px var(--ink)}
+.nb-custom input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer}
+.nb-sz{width:34px;height:34px;border-radius:11px;display:grid;place-items:center}.nb-sz i{border-radius:50%;background:var(--ink);opacity:.55}.nb-sz.on{background:var(--surface2)}.nb-sz.on i{opacity:1}
+.nb-scroll{flex:1;overflow:auto;touch-action:none;-webkit-user-select:none;user-select:none;overscroll-behavior:contain;position:relative}
+#nbView.t-text .nb-scroll{-webkit-user-select:auto;user-select:auto}
+.nb-pages{margin:18px auto 120px;display:flex;flex-direction:column;gap:18px}
+.nb-page{position:relative;flex:none;border-radius:4px;box-shadow:0 1px 2px rgb(0 0 0 / .2),0 12px 34px rgb(0 0 0 / .35);overflow:hidden}
+.nb-imgs,.nb-txts{position:absolute;inset:0}
+.nb-imgs img{position:absolute;object-fit:cover;border-radius:4px;-webkit-user-drag:none;user-select:none}
+.nb-ink,.nb-live{position:absolute;left:0;top:0;pointer-events:none}
+.nb-txt{position:absolute;min-height:1.3em;line-height:1.3;white-space:pre-wrap;overflow-wrap:break-word;outline:0;font-family:-apple-system,system-ui,sans-serif;font-weight:500;border-radius:4px;pointer-events:none}
+#nbView.t-text .nb-txt,#nbView.t-lasso .nb-txt{pointer-events:auto}#nbView.t-text .nb-txt{box-shadow:0 0 0 1px rgb(240 109 68 / .35);cursor:text}
+#nbView.t-text .nb-txt:focus{box-shadow:0 0 0 2px var(--accent)}
+.nb-no{position:absolute;right:10px;bottom:8px;font:600 11px var(--mono);color:rgb(128 128 128 / .7)}
+.nb-selbox{position:absolute;border:1.5px dashed var(--accent);border-radius:6px;background:rgb(240 109 68 / .05);pointer-events:none;z-index:4}
+.nb-rz{position:absolute;right:-9px;bottom:-9px;width:18px;height:18px;border-radius:50%;background:var(--accent);border:2px solid #fff;pointer-events:auto;touch-action:none}
+.nb-selbar{position:absolute;z-index:5;display:flex;gap:4px;padding:4px;border-radius:14px;background:var(--surface);border:1px solid var(--line);box-shadow:0 8px 24px rgb(0 0 0 / .35)}
+.nb-selbar button{display:flex;align-items:center;gap:5px;height:36px;padding:0 10px;border-radius:10px;font-size:12.5px;font-weight:700;color:var(--ink)}.nb-selbar svg{width:16px!important;height:16px!important}
+.nb-selbar i{width:14px;height:14px;border-radius:50%}
+.nb-zoom{position:absolute;right:max(14px,env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 14px);display:flex;align-items:center;gap:6px;padding:4px;border-radius:16px;background:color-mix(in srgb,var(--surface) 85%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border:1px solid var(--line);z-index:3}
+.nb-zoom b{font:700 12px var(--mono);min-width:44px;text-align:center}
+.nb-modal{position:absolute;inset:0;z-index:10;display:grid;place-items:center;padding:20px;background:rgb(0 0 0 / .35);opacity:0;transition:opacity .2s}
+.nb-modal.on{opacity:1}
+.nb-mcard{width:min(440px,100%);max-height:calc(100% - 20px);overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:26px;padding:20px;box-shadow:0 30px 80px rgb(0 0 0 / .45);transform:translateY(10px);transition:transform .3s cubic-bezier(.22,1,.36,1)}
+.nb-modal.on .nb-mcard{transform:none}
+.nb-mcard h3{margin:0 0 16px;font:500 24px var(--serif)}
+.nb-fld{display:flex;flex-direction:column;gap:8px}.nb-fld span,.nb-cap{font:400 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.nb-cap{margin:16px 0 8px}
+.nb-fld input{height:48px;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:0 14px;font:600 16px var(--ui)}
+.nb-sw{display:flex;gap:10px;flex-wrap:wrap}.nb-sw button{width:34px;height:34px;border-radius:10px;background:var(--c)}.nb-sw button[aria-pressed="true"]{box-shadow:0 0 0 2.5px var(--surface),0 0 0 4.5px var(--ink)}
+.nb-seg{display:flex;gap:4px;padding:4px;border-radius:14px;background:var(--surface2);flex-wrap:wrap}.nb-seg button{flex:1;height:36px;border-radius:10px;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;gap:6px;color:var(--muted)}
+.nb-seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}.nb-seg i{width:12px;height:12px;border-radius:50%;border:1px solid rgb(128 128 128 / .5)}
+.nb-acts{display:flex;gap:8px;margin-top:20px}.nb-acts>span{flex:1}.nb-btn{height:46px;padding:0 18px;border-radius:999px;background:var(--surface2);font-weight:800}.nb-btn.primary{background:var(--ink);color:var(--bg)}.nb-btn.danger{color:var(--late)}
+.nb-list{display:flex;flex-direction:column}.nb-list button{display:flex;align-items:center;gap:12px;min-height:50px;text-align:left;font-weight:700;border-bottom:1px solid var(--line)}.nb-list button:last-child{border-bottom:0}.nb-list svg{color:var(--muted)}
+html.nb-open #scroller,html.nb-open .dock{visibility:hidden}
+#nbPrint{display:none}
+@media print{html.nb-printing body>*:not(#nbPrint){display:none!important}html.nb-printing #nbPrint{display:block}#nbPrint img{width:100%;display:block;page-break-after:always;break-after:page}@page{margin:0}}
 /* tab bar */
 .dock{transition:transform .42s cubic-bezier(.22,1,.36,1),opacity .3s ease;position:fixed;z-index:7;left:0;right:0;bottom:calc(-1 * var(--gap));
   padding-top:28px;padding-bottom:max(12px,env(safe-area-inset-bottom,0px));padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));isolation:isolate;
@@ -876,6 +951,7 @@ details.sec>summary{list-style:none;cursor:pointer}details.sec>summary::-webkit-
 
 <div class="dock"><div class="dock-in">
   <nav class="tabs" aria-label="Sections"><span class="ind" id="ind" aria-hidden="true"></span><span id="tabs" style="display:contents"></span></nav>
+  <button class="nbrail" id="nbRail" aria-label="Notebooks"><svg class="i" viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg><span>Notes</span></button>
   <button class="fab" id="fab" aria-label="Add entry"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
 </div></div>
 
@@ -1349,6 +1425,7 @@ function viewMind(){
   const k=state.sub.mind;
   const ideas=of('idea').length,notes=of('note').length,fs=of('folder').length;
   let h=chipsSub('mind')+heroBanner('Ideas &amp; notes',`${ideas+notes}`,`saved across <b>${fs}</b> folder${fs===1?'':'s'}`,[['Ideas',ideas],['Notes',notes],['Reminders',of('reminder').filter(e=>!e.done).length]],'#E7B8FF');
+  h+=section('Note<em>books</em>','<div id="nbStrip"><p class="hint">Loading notebooks…</p></div>','<button class="link" data-nbopen="">'+ic('plus')+'Open</button>');
   if(k==='idea'||k==='note'){
     const items=of(k).filter(e=>state.folder?e.folder===state.folder:true).sort((x,y)=>y.created-x.created);
     const f=state.folder&&find(state.folder);
@@ -1504,6 +1581,7 @@ function render(animate,first,switchDir){
   const pane=getPane(state.tab,switchDir===undefined);
   $('#view').replaceChildren(pane);
   if(state.tab==='plan')initDayScroll();
+  if(state.tab==='mind'&&typeof notebookStrip==='function'&&!SPLASHING)notebookStrip();
   $('#sampleBar').hidden=!db.entries.some(e=>e.sample);
   moveInd(firstRender);
   if(animate)playIn(first,switchDir);
@@ -1706,7 +1784,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='64';
+const APP_VER='71';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -2371,7 +2449,10 @@ function dailySnap(){if(meta.snapDay===today())return;SNAP.put().then(ok=>{if(ok
 function backupText(){return LOCK.key?(localStorage.getItem(KEY)||''):JSON.stringify(db)}
 async function exportFile(){
   flushNow();await new Promise(r=>setTimeout(r,LOCK.key?300:0));
-  const name=`life-backup-${today()}.json`,f=new File([backupText()],name,{type:'application/json'});
+  let txt=backupText();
+  /* notebooks ride along in the same file (not when a passcode is on: the file would no longer be fully encrypted) */
+  if(!LOCK.key){try{const N=await loadNotes(),n=await N.exportAll();if(n.books.length){const o=JSON.parse(txt);o.notes=n;txt=JSON.stringify(o)}}catch(e){}}
+  const name=`life-backup-${today()}.json`,f=new File([txt],name,{type:'application/json'});
   const ok=()=>{meta.lastFile=Date.now();delete meta.snoozeBk;saveMeta();DATA_VER++;toast('Backup saved');if(state.tab==='today')render(false)};
   if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f],title:'Life backup'});ok();return}catch(e){if(e&&e.name==='AbortError')return}}
   const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);ok();
@@ -2380,7 +2461,7 @@ function restoreText(text,btn){
   let d;try{d=JSON.parse(text)}catch(e){toast('That file isn’t a Life backup');return}
   if(d&&d.enc){arm(btn,'Tap again to restore (needs that backup’s passcode)',()=>{try{localStorage.setItem(KEY,text)}catch(e){storageFail();return}location.reload()});return}
   if(!d||!Array.isArray(d.entries)){toast('That file isn’t a Life backup');return}
-  arm(btn,`Tap again to replace with ${d.entries.length} entries`,()=>{d.entries=d.entries.filter(e=>e&&TYPES[e.type]&&e.id);db={entries:d.entries,lib:d.lib||[],templates:d.templates||[],settings:{...DEF,...db.settings,...(d.settings||{})}};save();applyLook();closeSheet();render(false);toast(`Restored ${db.entries.length} entries`)});
+  arm(btn,`Tap again to replace with ${d.entries.length} entries`,()=>{d.entries=d.entries.filter(e=>e&&TYPES[e.type]&&e.id);db={entries:d.entries,lib:d.lib||[],templates:d.templates||[],settings:{...DEF,...db.settings,...(d.settings||{})}};save();applyLook();closeSheet();render(false);toast(`Restored ${db.entries.length} entries`);if(d.notes)loadNotes().then(N=>N.importAll(d.notes,false)).then(n=>{if(n)toast(`Restored ${n} notebook${n===1?'':'s'}`)}).catch(()=>{})});
 }
 function openBackup(){
   const bkDue=Date.now()-(meta.lastFile||0)>7*864e5;
@@ -2572,7 +2653,7 @@ async function pushWidget(force){
 }
 
 /* everything that should follow a change to your data */
-function afterSave(){queueSchedule();if(meta.snapDay!==today())setTimeout(dailySnap,1500);if(Date.now()-widgetAt>10*6e4)setTimeout(()=>pushWidget(false),5000)}
+function afterSave(){try{stampSync()}catch(e){}queueSync();queueSchedule();if(meta.snapDay!==today())setTimeout(dailySnap,1500);if(Date.now()-widgetAt>10*6e4)setTimeout(()=>pushWidget(false),5000)}
 function syncOnHide(){pushWidget(true);pushSchedule(false)}
 let lastWake=Date.now();
 function onWake(){
@@ -2845,6 +2926,7 @@ function openConn(){
         <div class="sh-actions" style="margin-top:0"><button class="primary" id="srvGo" style="flex:1">${ic('link')}Connect</button></div>`}
     ${syncOn()?`<div class="sh-actions" style="margin-top:0"><button class="primary" id="diagGo" style="flex:1">Check everything</button></div>`:''}
     <div class="set-grp">What it powers</div>
+    ${syncOn()?trow('id="syncTg"',SYNC.syncOn!==false,'Sync across devices',syncStatusText()):''}
     ${connRow('notif','reminder','Notifications',NS().on?'On · reminders, classes, morning digest':'Off',NS().on)}
     ${connRow('cals','ext','Calendars',(SYNC.cals||[]).length?`${SYNC.cals.length} linked · ${(SYNC.cals||[]).map(c=>c.name).join(', ')}`:'Outlook and iPhone (iCloud) calendars',(SYNC.cals||[]).length>0)}
     ${connRow('mail','mail','Email',SYNC.mailOn?`On${c.outlookMail?' · Outlook':''}${c.gmailUpdated?' · Gmail':''}`:'Outlook and Gmail unread',!!SYNC.mailOn)}
@@ -3517,6 +3599,7 @@ function runSplash(){
   setTimeout(go,450);
 }
 function runSplashNow(){
+  const root=()=>document.documentElement;
   const hiEl=document.getElementById('splashHi');
   hiEl.innerHTML=`<span class="sl1">${esc(GREET)}</span><span class="sl2"><em>${esc(firstName())}</em></span>`;
   const target=$('#hi');if(target)target.style.visibility='hidden';
@@ -3605,7 +3688,6 @@ function runSplashNow(){
     setTimeout(()=>{t.style.visibility='';hiEl.style.visibility='hidden'},830);
   }
   function legacyEnd(){splashBg.style.opacity='0';SC.style.opacity='';const t=$('#hi');if(t)t.style.visibility='';root().classList.add('rings-on');setTimeout(endSplash,300)}
-  const root=()=>document.documentElement;
   raf=requestAnimationFrame(frame);
   setTimeout(()=>{if(splash.isConnected){cancelAnimationFrame(raf);SC.style.opacity='';const t=$('#hi');if(t)t.style.visibility='';root().classList.add('rings-on');endSplash()}},7500);
 }
@@ -3710,6 +3792,99 @@ function activityView(){
       +section('Sleep · <em>14 days</em>',`<div class="card-s rvcard"><div class="rvgrid"><div><b class="num">${(avg(sl)/60).toFixed(1)}h</b><span>7-day average</span></div><div><b class="num">${sl.slice(-7).filter(v=>v>=420).length}/7</b><span>nights 7h+</span></div></div>${bars(sl,lmax,v=>(v/60).toFixed(1)+' h',480)}</div>`)
       :section('History','<p class="hint">No steps or sleep in the last 14 days yet. Once the Fitbit app syncs to Google, data shows up here within a few minutes.</p>'));
 }
+
+/* ===================== notebooks (loaded only when you open them) ===================== */
+let NOTES_P=null;
+function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=71';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
+async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
+async function notebookStrip(){
+  const el=$('#nbStrip');if(!el)return;let list=[];try{const N=await loadNotes();list=await N.summary()}catch(e){}
+  el.innerHTML=`<div class="nbs">${list.slice(0,8).map(b=>`<button class="nbs-b" data-nbopen="${b.id}"><span class="nbs-c" style="--cv:${esc(b.color)}"></span><b>${esc(b.title)}</b><small>${b.pages} page${b.pages===1?'':'s'} · ${esc(ago(b.u))}</small></button>`).join('')}<button class="nbs-b nbs-new" data-nbopen=""><span class="nbs-c nbs-plus">${ic('plus')}</span><b>${list.length?'All notebooks':'New notebook'}</b><small>Handwrite or type</small></button></div>`}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-nbopen],#nbRail');if(!b)return;e.stopImmediatePropagation();e.preventDefault();openNotebooks(b.dataset?b.dataset.nbopen||null:null)},true);
+window.addEventListener('life-notes-changed',()=>{if(state.tab==='mind'){DATA_VER++;setTimeout(notebookStrip,50)}});
+
+/* ===================== sync between your devices (iPhone · iPad · laptop) =====================
+   Every entry carries the time it last changed (u); deletions leave a dated marker (tomb).
+   Devices pull the server copy, merge entry by entry (newest change wins), then push back. */
+const SYNC_SKIP=new Set(['entries','_ku','tomb','focusNow']);   /* a running focus timer stays on the device that started it */
+const SH={map:null,keys:{}};
+const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}},lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+const SYNCST={ver:+(lsGet('ishiros.syncver')||0),dirty:false,busy:false,lastPush:0,lastAt:+(lsGet('ishiros.syncat')||0),err:'',t:0};
+const hashE=e=>{const{u,...r}=e;return JSON.stringify(r)};
+function syncBase(){SH.map=new Map(db.entries.map(e=>[e.id,hashE(e)]));SH.keys={};for(const k of Object.keys(db))if(!SYNC_SKIP.has(k))SH.keys[k]=JSON.stringify(db[k])}
+function stampSync(){if(!SH.map){syncBase();return}const now=Date.now(),seen=new Set();let ch=false;
+  for(const e of db.entries){seen.add(e.id);const h=hashE(e);if(SH.map.get(e.id)!==h){if(!e.sample){e.u=now;ch=true}SH.map.set(e.id,h)}}
+  for(const id of [...SH.map.keys()])if(!seen.has(id)){(db.tomb=db.tomb||{})[id]=now;SH.map.delete(id);ch=true}
+  db._ku=db._ku||{};for(const k of Object.keys(db))if(!SYNC_SKIP.has(k)){const j=JSON.stringify(db[k]);if(SH.keys[k]!==j){SH.keys[k]=j;db._ku[k]=now;ch=true}}
+  if(ch)SYNCST.dirty=true}
+const tsE=e=>e.u||e.created||0;
+function mergeDocs(L,R){
+  const tomb={...(R.tomb||{})};for(const[k,v]of Object.entries(L.tomb||{}))tomb[k]=Math.max(tomb[k]||0,v);
+  const cut=Date.now()-120*864e5;for(const k in tomb)if(tomb[k]<cut)delete tomb[k];
+  const m=new Map();for(const e of R.entries||[])if(!e.sample)m.set(e.id,e);
+  for(const e of L.entries){const r=m.get(e.id);if(!r||tsE(e)>=tsE(r))m.set(e.id,e)}
+  let entries=[...m.values()].filter(e=>!(tomb[e.id]&&tomb[e.id]>=tsE(e)));
+  if(entries.some(e=>!e.sample))entries=entries.filter(e=>!e.sample);   /* real data replaces the example entries */
+  const out={...L,entries,tomb},lk=L._ku||{},rk=R._ku||{};out._ku={...lk};
+  for(const k of Object.keys(R))if(!SYNC_SKIP.has(k)){if((rk[k]||0)>(lk[k]||0)){out[k]=R[k];out._ku[k]=rk[k]}}
+  out.settings={...DEF,...(out.settings||{})};
+  return out}
+const docForPush=d=>{const o={};for(const k of Object.keys(d))if(k!=='focusNow')o[k]=d[k];o.entries=d.entries.filter(e=>!e.sample);return o};
+const syncAllowed=()=>syncOn()&&SYNC.syncOn!==false&&!(LOCK&&LOCK.key)&&!LOCKED_BLOB;
+function syncStatusText(){if(LOCK&&LOCK.key)return'Off while a passcode is on (data on the server would not be encrypted)';if(SYNC.syncOn===false)return'Off · this device keeps its own copy';
+  return SYNCST.err?`Last try failed: ${esc(SYNCST.err)}`:SYNCST.lastAt?`Your entries and notebooks · synced ${esc(ago(SYNCST.lastAt))}`:'Your entries and notebooks stay the same on every device'}
+async function syncNow(force){
+  if(!syncAllowed()||SYNCST.busy)return;SYNCST.busy=true;
+  try{
+    stampSync();
+    for(let attempt=0;attempt<3;attempt++){
+      const r=await api('/sync');let local=db,changed=false;
+      if(r.doc&&r.ver!==SYNCST.ver||r.doc&&force){const merged=mergeDocs(db,r.doc);if(JSON.stringify(merged)!==JSON.stringify(db)){local=merged;changed=true}}
+      if(changed){db=local;syncBase();try{if(typeof LOCK!=='undefined'&&LOCK.key)LOCK.saveEnc();else localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}DATA_VER++;applyLook();render(false)}
+      const pushDoc=docForPush(db),need=!r.doc||SYNCST.dirty||JSON.stringify(pushDoc)!==JSON.stringify(r.doc);
+      if(!need){SYNCST.ver=r.ver;break}
+      try{const p=await api('/sync',{method:'PUT',body:JSON.stringify({base:r.ver,doc:pushDoc})});SYNCST.ver=p.ver;SYNCST.dirty=false;SYNCST.lastPush=Date.now();break}
+      catch(e){if(!/conflict|409/.test(e.message))throw e}   /* another device saved first: pull again and merge */
+    }
+    SYNCST.err='';SYNCST.lastAt=Date.now();lsSet('ishiros.syncver',SYNCST.ver);lsSet('ishiros.syncat',SYNCST.lastAt);
+  }catch(e){SYNCST.err=e.message||'error'}finally{SYNCST.busy=false}
+  syncNotes().catch(()=>{});
+}
+function queueSync(){if(!syncAllowed())return;clearTimeout(SYNCST.t);const wait=Math.max(12000,45000-(Date.now()-SYNCST.lastPush));SYNCST.t=setTimeout(()=>syncNow(),wait)}
+/* notebooks: one server record per book and page */
+let NBS={busy:false,t:0};
+async function syncNotes(){
+  if(!syncAllowed()||NBS.busy)return;let N;try{N=await loadNotes()}catch(e){return}NBS.busy=true;
+  try{
+    const idx=await api('/sync/notes'),books=await N.IDB.all('books'),pages=await N.IDB.all('pages');
+    const lb=new Map(books.map(b=>[b.id,b])),lp=new Map(pages.map(p=>[p.id,p])),open=N.openBookId();let pulled=0;
+    const tombs=JSON.parse(lsGet('ishiros.nbtomb')||'{}');
+    /* pull what's newer on the server */
+    for(const[kind,map,store]of[['books',lb,'books'],['pages',lp,'pages']]){
+      for(const[id,meta]of Object.entries(idx[kind]||{})){const loc=map.get(id);
+        if(meta.d){if(loc&&(loc.u||0)<=meta.u){await N.IDB.rawDel(store,id);map.delete(id);pulled++}continue}
+        if(tombs[store+':'+id]&&tombs[store+':'+id]>=meta.u)continue;
+        if(open&&(kind==='books'?id===open:(loc&&loc.book===open)))continue;   /* never change the notebook you're writing in */
+        if(!loc||(meta.u||0)>(loc.u||0)){try{const d=await api(`/sync/notes/item?kind=${kind==='books'?'book':'page'}&id=${encodeURIComponent(id)}`);await N.IDB.put(store,d);map.set(id,d);pulled++}catch(e){}}}}
+    /* push what's newer here (in batches that stay well under the size limit) */
+    const items=[];
+    for(const b of lb.values()){const m=idx.books&&idx.books[b.id];if(!m||(b.u||0)>(m.u||0))items.push({kind:'book',id:b.id,u:b.u||Date.now(),data:b})}
+    for(const p of lp.values()){const m=idx.pages&&idx.pages[p.id];if(!m||(p.u||0)>(m.u||0))items.push({kind:'page',id:p.id,u:p.u||Date.now(),data:p})}
+    for(const[k,u]of Object.entries(tombs)){const[store,id]=k.split(':');const m=idx[store]&&idx[store][id];if(!m||!m.d)items.push({kind:store==='books'?'book':'page',id,u,deleted:true})}
+    let batch=[],size=0;const send=async()=>{if(!batch.length)return;await api('/sync/notes',{method:'PUT',body:JSON.stringify({items:batch})});batch=[];size=0};
+    for(const it of items){const n=JSON.stringify(it).length;if(size+n>4e6)await send();batch.push(it);size+=n}await send();
+    if(Object.keys(tombs).length)lsSet('ishiros.nbtomb','{}');
+    if(pulled){N.refresh();if(state.tab==='mind'){DATA_VER++;notebookStrip()}}
+  }finally{NBS.busy=false}
+}
+window.addEventListener('life-notes-changed',()=>{clearTimeout(NBS.t);NBS.t=setTimeout(()=>syncNotes().catch(()=>{}),15000)});
+document.addEventListener('click',e=>{const b=e.target.closest('#syncTg');if(!b)return;e.stopImmediatePropagation();e.preventDefault();SYNC.syncOn=SYNC.syncOn===false;saveSync();b.setAttribute('aria-pressed',String(SYNC.syncOn!==false));if(SYNC.syncOn)syncNow(true)},true);
+/* pull on open, when you come back to Life, and every minute while it's open */
+afterSplash(()=>setTimeout(()=>syncNow(true),900));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(()=>syncNow(),500);else if(SYNCST.dirty)syncNow()});
+setInterval(()=>{if(!document.hidden)syncNow()},60000);
 
 /* ===================== boot ===================== */
 load();
