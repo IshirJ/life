@@ -483,7 +483,7 @@ document.addEventListener('click',async e=>{
   if(d.tbold){S.cfg.text.bold=!S.cfg.text.bold;savePrefs();popover($('[data-nb="pop"]',V));return}
   switch(d.nb){
     case'close':hide();return;
-    case'lib':await flushAll();library();return;
+    case'lib':await flushAll();if(S.direct){S.direct=false;hide();return}library();return;
     case'new':bookForm();return;
     case'importpdf':{const inp=$('#nbPdf',V);inp.value='';inp.onchange=()=>importPdfAsBook(inp.files&&inp.files[0]);inp.click();return}
     case'insertpdf':{closeModal(m);const inp=$('#nbPdf2',V);inp.value='';inp.onchange=()=>insertPdfPages(inp.files&&inp.files[0]);inp.click();return}
@@ -533,7 +533,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)flushAll()}
 
 /* ---------- public ---------- */
 window.NOTES={
-  async open(bookId){show();if(bookId)await openBook(bookId);else await library()},
+  async open(bookId){show();S.direct=!!bookId;if(bookId)await openBook(bookId);else await library()},
   close:hide,
   async exportAll(){return{books:await IDB.all('books'),pages:(await IDB.all('pages')).map(strip)}},
   async importAll(d,replace){if(!d||!Array.isArray(d.books))return 0;if(replace){for(const b of await IDB.all('books'))await IDB.rawDel('books',b.id);for(const p of await IDB.all('pages'))await IDB.rawDel('pages',p.id)}
