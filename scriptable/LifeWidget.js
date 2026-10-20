@@ -18,15 +18,18 @@ const C = {
   blue: new Color('#6FC3F0'),
 };
 
+// Written without backticks or double pipes so it survives copy-paste on iPhone.
+function or(a, b) { return a ? a : b; }
+
 async function load() {
-  const req = new Request(`${WORKER_URL.replace(/\/+$/, '')}/widget?k=${encodeURIComponent(LIFE_KEY)}`);
+  const req = new Request(WORKER_URL.replace(/\/+$/, '') + '/widget?k=' + encodeURIComponent(LIFE_KEY));
   req.timeoutInterval = 10;
   const data = await req.loadJSON();
-  if (req.response && req.response.statusCode >= 400) throw new Error((data && data.error) || `HTTP ${req.response.statusCode}`);
-  return data || {};
+  if (req.response && req.response.statusCode >= 400) throw new Error(or(data && data.error, 'HTTP ' + req.response.statusCode));
+  return or(data, {});
 }
 
-const num = (n) => (n == null || isNaN(Number(n)) ? null : Number(n));
+const num = (n) => (n == null ? null : isNaN(Number(n)) ? null : Number(n));
 const fmtNum = (n) => (num(n) == null ? '–' : Math.round(num(n)).toLocaleString());
 const fmtK = (n) => (num(n) == null ? '–' : num(n) >= 10000 ? (num(n) / 1000).toFixed(1) + 'k' : fmtNum(n));
 
@@ -35,8 +38,8 @@ function fmtTime(t) {
   if (!t) return '';
   const m = /^(?:(\w{3}) )?(\d{1,2}):(\d{2})$/.exec(String(t));
   if (m) {
-    const h = +m[2], ap = h < 12 ? 'AM' : 'PM', h12 = h % 12 || 12;
-    return `${m[1] ? m[1] + ' ' : ''}${h12}:${m[3]} ${ap}`;
+    const h = +m[2], ap = h < 12 ? 'AM' : 'PM', h12 = or(h % 12, 12);
+    return (m[1] ? m[1] + ' ' : '') + h12 + ':' + m[3] + ' ' + ap;
   }
   const d = new Date(t);
   if (isNaN(d)) return String(t);
@@ -53,7 +56,7 @@ function txt(stack, str, size, color, style, lines) {
     : style === 'cap' ? Font.semiboldSystemFont(size)
     : Font.systemFont(size);
   t.textColor = color;
-  t.lineLimit = lines || 1;
+  t.lineLimit = or(lines, 1);
   t.minimumScaleFactor = 0.7;
   return t;
 }
@@ -69,7 +72,7 @@ function bar(stack, frac, width, color) {
   dc.addPath(track);
   dc.setFillColor(C.faint);
   dc.fillPath();
-  const f = Math.max(0, Math.min(1, frac || 0));
+  const f = Math.max(0, Math.min(1, or(frac, 0)));
   if (f > 0) {
     const p = new Path();
     p.addRoundedRect(new Rect(0, 0, Math.max(h, width * f), h), h / 2, h / 2);
@@ -87,7 +90,7 @@ function header(w, data) {
   r.centerAlignContent();
   txt(r, 'LIFE', 10, C.accent, 'cap');
   r.addSpacer();
-  const ts = data.updated || data._updated;
+  const ts = or(data.updated, data._updated);
   if (ts) {
     const f = new DateFormatter();
     f.useShortTimeStyle();
@@ -100,21 +103,22 @@ function header(w, data) {
 function foodBlock(parent, data, width, bigSize, compact) {
   const s = parent.addStack();
   s.layoutVertically();
-  const left = num(data.kcalLeft), goal = num(data.kcalGoal || data.kcalTarget), eaten = num(data.kcal);
+  const left = num(data.kcalLeft), goal = num(or(data.kcalGoal, data.kcalTarget)), eaten = num(data.kcal);
   const over = left != null && left < 0;
   txt(s, over ? 'KCAL OVER' : 'KCAL LEFT', 9, C.muted, 'cap');
   txt(s, left == null ? '–' : fmtNum(Math.abs(left)), bigSize, over ? C.accent : C.ink, 'num');
   s.addSpacer(4);
-  bar(s, goal ? (eaten != null ? eaten : goal - (left || 0)) / goal : 0, width, C.accent);
+  bar(s, goal ? (eaten != null ? eaten : goal - or(left, 0)) / goal : 0, width, C.accent);
   s.addSpacer(6);
   const pr = s.addStack();
   pr.centerAlignContent();
   txt(pr, 'Protein', 10, C.muted);
   pr.addSpacer();
-  txt(pr, `${fmtNum(data.protein)}${data.proteinGoal || data.proteinTarget ? ' / ' + fmtNum(data.proteinGoal || data.proteinTarget) : ''} g`, 10, C.ink, 'bold');
+  const pg = or(data.proteinGoal, data.proteinTarget);
+  txt(pr, fmtNum(data.protein) + (pg ? ' / ' + fmtNum(pg) : '') + ' g', 10, C.ink, 'bold');
   if (compact) return s;
   s.addSpacer(3);
-  bar(s, (data.proteinGoal || data.proteinTarget) ? num(data.protein) / num(data.proteinGoal || data.proteinTarget) : 0, width, C.sage);
+  bar(s, pg ? num(data.protein) / num(pg) : 0, width, C.sage);
   return s;
 }
 
@@ -125,7 +129,7 @@ function nextBlock(parent, data, lines) {
   txt(s, 'NEXT', 9, C.muted, 'cap');
   s.addSpacer(2);
   if (ev && ev.title) {
-    txt(s, ev.title, 14, C.ink, 'bold', lines || 2);
+    txt(s, ev.title, 14, C.ink, 'bold', or(lines, 2));
     s.addSpacer(2);
     txt(s, fmtTime(ev.time), 11, C.accent, 'bold');
   } else {
@@ -138,7 +142,7 @@ function statsRow(parent, data) {
   const r = parent.addStack();
   r.centerAlignContent();
   const items = [];
-  if (data.due != null) items.push([`${fmtNum(data.due)}`, 'due', data.due > 0 ? C.accent : C.ink]);
+  if (data.due != null) items.push([fmtNum(data.due), 'due', data.due > 0 ? C.accent : C.ink]);
   if (data.steps != null) items.push([fmtK(data.steps), 'steps', C.ink]);
   if (data.sleepMin != null) items.push([(data.sleepMin / 60).toFixed(1) + 'h', 'sleep', C.ink]);
   items.slice(0, 3).forEach(([v, l, col], i) => {
@@ -170,7 +174,7 @@ function build(data, family) {
       txt(w, ev.title, 11, C.ink, 'bold');
       txt(w, fmtTime(ev.time), 10, C.accent, 'bold');
     } else if (data.due != null) {
-      txt(w, `${fmtNum(data.due)} due today`, 11, data.due ? C.accent : C.muted, 'bold');
+      txt(w, fmtNum(data.due) + ' due today', 11, data.due ? C.accent : C.muted, 'bold');
     }
     return w;
   }
@@ -225,11 +229,11 @@ function errorWidget(msg) {
   w.addSpacer(6);
   txt(w, 'Couldn’t load', 14, C.ink, 'bold');
   w.addSpacer(2);
-  txt(w, String(msg || 'Check WORKER_URL and LIFE_KEY at the top of the script.'), 11, C.muted, null, 4);
+  txt(w, String(or(msg, 'Check WORKER_URL and LIFE_KEY at the top of the script.')), 11, C.muted, null, 4);
   return w;
 }
 
-const family = config.runsInWidget ? (config.widgetFamily || 'small') : 'medium';
+const family = config.runsInWidget ? or(config.widgetFamily, 'small') : 'medium';
 let widget;
 try {
   widget = build(await load(), family);
