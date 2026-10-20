@@ -382,3 +382,32 @@ test('inbox: shortcuts post text, app reads and clears it', async () => {
   r = await call(env, req('/inbox', { key, method: 'DELETE', body: { ids: [list[0].id] } }));
   assert.equal((await r.json()).left, 1);
 });
+
+test('sync hub: moves old KV data over on first use and reports status', async () => {
+  const { env, key } = await paired();
+  await env.LIFE.put('sync:meta', JSON.stringify({ ver: 7, ts: 1 }));
+  await env.LIFE.put('sync:doc', JSON.stringify({ entries: [{ id: 'old', u: 1 }], tomb: { x: 1 } }));
+  let r = await call(env, req('/sync', { key }));
+  let d = await r.json();
+  assert.equal(d.ver, 7);
+  assert.equal(d.doc.entries[0].id, 'old');
+  r = await call(env, req('/sync?have=7', { key }));
+  assert.equal((await r.json()).same, true);
+  r = await call(env, req('/sync/status', { key }));
+  d = await r.json();
+  assert.equal(d.entries, 1);
+  assert.equal(d.tombs, 1);
+  // big documents are split into pieces and come back whole
+  const big = { entries: Array.from({ length: 3000 }, (_, i) => ({ id: 'e' + i, title: 'x'.repeat(600) })) };
+  r = await call(env, req('/sync', { key, method: 'PUT', body: { base: 7, doc: big } }));
+  assert.equal((await r.json()).ver, 8);
+  r = await call(env, req('/sync', { key }));
+  d = await r.json();
+  assert.equal(d.doc.entries.length, 3000);
+});
+
+test('sync websocket: needs the key in the subprotocol', async () => {
+  const { env } = await paired();
+  const r = await call(env, req('/sync/ws', { headers: { Upgrade: 'websocket', 'Sec-WebSocket-Protocol': 'life, wrong' } }));
+  assert.equal(r.status, 401);
+});

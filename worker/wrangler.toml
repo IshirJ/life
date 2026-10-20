@@ -9,3 +9,11 @@ crons = ["* * * * *"]
 [[kv_namespaces]]
 binding = "LIFE"
 id = "__KV_ID__"
+
+[[durable_objects.bindings]]
+name = "HUB"
+class_name = "SyncHub"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["SyncHub"]

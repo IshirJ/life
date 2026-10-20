@@ -10,6 +10,7 @@ import {
 } from './services.js';
 import { isValidTz, parseYmd } from './tz.js';
 import { searchFood } from './food.js';
+import { SyncHub } from './hub.js';
 
 const MIN = 60 * 1000;
 const DUE_WINDOW = 30 * MIN;
@@ -130,42 +131,35 @@ export async function runCron(env, now = Date.now()) {
 }
 
 // ---------- device sync ----------
+// Everything goes through one Durable Object (see hub.js) so all devices see the same version instantly.
+async function hub(env, request, device) {
+  const stub = env.HUB.get(env.HUB.idFromName('main'));
+  if (request.headers.get('Upgrade') === 'websocket') {   // pass the upgrade through untouched
+    const h = new Headers(request.headers);
+    if (device) h.set('X-Life-Device', device);
+    return stub.fetch(new Request(request, { headers: h }));
+  }
+  const body = request.method === 'GET' || request.method === 'HEAD' ? undefined : await request.text();
+  if (body && body.length > MAX_SYNC) throw new HttpError(413, 'body too large');
+  return stub.fetch(new Request(request.url, { method: request.method, headers: request.headers, body }));
+}
 // The whole Life database is one document with a version number. A device sends the version it built on;
 // if someone else saved in between it gets 409 and merges first (merging happens on the device).
 const MAX_SYNC = 20 * 1024 * 1024;
-async function getSync(env) {
-  const meta = (await kvGet(env, 'sync:meta')) || { ver: 0, ts: 0 };
-  if (!meta.ver) return json({ ver: 0, ts: 0, doc: null });
-  const doc = await env.LIFE.get('sync:doc');
-  return new Response(`{"ver":${meta.ver},"ts":${meta.ts},"doc":${doc || 'null'}}`, { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
-}
-async function putSync(request, env) {
-  const body = await readJson(request, MAX_SYNC);
-  if (!body.doc || typeof body.doc !== 'object' || !Array.isArray(body.doc.entries)) throw new HttpError(400, 'doc with entries required');
-  const meta = (await kvGet(env, 'sync:meta')) || { ver: 0, ts: 0 };
-  if (Number(body.base || 0) !== meta.ver) return json({ error: 'conflict', ver: meta.ver }, 409);
-  const next = { ver: meta.ver + 1, ts: Date.now() };
-  await env.LIFE.put('sync:doc', JSON.stringify(body.doc));
-  await kvPut(env, 'sync:meta', next);
-  return json({ ok: true, ...next });
-}
 // Notebooks sync item by item (pages can be big): an index of {id: updated} plus one key per book/page.
-async function getNotesIndex(env) { return (await kvGet(env, 'nb:index')) || { books: {}, pages: {} }; }
 async function putNotes(request, env) {
   const body = await readJson(request, MAX_SYNC);
-  const items = Array.isArray(body.items) ? body.items.slice(0, 200) : [];
-  const idx = await getNotesIndex(env);
+  const items = (Array.isArray(body.items) ? body.items.slice(0, 200) : []).filter((it) => it && typeof it.id === 'string' && it.id.length <= 64 && (it.kind === 'book' || it.kind === 'page'));
+  const r = await hub(env, new Request('https://hub/sync/notes/apply', { method: 'POST', body: JSON.stringify({ items: items.map(({ kind, id, u, deleted }) => ({ kind, id, u, deleted })) }) }));
+  const res = await r.json();
+  const ok = new Set(res.accepted || []);
   for (const it of items) {
-    const kind = it.kind === 'book' ? 'books' : it.kind === 'page' ? 'pages' : null;
-    if (!kind || !it.id || typeof it.id !== 'string' || it.id.length > 64) continue;
-    const u = Number(it.u) || Date.now();
-    const cur = idx[kind][it.id];
-    if (cur && cur.u > u) continue; // the server already has something newer
-    if (it.deleted) { idx[kind][it.id] = { u, d: 1 }; await env.LIFE.delete(`nb:${kind}:${it.id}`); }
-    else { idx[kind][it.id] = { u }; await env.LIFE.put(`nb:${kind}:${it.id}`, JSON.stringify(it.data)); }
+    if (!ok.has(it.id)) continue;
+    const key = `nb:${it.kind === 'book' ? 'books' : 'pages'}:${it.id}`;
+    if (it.deleted) await env.LIFE.delete(key);
+    else await env.LIFE.put(key, JSON.stringify(it.data));
   }
-  await kvPut(env, 'nb:index', idx);
-  return json({ ok: true, index: idx });
+  return json({ ok: true, index: res.index });
 }
 async function getNotesItem(env, url) {
   const kind = url.searchParams.get('kind') === 'book' ? 'books' : 'pages';
@@ -260,6 +254,13 @@ async function route(request, env, url) {
     return oauthCallback(provider, request, env, lifeKey, config);
   }
 
+  if (path === '/sync/ws') {
+    const protos = (request.headers.get('Sec-WebSocket-Protocol') || '').split(',').map((x) => x.trim());
+    const key = await env.LIFE.get('key');
+    if (!key || !protos.some((p) => safeEqual(p, key))) return err(401, 'unauthorized');
+    const device = (url.searchParams.get('d') || '').slice(0, 40);
+    return hub(env, request, device);
+  }
   const allowQuery = path === '/widget' && method === 'GET';
   if (!(await authorize(request, env, url, allowQuery))) return err(401, 'unauthorized');
 
@@ -379,11 +380,10 @@ async function route(request, env, url) {
     case 'DELETE /inbox':
       return deleteInbox(request, env);
     case 'GET /sync':
-      return getSync(env);
     case 'PUT /sync':
-      return putSync(request, env);
     case 'GET /sync/notes':
-      return json(await getNotesIndex(env));
+    case 'GET /sync/status':
+      return hub(env, request);
     case 'PUT /sync/notes':
       return putNotes(request, env);
     case 'GET /sync/notes/item':
@@ -413,6 +413,7 @@ export default {
     let resp;
     try {
       resp = await route(request, env, url);
+      if (resp.status === 101) return resp;
     } catch (e) {
       resp = e instanceof HttpError ? err(e.status, e.message) : err(500, 'internal error', { message: String(e?.message || e) });
     }
@@ -424,4 +425,4 @@ export default {
   },
 };
 
-export { mergeConfig, cleanSchedule };
+export { mergeConfig, cleanSchedule, SyncHub };

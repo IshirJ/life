@@ -27,7 +27,22 @@ if (typeof globalThis.caches === 'undefined') {
   };
 }
 
-export function makeEnv(init) { return { LIFE: new MockKV(init) }; }
+import { SyncHub } from '../src/hub.js';
+// In-memory stand-in for a Durable Object's storage + namespace.
+class MockStorage {
+  constructor() { this.m = new Map(); this.writes = 0; }
+  async get(k) { if (Array.isArray(k)) { const r = new Map(); for (const x of k) if (this.m.has(x)) r.set(x, structuredClone(this.m.get(x))); return r; } return this.m.has(k) ? structuredClone(this.m.get(k)) : undefined; }
+  async put(k, v) { if (typeof k === 'object') { for (const [a, b] of Object.entries(k)) { this.m.set(a, structuredClone(b)); this.writes++; } return; } this.m.set(k, structuredClone(v)); this.writes++; }
+  async delete(k) { this.m.delete(k); }
+}
+export function makeEnv(init) {
+  const env = { LIFE: new MockKV(init) };
+  const ctx = { storage: new MockStorage(), sockets: [], acceptWebSocket(ws) { this.sockets.push(ws); }, getWebSockets() { return this.sockets; } };
+  let obj = null;
+  env.HUB = { idFromName: () => 'main', get: () => ({ fetch: (req) => (obj ||= new SyncHub(ctx, env)).fetch(req) }) };
+  env._hubCtx = ctx;
+  return env;
+}
 
 // Replace global fetch with a handler; returns { calls, restore }.
 export function mockFetch(handler) {

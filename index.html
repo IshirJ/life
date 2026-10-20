@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://raw.githubusercontent.com; media-src 'self' blob: mediastream:; connect-src 'self' https://*.workers.dev https://world.openfoodfacts.org https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://raw.githubusercontent.com; media-src 'self' blob: mediastream:; connect-src 'self' https://*.workers.dev wss://*.workers.dev https://world.openfoodfacts.org https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="theme-color" content="#131311">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1929,7 +1929,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='85';
+const APP_VER='88';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -3072,6 +3072,7 @@ function openConn(){
     ${syncOn()?`<div class="sh-actions" style="margin-top:0"><button class="primary" id="diagGo" style="flex:1">Check everything</button></div>`:''}
     <div class="set-grp">What it powers</div>
     ${syncOn()?trow('id="syncTg"',SYNC.syncOn!==false,'Sync across devices',syncStatusText()):''}
+    ${syncOn()?connRow('syncstat','cloud','Sync status','See what this device and the server each have',LIVE.state==='live'):''}
     ${connRow('notif','reminder','Notifications',NS().on?'On · reminders, classes, morning digest':'Off',NS().on)}
     ${connRow('cals','ext','Calendars',(SYNC.cals||[]).length?`${SYNC.cals.length} linked · ${(SYNC.cals||[]).map(c=>c.name).join(', ')}`:'Outlook and iPhone (iCloud) calendars',(SYNC.cals||[]).length>0)}
     ${connRow('mail','mail','Email',SYNC.mailOn?`On${c.outlookMail?' · Outlook':''}${c.gmailUpdated?' · Gmail':''}`:'Outlook and Gmail unread',!!SYNC.mailOn)}
@@ -3951,7 +3952,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=85';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=88';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -3986,28 +3987,55 @@ function mergeDocs(L,R){
   for(const k of Object.keys(R))if(!SYNC_SKIP.has(k)){if((rk[k]||0)>(lk[k]||0)){out[k]=R[k];out._ku[k]=rk[k]}}
   out.settings={...DEF,...(out.settings||{})};
   return out}
+/* order-independent fingerprint, so two devices with the same data never think they differ */
+function canon(d){if(!d)return'';const o={};for(const k of Object.keys(d).sort()){if(k==='focusNow')continue;let v=d[k];
+  if(k==='entries')v=[...v].filter(e=>!e.sample).sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0);else if(k==='tomb'||k==='_ku')v=Object.fromEntries(Object.entries(v||{}).sort());o[k]=v}return JSON.stringify(o)}
 const docForPush=d=>{const o={};for(const k of Object.keys(d))if(k!=='focusNow')o[k]=d[k];o.entries=d.entries.filter(e=>!e.sample);return o};
 const syncAllowed=()=>syncOn()&&SYNC.syncOn!==false&&!(LOCK&&LOCK.key)&&!LOCKED_BLOB;
 function syncStatusText(){if(LOCK&&LOCK.key)return'Off while a passcode is on (data on the server would not be encrypted)';if(SYNC.syncOn===false)return'Off · this device keeps its own copy';
   return SYNCST.err?`Last try failed: ${esc(SYNCST.err)}`:SYNCST.lastAt?`Your entries and notebooks · synced ${esc(ago(SYNCST.lastAt))}`:'Your entries and notebooks stay the same on every device'}
 async function syncNow(force){
-  if(!syncAllowed()||SYNCST.busy)return;SYNCST.busy=true;
+  if(!syncAllowed())return;if(SYNCST.busy){SYNCST.again=true;return}SYNCST.busy=true;SYNCST.again=false;
   try{
     stampSync();
-    for(let attempt=0;attempt<3;attempt++){
-      const r=await api('/sync');let local=db,changed=false;
-      if(r.doc&&r.ver!==SYNCST.ver||r.doc&&force){const merged=mergeDocs(db,r.doc);if(JSON.stringify(merged)!==JSON.stringify(db)){local=merged;changed=true}}
-      if(changed){db=local;syncBase();try{if(typeof LOCK!=='undefined'&&LOCK.key)LOCK.saveEnc();else localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}DATA_VER++;applyLook();render(false)}
-      const pushDoc=docForPush(db),need=!r.doc||SYNCST.dirty||JSON.stringify(pushDoc)!==JSON.stringify(r.doc);
+    for(let attempt=0;attempt<4;attempt++){
+      /* cheap check first: if the server is still on the version we have, only send our own changes */
+      let r=await api('/sync'+(!force&&attempt===0&&SYNCST.ver?`?have=${SYNCST.ver}`:''));
+      if(r.same){if(!SYNCST.dirty)break;r={ver:r.ver,doc:undefined,same:true}}
+      let changed=false;
+      if(r.doc&&(r.ver!==SYNCST.ver||force)){const merged=mergeDocs(db,r.doc);if(canon(merged)!==canon(db)){db=merged;changed=true}}
+      if(changed){syncBase();try{if(typeof LOCK!=='undefined'&&LOCK.key)LOCK.saveEnc();else localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}DATA_VER++;applyLook();render(false);SYNCST.pulledAt=Date.now()}
+      const pushDoc=docForPush(db),need=r.same?SYNCST.dirty:(r.doc==null||canon(pushDoc)!==canon(r.doc));
       if(!need){SYNCST.ver=r.ver;break}
-      try{const p=await api('/sync',{method:'PUT',body:JSON.stringify({base:r.ver,doc:pushDoc})});SYNCST.ver=p.ver;SYNCST.dirty=false;SYNCST.lastPush=Date.now();break}
-      catch(e){if(!/conflict|409/.test(e.message))throw e}   /* another device saved first: pull again and merge */
+      try{const p=await api('/sync',{method:'PUT',headers:{'X-Life-Device':DEVICE},body:JSON.stringify({base:r.ver,doc:pushDoc})});SYNCST.ver=p.ver;SYNCST.dirty=false;SYNCST.lastPush=Date.now();break}
+      catch(e){if(!/conflict|409/.test(e.message))throw e;force=true}   /* another device saved first: pull everything and merge */
     }
     SYNCST.err='';SYNCST.lastAt=Date.now();lsSet('ishiros.syncver',SYNCST.ver);lsSet('ishiros.syncat',SYNCST.lastAt);
   }catch(e){SYNCST.err=e.message||'error'}finally{SYNCST.busy=false}
+  if(SYNCST.again)setTimeout(()=>syncNow(),300);
   syncNotes().catch(()=>{});
 }
-function queueSync(){if(!syncAllowed())return;clearTimeout(SYNCST.t);const wait=Math.max(12000,45000-(Date.now()-SYNCST.lastPush));SYNCST.t=setTimeout(()=>syncNow(),wait)}
+/* changes go up about a second after you make them */
+function queueSync(){if(!syncAllowed())return;clearTimeout(SYNCST.t);SYNCST.t=setTimeout(()=>syncNow(),Math.max(1200,3000-(Date.now()-SYNCST.lastPush)))}
+/* ---------- live link: the server tells this device the moment another one saves ---------- */
+const DEVICE=(()=>{let d=lsGet('ishiros.dev');if(!d){d=Math.random().toString(36).slice(2,10);lsSet('ishiros.dev',d)}return d})();
+const LIVE={ws:null,tries:0,t:0,ping:0,state:'off',devices:0};
+function liveConnect(){
+  if(!syncAllowed()||document.hidden||LIVE.ws||!('WebSocket' in window))return;
+  let ws;try{ws=new WebSocket(SYNC.url.replace(/\/+$/,'').replace(/^http/,'ws')+'/sync/ws?d='+DEVICE,['life',SYNC.key])}catch(e){return}
+  LIVE.ws=ws;LIVE.state='connecting';
+  ws.onopen=()=>{LIVE.tries=0;LIVE.state='live';clearInterval(LIVE.ping);LIVE.ping=setInterval(()=>{try{ws.send('ping')}catch(e){}},25000)};
+  ws.onmessage=ev=>{if(ev.data==='pong')return;let m;try{m=JSON.parse(ev.data)}catch(e){return}
+    if(m.devices)LIVE.devices=m.devices;
+    if((m.t==='ver'||m.t==='hello')&&m.ver!==SYNCST.ver&&m.from!==DEVICE)syncNow();
+    if(m.t==='notes'){clearTimeout(NBS.t);NBS.t=setTimeout(()=>syncNotes().catch(()=>{}),800)}};
+  ws.onclose=()=>{clearInterval(LIVE.ping);LIVE.ws=null;LIVE.state='off';if(document.hidden||!syncAllowed())return;LIVE.tries++;clearTimeout(LIVE.t);LIVE.t=setTimeout(liveConnect,Math.min(30000,1000*2**Math.min(LIVE.tries,5)))};
+  ws.onerror=()=>{try{ws.close()}catch(e){}};
+}
+function liveClose(){clearTimeout(LIVE.t);if(LIVE.ws){try{LIVE.ws.close()}catch(e){}LIVE.ws=null}LIVE.state='off'}
+afterSplash(()=>setTimeout(liveConnect,1500));
+document.addEventListener('visibilitychange',()=>{if(document.hidden)liveClose();else setTimeout(liveConnect,400)});
+addEventListener('online',()=>{setTimeout(()=>{liveConnect();syncNow()},500)});
 /* notebooks: one server record per book and page */
 let NBS={busy:false,t:0};
 async function syncNotes(){
@@ -4034,12 +4062,13 @@ async function syncNotes(){
     if(pulled){N.refresh();if(state.tab==='mind'){DATA_VER++;notebookStrip()}}
   }finally{NBS.busy=false}
 }
-window.addEventListener('life-notes-changed',()=>{clearTimeout(NBS.t);NBS.t=setTimeout(()=>syncNotes().catch(()=>{}),15000)});
+window.addEventListener('life-notes-changed',()=>{clearTimeout(NBS.t);NBS.t=setTimeout(()=>syncNotes().catch(()=>{}),2500)});
 document.addEventListener('click',e=>{const b=e.target.closest('#syncTg');if(!b)return;e.stopImmediatePropagation();e.preventDefault();SYNC.syncOn=SYNC.syncOn===false;saveSync();b.setAttribute('aria-pressed',String(SYNC.syncOn!==false));if(SYNC.syncOn)syncNow(true)},true);
 /* pull on open, when you come back to Life, and every minute while it's open */
 afterSplash(()=>setTimeout(()=>syncNow(true),900));
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(()=>syncNow(),500);else if(SYNCST.dirty)syncNow()});
-setInterval(()=>{if(!document.hidden)syncNow()},60000);
+/* safety net: check every 20 s if the live link is down, every 2 min if it's up */
+setInterval(()=>{if(!document.hidden&&(LIVE.state!=='live'||Date.now()-(SYNCST.lastAt||0)>12e4))syncNow()},20000);
 
 
 /* ===================== more: quick capture · grades · money · insights · time-blocking · flashcards · trips · follow-ups ===================== */
@@ -4480,6 +4509,23 @@ const _buildScheduleM=buildSchedule;buildSchedule=function(){const out=_buildSch
   return out.sort((a,b)=>a.at.localeCompare(b.at)).slice(0,300)};
 document.addEventListener('click',e=>{const b=e.target.closest('[data-panel="quick"]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();openQuickSetup()},true);
 document.addEventListener('click',e=>{if(!e.target.closest('[data-showall]'))return;e.preventDefault();e.stopImmediatePropagation();LIST_ALL=true;DATA_VER++;render(false);setTimeout(()=>{LIST_ALL=false},50)},true);
+
+/* ===================== sync status: what this device has vs the server ===================== */
+async function openSyncStatus(){
+  NAV_DIR=1;openSheet(`${sheetHead('Sync <em>status</em>','conn')}<div id="ssOut"><p class="hint">Checking…</p></div>`);
+  const local=db.entries.filter(e=>!e.sample).length,tombs=Object.keys(db.tomb||{}).length;let srv=null,err='';
+  try{srv=await api('/sync/status')}catch(e){err=e.message}
+  const row=(ok,l,v)=>`<div class="trow" style="cursor:default"><span>${ok===null?'':ok?'✅ ':'⚠️ '}${l}<small>${v}</small></span></div>`;
+  const el=$('#ssOut');if(!el)return;
+  el.innerHTML=row(syncAllowed(),'This device',!syncAllowed()?(LOCK&&LOCK.key?'Sync is off because a passcode is on':SYNC.syncOn===false?'Sync is switched off':'Not connected to a server'):`ID ${esc(DEVICE)} · version ${SYNCST.ver||'—'} · ${local} entries${tombs?` · ${tombs} deleted`:''}`)
+    +row(LIVE.state==='live',`Live link`,LIVE.state==='live'?`Connected · ${LIVE.devices||1} device${(LIVE.devices||1)===1?'':'s'} online · changes arrive instantly`:LIVE.state==='connecting'?'Connecting…':'Not connected (checks every 20 s instead)')
+    +(srv?row(srv.ver===SYNCST.ver,'Server',`version ${srv.ver} · ${srv.entries} entries${srv.tombs?` · ${srv.tombs} deleted`:''} · saved ${esc(ago(srv.ts))}`):row(false,'Server',esc(err||'unreachable')))
+    +row(!SYNCST.err,'Last sync',SYNCST.err?`Failed: ${esc(SYNCST.err)}`:SYNCST.lastAt?`${esc(ago(SYNCST.lastAt))}${SYNCST.pulledAt?` · last brought in changes ${esc(ago(SYNCST.pulledAt))}`:''}`:'Not yet')
+    +`<div class="sh-actions"><button class="primary" id="ssNow" style="flex:1">Sync now</button><button class="secondary" id="ssFull">Merge everything</button></div>
+    <p class="small">Both devices should show the same server version within a few seconds of a change. “Merge everything” re-reads the whole server copy and combines it with this device (nothing is deleted).</p>`}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-panel="syncstat"],#ssNow,#ssFull');if(!b)return;e.preventDefault();e.stopImmediatePropagation();
+  if(b.id==='ssNow'||b.id==='ssFull'){b.textContent='Syncing…';await syncNow(b.id==='ssFull');liveConnect();toast(SYNCST.err?'Sync failed: '+SYNCST.err:'Synced');openSyncStatus();return}
+  openSyncStatus()},true);
 
 /* ===================== boot ===================== */
 load();

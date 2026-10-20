@@ -76,7 +76,7 @@ export function redirect(url, status = 302) {
 export function corsHeaders(origin) {
   const h = {
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Life-Key',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Life-Key, X-Life-Device',
     'Access-Control-Expose-Headers': 'X-Backup-Ts',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
