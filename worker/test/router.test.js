@@ -238,6 +238,10 @@ test('health GET merges Apple + Google (mocked), reauth on invalid_grant', async
       const startIso = new Date(Date.UTC(y, m - 1, d, 4, 0)).toISOString();
       return Response.json({ dataPoints: [{ sleep: { interval: { startTime: startIso, endTime: endIso } } }] });
     }
+    if (url.includes('/daily-resting-heart-rate/dataPoints')) {
+      assert.match(decodeURIComponent(url), /daily_resting_heart_rate\.date >= "/);
+      return Response.json({ dataPoints: [{ dailyRestingHeartRate: { date: { year: y, month: m, day: d }, beatsPerMinute: '58' } }] });
+    }
     return new Response('nope', { status: 404 });
   });
   try {
@@ -247,6 +251,7 @@ test('health GET merges Apple + Google (mocked), reauth on invalid_grant', async
     assert.equal(t.steps, 9876);       // google preferred for steps
     assert.equal(t.kcal, 1800);        // apple nutrition kept
     assert.equal(t.sleepMin, 420);
+    assert.equal(t.restingHr, 58);
     assert.equal(t.apple.steps, 100);
     assert.ok(h.sources.google);
 

@@ -314,6 +314,60 @@ export async function googleSleep(env, config, startYmd) {
   return res;
 }
 
+// Daily resting heart rate: a "daily" record type, filtered on its civil date.
+// Parsing walks each point for a beatsPerMinute value and a {year,month,day} date, so small shape
+// differences between API revisions don't silently drop the number.
+function findKey(o, re, depth = 0) {
+  if (!o || typeof o !== 'object' || depth > 6) return undefined;
+  for (const [k, v] of Object.entries(o)) if (re.test(k) && (typeof v !== 'object' || v === null)) return v;
+  for (const v of Object.values(o)) { const r = findKey(v, re, depth + 1); if (r !== undefined) return r; }
+  return undefined;
+}
+function findDate(o, depth = 0) {
+  if (!o || typeof o !== 'object' || depth > 6) return null;
+  if (o.year && o.month && o.day && typeof o.year === 'number') return o;
+  if (o.date && typeof o.date === 'object' && o.date.year) return o.date;
+  for (const v of Object.values(o)) { const r = findDate(v, depth + 1); if (r) return r; }
+  return null;
+}
+export function parseGoogleRhr(pages) {
+  const out = {}, cnt = {};
+  for (const data of pages) {
+    const points = data.dataPoints || Object.values(data).find(Array.isArray) || [];
+    for (const p of points) {
+      const v = looseNumber(findKey(p, /^beatsPerMinute$/i));
+      const dt = findDate(p);
+      if (v == null || !dt || v < 20 || v > 220) continue;
+      const key = fmtDate({ y: dt.year, m: dt.month, d: dt.day });
+      out[key] = (out[key] || 0) + v; cnt[key] = (cnt[key] || 0) + 1;
+    }
+  }
+  for (const k of Object.keys(out)) out[k] = Math.round(out[k] / cnt[k]);
+  return out;
+}
+
+export async function googleRhr(env, config, startYmd) {
+  const filter = `daily_resting_heart_rate.date >= "${fmtDate(startYmd)}"`;
+  const pages = [];
+  let token = '';
+  for (let i = 0; i < 3; i++) {
+    let qs = `filter=${encodeURIComponent(filter)}&pageSize=100`;
+    if (token) qs += `&pageToken=${encodeURIComponent(token)}`;
+    let data;
+    try { data = await googleFetch(env, config, `${GH}/daily-resting-heart-rate/dataPoints?${qs}`); }
+    catch (e) {
+      // if this API revision rejects the date filter, fall back to the newest page without one
+      if (i || !/FILTER|400/.test(String(e?.message))) throw e;
+      data = await googleFetch(env, config, `${GH}/daily-resting-heart-rate/dataPoints?pageSize=100`);
+      pages.push(data); break;
+    }
+    pages.push(data);
+    token = data.nextPageToken;
+    if (!token) break;
+  }
+  return parseGoogleRhr(pages);
+}
+
 export async function getHealth(env, config, days = 30, now = Date.now(), fresh = false) {
   const tz = tzOf(config);
   days = Math.max(1, Math.min(90, Number(days) || 30));
@@ -329,15 +383,17 @@ export async function getHealth(env, config, days = 30, now = Date.now(), fresh 
     const ck = `gh:${days}:${fmtDate(today)}`;
     google = fresh ? null : await cacheGet(ck);
     if (!google) {
-      google = { steps: {}, sleep: {}, ts: now };
+      google = { steps: {}, sleep: {}, rhr: {}, ts: now };
       let any = false;
       try { google.steps = await googleSteps(env, config, startYmd, fromDayNum(todayDn + 1)); any = true; }
       catch (e) { errors.push(errorEntry('google', e)); }
       if (!errors.some((x) => x.code === 'reauth')) {
         try { google.sleep = await googleSleep(env, config, startYmd); any = true; }
         catch (e) { errors.push({ ...errorEntry('google', e), part: 'sleep' }); }
+        try { google.rhr = await googleRhr(env, config, startYmd); any = true; }
+        catch (e) { errors.push({ ...errorEntry('google', e), part: 'restingHr' }); }
       }
-      if (any && !errors.length) await cachePut(ck, google, 5 * 60);
+      if (any && !errors.some((x) => x.part !== 'restingHr')) await cachePut(ck, google, 5 * 60);
       if (!any) google = null;
     }
   }
@@ -350,12 +406,13 @@ export async function getHealth(env, config, days = 30, now = Date.now(), fresh 
     map[date] = { date, ...vals, apple: vals };
   }
   if (google) {
-    const dates = new Set([...Object.keys(google.steps || {}), ...Object.keys(google.sleep || {})]);
+    const dates = new Set([...Object.keys(google.steps || {}), ...Object.keys(google.sleep || {}), ...Object.keys(google.rhr || {})]);
     for (const date of dates) {
       if (date < startKey) continue;
       const g = {};
       if (google.steps?.[date] != null) g.steps = google.steps[date];
       if (google.sleep?.[date] != null) g.sleepMin = google.sleep[date];
+      if (google.rhr?.[date] != null) g.restingHr = google.rhr[date];
       const cur = map[date] || { date };
       for (const [k, v] of Object.entries(g)) if (preferGoogle || cur[k] == null) cur[k] = v;
       cur.google = g;
