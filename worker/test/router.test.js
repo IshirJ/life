@@ -233,7 +233,7 @@ test('health GET merges Apple + Google (mocked), reauth on invalid_grant', async
       return Response.json({ rollupDataPoints: [{ civilStartTime: { date: { year: y, month: m, day: d } }, steps: { countSum: '9876' } }] });
     }
     if (url.includes('/sleep/dataPoints')) {
-      assert.match(decodeURIComponent(url), /sleep\.interval\.civil_start_time >= "/);
+      assert.match(decodeURIComponent(url), /sleep\.interval\.civil_end_time >= "/);
       const endIso = new Date(Date.UTC(y, m - 1, d, 11, 0)).toISOString();
       const startIso = new Date(Date.UTC(y, m - 1, d, 4, 0)).toISOString();
       return Response.json({ dataPoints: [{ sleep: { interval: { startTime: startIso, endTime: endIso } } }] });

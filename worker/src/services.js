@@ -296,7 +296,7 @@ export function parseGoogleSleep(pages, tz) {
 
 export async function googleSleep(env, config, startYmd) {
   const tz = tzOf(config);
-  const filter = `sleep.interval.civil_start_time >= "${fmtDate(startYmd)}T00:00:00"`;
+  const filter = `sleep.interval.civil_end_time >= "${fmtDate(startYmd)}T00:00:00"`; // sleep can only be filtered by its END time
   const pages = [];
   let token = '';
   for (let i = 0; i < 5; i++) {

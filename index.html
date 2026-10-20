@@ -56,7 +56,7 @@
 <style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
 </head>
 <body>
-<script>try{var _d=JSON.parse(localStorage.getItem('ishiros.life.v1')||'null'),_t=_d&&_d.settings&&_d.settings.theme;if(_t==='light'||_t==='dark')document.documentElement.dataset.theme=_t;if(_d&&_d.settings&&_d.settings.accent)document.documentElement.style.setProperty('--accent',_d.settings.accent)}catch(e){}</script>
+<script>(function(){var w=innerWidth,h=innerHeight,m=Math.min(w,h);document.documentElement.dataset.lay=m>=600&&w>=700?'tab':w>h&&w>=560?'land':'port'})();try{var _d=JSON.parse(localStorage.getItem('ishiros.life.v1')||'null'),_t=_d&&_d.settings&&_d.settings.theme;if(_t==='light'||_t==='dark')document.documentElement.dataset.theme=_t;if(_d&&_d.settings&&_d.settings.accent)document.documentElement.style.setProperty('--accent',_d.settings.accent)}catch(e){}</script>
 <style>
 /* Layout: one-column phone app. Every tab opens with a glass "hero" card (number + art), then sectioned cards.
    Floating glass tab bar with labels + round add button. Openers come from their button (side panel, drop-down, bottom sheet, zoom).
@@ -118,6 +118,25 @@ body.panel .dock{transform:translateY(130%);opacity:0;pointer-events:none}
 
 .av{width:46px;height:46px;border-radius:50%;color:var(--sage-ink);display:grid;place-items:center;font:700 15px var(--ui);flex:none;
   background:radial-gradient(circle at 32% 26%,rgb(255 255 255 / .55),rgb(255 255 255 / 0) 40%),linear-gradient(150deg,var(--sage-soft),var(--sage));box-shadow:inset 0 1px 0 rgb(255 255 255 / .4),0 4px 12px rgb(0 0 0 / .15)}
+.av{position:relative;overflow:visible}
+.avr{position:absolute;left:50%;top:50%;width:80px;height:80px;margin:-40px 0 0 -40px;pointer-events:none;overflow:visible;opacity:0;transition:opacity .35s ease}
+.avr circle{fill:none;stroke-linecap:round}
+.avr g{transform-origin:40px 40px;transform:rotate(var(--a0,0deg));filter:drop-shadow(0 0 2px rgb(240 109 68 / .45))}
+.rings-on .avr{opacity:1}
+.rings-on .avr g{animation:avspin var(--dur,20s) linear infinite var(--dir,normal)}
+@keyframes avspin{from{transform:rotate(var(--a0,0deg))}to{transform:rotate(calc(var(--a0,0deg) + 360deg))}}
+html[data-motion="off"] .avr g{animation:none}
+.top{overflow:visible}
+@keyframes glitch{0%{filter:none;transform:none;opacity:1}
+  8%{filter:brightness(1.9) drop-shadow(-2px 0 0 rgb(80 220 255 / .75)) drop-shadow(2px 0 0 rgb(255 70 160 / .7));transform:translateX(1.5px)}
+  14%{filter:brightness(.6);opacity:.55;transform:translateX(-1.5px) skewX(-4deg)}
+  22%{filter:brightness(2.3) drop-shadow(0 0 10px var(--accent));opacity:1;transform:none}
+  32%{filter:brightness(1) drop-shadow(1px 0 0 rgb(80 220 255 / .6)) drop-shadow(-1px 0 0 rgb(255 70 160 / .6));transform:translateX(-.8px)}
+  44%{filter:brightness(1.8) drop-shadow(0 0 14px var(--accent));opacity:.8;transform:none}
+  58%{filter:brightness(1.05);opacity:1}
+  70%{filter:brightness(1.5) drop-shadow(0 0 8px var(--accent))}
+  100%{filter:none;transform:none;opacity:1}}
+.glitch{animation:glitch .85s linear both}
 .hello{flex:1;min-width:0}
 .hello h1{font:500 clamp(22px,6.6vw,27px)/1.12 var(--serif);margin:3px 0 0;letter-spacing:-.01em;overflow-wrap:anywhere}
 .hello h1 em{font-style:italic;color:var(--accent)}
@@ -359,6 +378,33 @@ h2 em{font-style:italic}
 .seg2 button{flex:1;height:36px;border-radius:999px;font-weight:800;font-size:13px;color:var(--muted);transition:background .2s,color .2s}
 .seg2 button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 
+/* ===== wide layouts: phone turned sideways (land) and iPad / laptop (tab). Tabs become a side rail, content flows into columns ===== */
+html[data-lay="land"]{--railw:78px}
+html[data-lay="tab"]{--railw:100px}
+html:not([data-lay="port"]) .dock{left:0;top:0;bottom:0;right:auto;width:calc(var(--railw) + env(safe-area-inset-left,0px));padding:max(12px,env(safe-area-inset-top,0px)) 10px max(12px,env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px));background:none}
+html:not([data-lay="port"]) .dock::before{display:none}
+html:not([data-lay="port"]) .dock-in{height:100%;flex-direction:column;justify-content:center;max-width:none;gap:14px}
+html:not([data-lay="port"]) .tabs{flex:none;width:100%;grid-template-columns:1fr;padding:6px;border-radius:32px}
+html:not([data-lay="port"]) .tabs .ind{top:0;left:6px;right:6px;height:54px;width:auto!important}
+html[data-lay="land"] .tabs button{height:50px}html[data-lay="land"] .tabs .ind{height:50px}
+html[data-lay="tab"] .tabs button{height:64px;font-size:11px}html[data-lay="tab"] .tabs .ind{height:64px}html[data-lay="tab"] .tabs button svg.i{width:24px;height:24px}
+html:not([data-lay="port"]) .fab{width:58px;height:58px}
+html:not([data-lay="port"]) .app{max-width:1500px;padding-left:calc(var(--railw) + env(safe-area-inset-left,0px) + 22px);padding-right:max(22px,env(safe-area-inset-right,0px));padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))}
+html:not([data-lay="port"]) .pane{columns:2 330px;column-gap:24px}
+html[data-lay="tab"] .pane{columns:3 340px;column-gap:26px}
+html:not([data-lay="port"]) .pane>*{break-inside:avoid}
+html:not([data-lay="port"]) .pane>.chips,html:not([data-lay="port"]) .pane>.hero,html:not([data-lay="port"]) .pane>.banner,html:not([data-lay="port"]) .pane>.sec:has(.wk),html:not([data-lay="port"]) .pane>.sec:has(.abars),html:not([data-lay="port"]) .pane>.lay-wide{column-span:all}
+html:not([data-lay="port"]) .pane>.sec:first-of-type{margin-top:22px}
+html:not([data-lay="port"]) .pane>.hero{max-width:none}
+html:not([data-lay="port"]) #fcPill{left:auto;right:max(20px,env(safe-area-inset-right,0px));bottom:max(20px,env(safe-area-inset-bottom,0px));transform:none}
+html:not([data-lay="port"]) .m-bottom{max-width:620px}
+html[data-lay="land"] .top{margin-bottom:2px}
+#view.relay{animation:relay .62s cubic-bezier(.22,1,.36,1) both}
+@keyframes relay{from{opacity:0;transform:scale(.955) translateY(10px);filter:blur(10px) brightness(1.4)}60%{filter:blur(0) brightness(1.15)}to{opacity:1;transform:none;filter:none}}
+.dock.relay-side{animation:relaySide .6s cubic-bezier(.22,1.2,.36,1) both}
+.dock.relay-bottom{animation:relayBottom .6s cubic-bezier(.22,1.2,.36,1) both}
+@keyframes relaySide{from{transform:translateX(-110%);opacity:0}to{transform:none;opacity:1}}
+@keyframes relayBottom{from{transform:translateY(110%);opacity:0}to{transform:none;opacity:1}}
 /* tab bar */
 .dock{transition:transform .42s cubic-bezier(.22,1,.36,1),opacity .3s ease;position:fixed;z-index:7;left:0;right:0;bottom:calc(-1 * var(--gap));
   padding-top:28px;padding-bottom:max(12px,env(safe-area-inset-bottom,0px));padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));isolation:isolate;
@@ -375,11 +421,16 @@ h2 em{font-style:italic}
 .tabs button.on{color:#fff}
 .tabs{touch-action:none;-webkit-user-select:none;user-select:none}
 .tabs .ind{transition:background-color .25s,box-shadow .25s}
-.tabs .ind.lens{background:rgb(255 255 255 / .07);-webkit-backdrop-filter:saturate(2.2) brightness(1.15);backdrop-filter:saturate(2.2) brightness(1.15);z-index:2;pointer-events:none;
-  box-shadow:inset 0 0 0 1px rgb(255 255 255 / .38),inset 0 1.5px 4px rgb(255 255 255 / .45),inset 0 -8px 14px rgb(0 0 0 / .28),0 10px 26px rgb(0 0 0 / .35)}
-.tabs .ind.lens::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1.5px;background:conic-gradient(from 120deg,#7ef,#a8f,#f8a,#fd7,#7fe,#7ef);opacity:.75;
+.tabs .ind.lens{background:color-mix(in srgb,var(--bar) 55%,transparent);-webkit-backdrop-filter:blur(3px) saturate(2) brightness(1.18);backdrop-filter:blur(3px) saturate(2) brightness(1.18);z-index:2;pointer-events:none;overflow:hidden;
+  box-shadow:inset 0 0 0 1px rgb(255 255 255 / .42),inset 0 2px 3px rgb(255 255 255 / .55),inset 5px 0 8px -2px rgb(90 200 255 / .55),inset -5px 0 8px -2px rgb(255 90 200 / .5),inset 0 -6px 10px -2px rgb(120 255 190 / .35),inset 0 -12px 18px rgb(0 0 0 / .25),0 12px 30px rgb(0 0 0 / .4)}
+.tabs .ind.lens::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.5px;z-index:3;background:conic-gradient(from 110deg,#8ef,#b9f,#f9c,#fe8,#9fd,#8ef);opacity:.9;
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
-.tabs .ind.lens::after{content:"";position:absolute;left:14%;right:14%;top:5px;height:38%;border-radius:999px;background:linear-gradient(rgb(255 255 255 / .35),rgb(255 255 255 / 0))}
+.tabs .ind.lens::after{content:"";position:absolute;left:12%;right:12%;top:3px;height:34%;border-radius:999px;z-index:3;background:linear-gradient(rgb(255 255 255 / .45),rgb(255 255 255 / 0))}
+.lmag{position:absolute;left:0;pointer-events:none;z-index:1;display:none}
+.tabs .ind.lens .lmag{display:block}
+.lmag .lbtn{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10px;font-weight:800;letter-spacing:.02em;color:var(--accent);
+  filter:drop-shadow(.6px 0 0 rgb(80 200 255 / .4)) drop-shadow(-.6px 0 0 rgb(255 80 200 / .35))}
+.lmag .lbtn svg.i{width:21px;height:21px}
 .tabs.lensing button{color:var(--bar-ink)}
 .tabs.lensing button.on{color:var(--bar-ink)}
 .tabs button.under{color:var(--accent)!important;transform:scale(1.12)}
@@ -723,7 +774,9 @@ button.av:active{transform:scale(.92)}
 .abars .ab{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;min-width:0}.abars .ab i{width:100%;border-radius:5px 5px 3px 3px;background:linear-gradient(180deg,#6FC3F0,#2D6FB8);min-height:0}
 .abars .ab.td i{background:linear-gradient(180deg,var(--accent),#B4622A)}.abars .ab span{font:400 10px var(--mono);color:var(--muted);height:12px}
 .abars em{position:absolute;left:0;right:0;border-top:1px dashed color-mix(in srgb,var(--ink) 30%,transparent)}
-.hstat{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 2px 0;font-size:12px;color:var(--muted)}.hstat.bad{color:var(--soon)}.hstat .link{font-size:12px}
+.hstat{display:flex;align-items:center;gap:10px;margin:12px 0 0;padding:8px 8px 8px 14px;border-radius:999px;background:color-mix(in srgb,var(--surface) 70%,transparent);border:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--muted)}
+.hstat span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hstat i{width:7px;height:7px;border-radius:50%;background:var(--good);flex:none;box-shadow:0 0 8px var(--good)}
+.hstat.bad i{background:var(--soon);box-shadow:0 0 8px var(--soon)}.hstat .link{font-size:12px;padding:6px 12px;border-radius:999px;background:var(--surface2);flex:none}
 .fcstat{display:flex;align-items:center;gap:10px;margin:0 0 16px}.fcstat>div{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);padding:10px 12px;display:flex;flex-direction:column;gap:2px}
 .fcstat b{font-size:22px;font-weight:800}.fcstat span{font:400 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.fcstat .link{flex:none}
 .pcard{padding:4px 14px;margin-bottom:14px}
@@ -1358,7 +1411,7 @@ function header(){
   const dueN=db.entries.filter(e=>(e.type==='task'||e.type==='reminder')&&!e.done&&e.due&&dayDiff(e.due)<=0).length;
   const date=new Date().toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
   const left=state.tab==='today'
-    ?`<button class="av" id="avBtn" aria-label="Your profile">${esc(myInitials())}</button><div class="hello"><div class="cap">${esc(date)}</div><h1 id="hi"><span class="hl1">${greet}</span><br><em>${esc(firstName())}</em></h1></div>`
+    ?`<button class="av" id="avBtn" aria-label="Your profile">${esc(myInitials())}${typeof avRings==='function'?avRings():''}</button><div class="hello"><div class="cap">${esc(date)}</div><h1 id="hi"><span class="hl1">${greet}</span><br><em>${esc(firstName())}</em></h1></div>`
     :`<div class="hello"><div class="cap">${esc(date)}</div><h1>${t.title}</h1></div>`;
   return left+`<button class="ib" id="searchBtn" aria-label="Search everything">${ic('search')}</button>
     <button class="ib" id="setBtn" aria-label="Settings${dueN?`, ${dueN} due today`:''}">${ic('gear')}${dueN?`<span class="badge">${dueN}</span>`:''}</button>`;
@@ -1381,9 +1434,30 @@ function anim(el,frames,o={}){
   }
   try{el.animate(kf,{duration:(o.duration||.5)*1000,delay:(o.delay||0)*1000,easing:o.ease||'cubic-bezier(.22,1,.36,1)',fill:'backwards'})}catch(e){}
 }
+/* which layout fits the screen right now */
+function layNow(){const w=innerWidth,h=innerHeight,s=Math.min(w,h);if(s>=600&&w>=700)return'tab';if(w>h&&w>=560)return'land';return'port'}
+const RAIL=()=>document.documentElement.dataset.lay!=='port';
+function applyLay(animate){
+  const r=document.documentElement,was=r.dataset.lay,now=layNow();if(was===now)return;r.dataset.lay=now;
+  for(const k in VIEWS)delete VIEWS[k];   /* panes rebuild for the new width */
+  if(!was||!animate||noMotion()){if(was)render(false);requestAnimationFrame(()=>moveInd(true));return}
+  render(false);requestAnimationFrame(()=>moveInd(true));
+  /* turning the phone: the page settles in with a soft blur, the tab bar slides in from its new edge, and the glow flickers once */
+  const v=$('#view'),d=$('.dock');v.classList.remove('relay');d.classList.remove('relay-side','relay-bottom');void v.offsetWidth;
+  v.classList.add('relay');d.classList.add(now==='port'?'relay-bottom':'relay-side');
+  setTimeout(()=>{v.classList.remove('relay');d.classList.remove('relay-side','relay-bottom')},700);
+  try{const gl=$('#bgGlow');if(gl)gl.animate([{opacity:0},{opacity:.85,offset:.3},{opacity:.25,offset:.5},{opacity:.7,offset:.7},{opacity:0}],{duration:700,easing:'ease-out'})}catch(e){}
+  if(typeof glitchIn==='function')setTimeout(glitchIn,180);
+}
+addEventListener('resize',()=>applyLay(true));
 function moveInd(instant){
   const on=$('#tabs button.on'),ind=$('#ind');
   if(!on||!ind)return;
+  if(RAIL()){const y=on.offsetTop,fy=ind.dataset.y===undefined?y:Number(ind.dataset.y);ind.style.width='';ind.style.height=on.offsetHeight+'px';ind.dataset.y=y;delete ind.dataset.x;
+    ind.getAnimations?.().forEach(a=>a.cancel());ind.style.transform=`translateY(${y}px)`;
+    if(!instant&&!noMotion()&&fy!==y)try{ind.animate([{transform:`translateY(${fy}px)`},{transform:`translateY(${y}px)`}],{duration:460,easing:'cubic-bezier(.3,1.25,.5,1)'})}catch(e){}
+    return}
+  delete ind.dataset.y;ind.style.height='';
   const x=on.offsetLeft,w=on.offsetWidth,from=ind.dataset.x===undefined?x:Number(ind.dataset.x);
   ind.style.width=w+'px';ind.dataset.x=x;
   ind.getAnimations?.().forEach(a=>a.cancel());
@@ -1632,7 +1706,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='57';
+const APP_VER='64';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -2942,8 +3016,10 @@ function handleHash(){
   if(h==='#log=food'){setTimeout(openFoodLog,500)}
 }
 function healthStatus(){
-  const e=(HC.err||[])[0],msg=e?(e.code==='reauth'?'Fitbit needs signing in again (Settings → Connections → Fitbit)':`Couldn’t refresh: ${e.message||e.code||'error'}`):'';
-  return`<div class="hstat${e?' bad':''}"><span>${e?esc(msg):`Fitbit &amp; Health · ${HC.at?`updated ${esc(ago(HC.at))}`:'not loaded yet'}`}</span><button class="link" id="hRefresh">${HC.busy?'Refreshing…':'Refresh'}</button></div>`}
+  const e=(HC.err||[])[0],part=e&&e.part==='sleep'?'Sleep':'Some Fitbit data';
+  const msg=e?(e.code==='reauth'?'Fitbit sign-in expired':`${part} didn’t load`):'';
+  /* details live in Settings → Connections → Check everything; here it stays one calm line */
+  return`<div class="hstat${e?' bad':''}"><i></i><span>${e?esc(msg):`Fitbit · ${HC.at?`updated ${esc(ago(HC.at))}`:'not loaded yet'}`}</span><button class="link" id="${e&&e.code==='reauth'?'hReconnect':'hRefresh'}">${HC.busy?'Refreshing…':e&&e.code==='reauth'?'Reconnect':e?'Retry':'Refresh'}</button></div>`}
 function healthTiles(){
   if(!syncOn())return'';
   if(!SYNC.healthOn)return`<div class="card-s rvcard" style="margin-top:8px"><p class="small" style="margin:0 0 10px">Health data is off on this phone.</p><button class="secondary" id="hOn2" style="width:100%">Show Fitbit &amp; Apple Health data</button></div>`;
@@ -3095,21 +3171,26 @@ document.addEventListener('click',async e=>{const b=e.target.closest('#fdcSave')
 /* ---------- tab bar: press, hold and slide — the selector turns into a glass lens that follows your finger ---------- */
 (function(){
   const nav=document.querySelector('nav.tabs'),ind=document.getElementById('ind');if(!nav||!ind)return;
-  let g=null,raf=0,x=0,v=0,tx=0,w=0,suppress=false;
+  let g=null,raf=0,x=0,v=0,tx=0,w=0,suppress=false,mag=null;
   const btns=()=>[...document.querySelectorAll('#tabs button')];
   const bounds=()=>{const b=btns();return[b[0].offsetLeft,b[b.length-1].offsetLeft+b[b.length-1].offsetWidth-w]};
   const under=cx=>{let best=null,bd=1e9;for(const b of btns()){const d=Math.abs(cx-(b.offsetLeft+b.offsetWidth/2));if(d<bd){bd=d;best=b}}return best};
   function frame(){
     const a=.22,d=.62;v=(v+(tx-x)*a)*d;x+=v;                       /* damped spring toward the finger */
-    const sp=Math.min(1,Math.abs(v)/14),sx=1.16+sp*.14,sy=1.16-sp*.08; /* stretch along the direction of travel */
+    const sp=Math.min(1,Math.abs(v)/14),sx=1.62+sp*.16,sy=1.36-sp*.1; /* stretch along the direction of travel */
     ind.style.transform=`translateX(${x.toFixed(2)}px) scale(${sx.toFixed(3)},${sy.toFixed(3)})`;
+    if(mag){mag.style.transformOrigin=`${(x+w/2).toFixed(1)}px ${mag.dataset.cy}px`;mag.style.transform=`translateX(${(-x).toFixed(2)}px) scale(${(1.2/sx).toFixed(3)},${(1.2/sy).toFixed(3)})`}   /* lens shape is wide; what you see through it is a steady 1.2× */   /* the copy inside the lens lines up with the real bar, so the lens's own scale magnifies it */
     const u=under(x+w/2);btns().forEach(b=>b.classList.toggle('under',b===u));
     if(g&&g.lens||Math.abs(v)>.05||Math.abs(tx-x)>.3)raf=requestAnimationFrame(frame);else raf=0;
   }
-  function startLens(){if(!g||g.lens)return;g.lens=true;try{nav.setPointerCapture(g.id)}catch(err){}nav.classList.add('lensing');ind.classList.add('lens');ind.getAnimations?.().forEach(a=>a.cancel());
+  function buildMag(){mag?.remove();mag=document.createElement('span');mag.className='lmag';mag.setAttribute('aria-hidden','true');
+    const top=ind.offsetTop;mag.dataset.cy=(top+ind.offsetHeight/2).toFixed(1);mag.style.cssText=`width:${nav.clientWidth}px;height:${nav.clientHeight}px;top:${-top}px`;
+    for(const b of btns()){const c=document.createElement('span');c.className='lbtn';c.innerHTML=b.innerHTML;c.style.cssText=`left:${b.offsetLeft}px;top:${b.offsetTop}px;width:${b.offsetWidth}px;height:${b.offsetHeight}px`;mag.appendChild(c)}
+    ind.appendChild(mag)}
+  function startLens(){if(!g||g.lens)return;g.lens=true;buildMag();try{nav.setPointerCapture(g.id)}catch(err){}nav.classList.add('lensing');ind.classList.add('lens');ind.getAnimations?.().forEach(a=>a.cancel());
     try{navigator.vibrate&&navigator.vibrate(8)}catch(e){}if(!raf)raf=requestAnimationFrame(frame)}
   nav.addEventListener('pointerdown',e=>{
-    if(noMotion()||e.button>0)return;const b=e.target.closest('#tabs button');if(!b)return;
+    if(noMotion()||e.button>0||RAIL())return;const b=e.target.closest('#tabs button');if(!b)return;
     w=ind.offsetWidth;x=Number(ind.dataset.x)||b.offsetLeft;v=0;const r=nav.getBoundingClientRect();
     g={id:e.pointerId,sx:e.clientX,r,lens:false,t:setTimeout(startLens,220)};
     tx=Math.max(bounds()[0],Math.min(bounds()[1],e.clientX-r.left-w/2));
@@ -3127,7 +3208,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('#fdcSave')
     const b=under(x+w/2);cancelAnimationFrame(raf);raf=0;
     btns().forEach(z=>z.classList.remove('under'));
     ind.style.transform=`translateX(${x.toFixed(2)}px)`;ind.dataset.x=x;
-    ind.classList.remove('lens');nav.classList.remove('lensing');
+    ind.classList.remove('lens');nav.classList.remove('lensing');const m=mag;mag=null;setTimeout(()=>m?.remove(),260);
     if(b&&b.dataset.tab!==state.tab){const ks=Object.keys(TABS),dir=Math.sign(ks.indexOf(b.dataset.tab)-ks.indexOf(state.tab));state.tab=b.dataset.tab;if(b.dataset.tab!=='mind')state.folder=null;SC.scrollTop=0;render(true,false,dir);tick()}
     else moveInd(false);
   }
@@ -3440,7 +3521,7 @@ function runSplashNow(){
   hiEl.innerHTML=`<span class="sl1">${esc(GREET)}</span><span class="sl2"><em>${esc(firstName())}</em></span>`;
   const target=$('#hi');if(target)target.style.visibility='hidden';
   const mk=splash.querySelector('.mark');if(mk)mk.style.display='none';
-  SC.style.opacity='0';splash.classList.add('go');
+  SC.style.opacity='0';splash.classList.add('go');document.documentElement.classList.remove('rings-on');
   const cv=document.createElement('canvas');cv.id='splashCv';splash.prepend(cv);
   let W=innerWidth,H=innerHeight;const dpr=Math.min(2,devicePixelRatio||1);cv.width=W*dpr;cv.height=H*dpr;
   const x=cv.getContext('2d');if(!x)return legacyEnd();x.scale(dpr,dpr);x.lineCap='round';x.lineJoin='round';
@@ -3453,47 +3534,58 @@ function runSplashNow(){
     const r2=hiEl.getBoundingClientRect();cx=W/2;cy=r2.top+r2.height/2||H/2};
   addEventListener('resize',onRs);
   const ex=Math.max(hr.width,170)/2+34,ey=Math.max(hr.height,80)/2+34,TAU=Math.PI*2,N=12;
-  const T_IN=900,T_SWIRL=1600,T_ROUND=520,T_SWOOSH=900,T_FLICK=700;
-  const cur=[...Array(N)].map((_,i)=>{const k=i/(N-1);return{rx:ex+12+k*(W*.5),ry:ey+12+k*(H*.36),a:i*1.9,span:(1.15+((i*37)%10)/14)*Math.PI,spd:(.22+((i*13)%7)/40)*(i%2?1:-1),
-    wob:.035+((i*7)%5)/120,ph:i*.9,w:[2.6,1.4,2,1.1,1.7,3][i%6],pal:PAL[i%PAL.length],rate:.75+((i*29)%10)/16,bright:.6+((i*17)%10)/25,ring:1+(i%4)*.06}});
-  const ease=u=>u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2,easeIn=u=>u*u*u,cl=v=>Math.max(0,Math.min(1,v)),PTS=90;
-  const t0=performance.now(),tRound=T_SWIRL,tSwoosh=T_SWIRL+T_ROUND,tFlick=tSwoosh+T_SWOOSH;
-  let flew=false,shown=false,flick=false,raf=0;
-  let vt=0,last=0;
+  const T_IN=900,T_SWIRL=1600,T_ROUND=520,T_FLY=900,T_FLICK=800;
+  /* three of the curves become the rings that stay around your avatar; the rest pour into it */
+  const KEEP={0:0,5:1,10:2};
+  const cur=[...Array(N)].map((_,i)=>{const k=i/(N-1);return{rx:ex+12+k*(W*.5),ry:ey+12+k*(H*.36),a:i*1.9,ang:0,span:(1.15+((i*37)%10)/14)*Math.PI,spd:(.22+((i*13)%7)/40)*(i%2?1:-1),
+    wob:.035+((i*7)%5)/120,ph:i*.9,w:[2.6,1.4,2,1.1,1.7,3][i%6],pal:PAL[i%PAL.length],ring:1+(i%4)*.06,keep:KEEP[i]}});
+  const flyE=u=>1-Math.pow(1-u,2.6),ease=u=>u<.5?4*u*u*u:1-Math.pow(-2*u+2,3)/2,cl=v=>Math.max(0,Math.min(1,v)),PTS=90;
+  const tRound=T_SWIRL,tFly=T_SWIRL+T_ROUND,tEnd=tFly+T_FLY+(N-1)*22;
+  let av=null,flew=false,shown=false,done=false,raf=0,vt=0,last=0;
   function frame(now){
     /* animation clock: if the phone hiccups, pause instead of jumping ahead */
-    if(!last)last=now;vt+=Math.min(34,Math.max(0,now-last));last=now;
+    if(!last)last=now;const dt=Math.min(34,Math.max(0,now-last));vt+=dt;last=now;
     const ms=vt,t=ms/1000;x.clearRect(0,0,W,H);
-    const r=ease(cl((ms-tRound)/T_ROUND));                 /* 0→1: gather into one ring */
-    let front=-1;
+    const r=ease(cl((ms-tRound)/T_ROUND));                 /* 0→1: gather into one ring around the greeting */
+    if(ms>tFly-40&&!av)av=avTarget();
     cur.forEach((c,i)=>{
       const grow=1-Math.pow(1-cl((ms-i*45)/T_IN),3);if(grow<.02&&r<=0)return;
-      const sw=cl((ms-tSwoosh-i*22)/(T_SWOOSH/c.rate));   /* each streak at its own speed */
-      if(sw>=1)return;
-      const swE=easeIn(sw),n=Math.max(2,Math.round(PTS*(r>0?1:grow))),fade=r>0?1:Math.min(1,grow*1.6);
-      const rx=c.rx+(ex*c.ring-c.rx)*r,ry=c.ry+(ey*c.ring-c.ry)*r,spin=t*c.spd*(1+r*4),span=c.span+(TAU*.92-c.span)*r;
+      const kp=c.keep!=null?AVR[c.keep]:null,fl=av?flyE(cl((ms-tFly-(kp?(N-1)*22:i*22))/T_FLY)):0;
+      /* spin speed: speeds up while gathering, then settles to the exact speed the rings keep after the splash */
+      const w0=c.spd*(1+r*4),w1=kp?TAU/kp.dur*kp.dir:w0*1.6;c.ang+=dt/1000*(w0+(w1-w0)*fl);
+      const n=Math.max(2,Math.round(PTS*(r>0?1:grow)));let fade=r>0?1:Math.min(1,grow*1.6);
+      let ox=cx,oy=cy,rx=c.rx+(ex*c.ring-c.rx)*r,ry=c.ry+(ey*c.ring-c.ry)*r,span=c.span+(TAU*.92-c.span)*r,lw=c.w;
+      if(fl>0){ /* fly along a soft arc into the avatar, shrinking to its ring */
+        const u=fl,p1x=av.x+(cx-av.x)*.25,p1y=cy*.3+av.y*.7;ox=(1-u)*(1-u)*cx+2*u*(1-u)*p1x+u*u*av.x;oy=(1-u)*(1-u)*cy+2*u*(1-u)*p1y+u*u*av.y;
+        const tr=kp?kp.r:av.r*.8;rx=rx+(tr-rx)*u;ry=ry+(tr-ry)*u;span=span+((kp?kp.f:.25)*TAU-span)*u;lw=lw+((kp?kp.w:.6)-lw)*u;
+        if(!kp)fade*=1-cl((u-.55)/.4)}
+      if(fade<=0)return;
+      const th0=c.a+c.ang;c.th0=th0;c.span1=span;
       let fx=0,fy=0,mx=0,my=0;const mid=n>>1;x.beginPath();
-      for(let j=0;j<n;j++){const s=j/(PTS-1),th=c.a+s*span+spin,w=1+c.wob*(1-r)*Math.sin(2*th+t*1.1+c.ph);
-        let px=cx+Math.cos(th)*rx*w,py=cy+Math.sin(th)*ry*w;
-        if(sw>0){ /* 1) the ring unrolls into a straight glowing line in its own lane, 2) the line fires across the screen */
-          const u1=ease(cl(sw/.38)),u2=easeIn(cl((sw-.22)/.78)),L=W*(.45+.35*c.rate/1.4),lane=cy+(i-(N-1)/2)*15;
-          const lx=cx-L/2+s*L,ly=lane+Math.sin(s*Math.PI)*6*(1-u2);
-          px+=(lx-px)*u1;py+=(ly-py)*u1;px+=u2*(W*1.75)}
+      for(let j=0;j<n;j++){const s=j/(PTS-1),th=th0+s*span,w=1+c.wob*(1-r)*Math.sin(2*th+t*1.1+c.ph);
+        const px=ox+Math.cos(th)*rx*w,py=oy+Math.sin(th)*ry*w;
         if(!j){fx=px;fy=py;x.moveTo(px,py)}else x.lineTo(px,py);if(j===mid){mx=px;my=py}}
-      const d=Math.hypot(mx-fx,my-fy)>4,g=x.createLinearGradient(fx,fy,d?mx:fx+1,d?my:fy+1);g.addColorStop(0,c.pal[0]);g.addColorStop(1,c.pal[1]);x.strokeStyle=g;
-      const boost=1+sw*1.6*c.bright;
-      x.globalAlpha=Math.min(1,.15*boost)*fade;x.lineWidth=c.w*(5+sw*6);x.stroke();
-      x.globalAlpha=Math.min(1,(.78)*(1-sw*.3))*fade;x.lineWidth=c.w*(1+sw*.8);x.stroke();
-      if(sw>0){const leftEdge=Math.min(fx,mx);front=Math.max(front,leftEdge)}
+      const d=Math.hypot(mx-fx,my-fy)>2,g=x.createLinearGradient(fx,fy,d?mx:fx+1,d?my:fy+1);g.addColorStop(0,c.pal[0]);g.addColorStop(1,c.pal[1]);x.strokeStyle=g;
+      x.globalAlpha=.16*fade*(1+fl*.8);x.lineWidth=lw*(5-fl*2.5);x.stroke();
+      x.globalAlpha=.85*fade;x.lineWidth=lw;x.stroke();
     });
     x.globalAlpha=1;
-    if(!flew&&ms>tSwoosh-80){flew=true;flyGreeting()}
-    if(!shown&&ms>tSwoosh){shown=true;SC.style.transition='none';SC.style.opacity=''}
-    /* reveal Home right behind the streaks: wipe the dark cover from left to right */
-    if(ms>tSwoosh){const p=cl((ms-tSwoosh)/(T_SWOOSH*.95)),edge=Math.round(p*125-15);
-      const m=`linear-gradient(100deg,transparent ${edge}%,#000 ${edge+18}%)`;splashBg.style.webkitMaskImage=m;splashBg.style.maskImage=m;if(p>=1)splashBg.style.opacity='0'}
-    if(!flick&&ms>tFlick-120){flick=true;finalFlicker()}
-    if(ms<tFlick+60)raf=requestAnimationFrame(frame);else{cv.remove();setTimeout(endSplash,T_FLICK)}
+    if(!flew&&ms>tFly+60){flew=true;flyGreeting()}
+    if(!shown&&ms>tFly+120){shown=true;SC.style.transition='none';SC.style.opacity=''}
+    /* Home opens outward from the greeting while the rings fly to the avatar */
+    if(ms>tFly+120){const p=ease(cl((ms-tFly-120)/(T_FLY*.85))),R=Math.round(p*Math.hypot(W,H)*1.05);
+      const m=`radial-gradient(circle at ${Math.round(cx)}px ${Math.round(cy)}px,transparent ${R}px,#000 ${R+140}px)`;splashBg.style.webkitMaskImage=m;splashBg.style.maskImage=m;if(p>=1)splashBg.style.opacity='0'}
+    if(!done&&ms>=tEnd){done=true;handOff();return}
+    raf=requestAnimationFrame(frame);
+  }
+  /* where the avatar is, and the rings it keeps */
+  function avTarget(){const a=$('#avBtn');if(!a)return{x:40,y:60,r:23};const b=a.getBoundingClientRect();return{x:b.left+b.width/2,y:b.top+b.height/2,r:b.width/2}}
+  function handOff(){
+    const root=document.documentElement;
+    cur.forEach(c=>{if(c.keep==null)return;const g=document.querySelector(`.avr .r${c.keep}`);if(g)g.style.setProperty('--a0',((c.th0*180/Math.PI)%360).toFixed(1)+'deg')});
+    root.classList.add('rings-on');
+    cv.animate([{opacity:1},{opacity:0}],{duration:260,fill:'forwards'});setTimeout(()=>cv.remove(),280);
+    finalFlicker();setTimeout(endSplash,T_FLICK);
   }
   function finalFlicker(){
     const bc=document.getElementById('bgcurve'),gl=document.getElementById('bgGlow');
@@ -3501,7 +3593,7 @@ function runSplashNow(){
     try{if(bc)bc.animate([{filter:'brightness(1)'},{filter:'brightness(2.2)',offset:.25},{filter:'brightness(1.1)',offset:.4},{filter:'brightness(2.6)',offset:.6},{filter:'brightness(1)'}],{duration:T_FLICK,easing:'ease-out'})}catch(e){}
     try{if(bc)bc.animate(k,{duration:T_FLICK})}catch(e){}
     try{if(gl)gl.animate([{opacity:0},{opacity:.9,offset:.25},{opacity:.2,offset:.4},{opacity:1,offset:.6},{opacity:0}],{duration:T_FLICK,easing:'ease-out'})}catch(e){}
-    const av=$('#avBtn');if(av)av.animate([{transform:'scale(1)'},{transform:'scale(1.12)'},{transform:'scale(1)'}],{duration:520,easing:'cubic-bezier(.34,1.56,.64,1)'});
+    glitchIn();
   }
   function flyGreeting(){
     hiEl.style.animation='none';hiEl.style.opacity='1';hiEl.style.transform='none';
@@ -3512,9 +3604,21 @@ function runSplashNow(){
       a.animate([{transform:'none'},{transform:`translate(${br.left-ar.left}px,${br.top-ar.top}px) scale(${sc})`}],{duration:820,easing:'cubic-bezier(.45,0,.15,1)',fill:'forwards'})});
     setTimeout(()=>{t.style.visibility='';hiEl.style.visibility='hidden'},830);
   }
-  function legacyEnd(){splashBg.style.opacity='0';SC.style.opacity='';const t=$('#hi');if(t)t.style.visibility='';setTimeout(endSplash,300)}
+  function legacyEnd(){splashBg.style.opacity='0';SC.style.opacity='';const t=$('#hi');if(t)t.style.visibility='';root().classList.add('rings-on');setTimeout(endSplash,300)}
+  const root=()=>document.documentElement;
   raf=requestAnimationFrame(frame);
-  setTimeout(()=>{if(splash.isConnected){cancelAnimationFrame(raf);SC.style.opacity='';const t=$('#hi');if(t)t.style.visibility='';endSplash()}},7000);
+  setTimeout(()=>{if(splash.isConnected){cancelAnimationFrame(raf);SC.style.opacity='';const t=$('#hi');if(t)t.style.visibility='';root().classList.add('rings-on');endSplash()}},7500);
+}
+/* the rings that live around your avatar (radius, line width, how much of the circle, seconds per turn, direction) */
+const AVR=[{r:28,w:1.7,f:.62,dur:16,dir:1},{r:31.5,w:1.15,f:.36,dur:23,dir:-1},{r:35,w:.9,f:.78,dur:31,dir:1}];
+function avRings(){
+  const C=['#F06D44','#9DB4A3','#FFB07A'],D=['#FFB07A','#F2EDE3','#F06D44'];
+  return`<svg class="avr" viewBox="0 0 80 80" aria-hidden="true"><defs>${AVR.map((_,k)=>`<linearGradient id="avg${k}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${C[k]}"/><stop offset="1" stop-color="${D[k]}"/></linearGradient>`).join('')}</defs>
+    ${AVR.map((q,k)=>{const L=2*Math.PI*q.r;return`<g class="r${k}" style="--dur:${q.dur}s;--dir:${q.dir>0?'normal':'reverse'}"><circle cx="40" cy="40" r="${q.r}" stroke="url(#avg${k})" stroke-width="${q.w}" stroke-dasharray="${(L*q.f).toFixed(1)} ${L.toFixed(1)}"/></g>`}).join('')}</svg>`}
+/* a short glow-and-glitch pass over the key pieces of Home as it appears */
+function glitchIn(){
+  const els=[['#hi',0],['#avBtn',90],['#scroller .big',160],['#ind',260],['#scroller .sec-h h2',340]];
+  els.forEach(([sel,d])=>{const el=$(sel);if(!el)return;setTimeout(()=>{el.classList.remove('glitch');void el.offsetWidth;el.classList.add('glitch');setTimeout(()=>el.classList.remove('glitch'),900)},d)});
 }
 
 /* ===================== drag a panel down by its handle (or header) to close it ===================== */
@@ -3584,7 +3688,8 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-srvs
   try{const txt=await api('/backup?slot='+encodeURIComponent(b.dataset.srvslot));restoreText(typeof txt==='string'?txt:JSON.stringify(txt),b)}catch(err){toast('Couldn’t load that copy: '+err.message)}},true);
 
 /* health: refresh when you open the Health tab and every 5 minutes while Life is open */
-document.addEventListener('click',e=>{const b=e.target.closest('#hRefresh,#hOn2');if(!b)return;e.stopImmediatePropagation();e.preventDefault();
+document.addEventListener('click',e=>{const b=e.target.closest('#hRefresh,#hOn2,#hReconnect');if(!b)return;e.stopImmediatePropagation();e.preventDefault();
+  if(b.id==='hReconnect'){openConn();return}
   if(b.id==='hOn2'){SYNC.healthOn=true;saveSync();DATA_VER++;render(false)}
   b.textContent='Refreshing…';loadHealth(true)},true);
 setInterval(()=>{if(!document.hidden&&syncOn()&&SYNC.healthOn)loadHealth(false)},5*6e4);
@@ -3612,8 +3717,8 @@ const splash=document.getElementById('splash'),splashBg=document.getElementById(
 SPLASHING=!(noMotion()||LOCKED_BLOB);
 if(!LOCKED_BLOB&&db.settings.startTab&&TABS[db.settings.startTab])state.tab=db.settings.startTab;
 if(LOCKED_BLOB){db.settings={...DEF,lockMin:LOCKED_BLOB.lockMin||5};showLock('unlock')}
-else{applyLook();render(false)}
-function endSplash(){if(!splash.isConnected&&!SPLASHING)return;splash.remove();splashBg.remove();const h=$('#hi');if(h)h.style.visibility='';flushAfterSplash()}
+else{applyLay(false);applyLook();render(false)}
+function endSplash(){document.documentElement.classList.add('rings-on');if(!splash.isConnected&&!SPLASHING)return;splash.remove();splashBg.remove();const h=$('#hi');if(h)h.style.visibility='';flushAfterSplash()}
 if(noMotion()||LOCKED_BLOB){endSplash()}
 else runSplash();
 handleHash();
