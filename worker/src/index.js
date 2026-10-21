@@ -559,7 +559,7 @@ async function route(request, env, url) {
     case 'POST /ai/test':
       return aiTest(await config());
     case 'POST /ai/food':
-      return aiFood(request, await config());
+      return aiFood(request, await config(), env);
     case 'POST /reels':
       return postReel(request, env, await config());
     case 'GET /reels':

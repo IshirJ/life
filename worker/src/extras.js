@@ -187,7 +187,42 @@ export async function aiTest(config) {
 const FOOD_SCHEMA = { type: 'OBJECT', properties: { items: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
   name: { type: 'STRING' }, grams: { type: 'NUMBER' }, kcal: { type: 'NUMBER' }, protein: { type: 'NUMBER' }, fat: { type: 'NUMBER' }, carbs: { type: 'NUMBER' }, confidence: { type: 'STRING' } },
   required: ['name', 'grams', 'kcal', 'protein', 'fat', 'carbs'] } }, note: { type: 'STRING' } }, required: ['items'] };
-export async function aiFood(request, config) {
+
+// Free fallback: Llama 3.2 Vision for photos, Llama 3.3 70B for text. Both run on Cloudflare's free daily allowance.
+const FOOD_JSON = 'Reply ONLY with JSON: {"items":[{"name":string,"grams":number,"kcal":number,"protein":number,"fat":number,"carbs":number,"confidence":"high"|"medium"|"low"}],"note":string}.';
+function firstJson(t) {
+  if (t && typeof t === 'object') return t;
+  const s = String(t || ''), a = s.indexOf('{'), z = s.lastIndexOf('}');
+  if (a < 0 || z <= a) return null;
+  try { return JSON.parse(s.slice(a, z + 1)); } catch { return null; }
+}
+async function foodWorkersAI(env, image, text) {
+  const ask = `You are a careful nutrition logger. Identify each separate food or drink ${image ? 'in the photo' : 'described'}${text ? ` (the person says: "${text}")` : ''}. Estimate the eaten portion in grams and its calories, protein, fat and carbs for that portion using standard nutrition databases (USDA; IFCT for Indian dishes). Short plain names. ${FOOD_JSON}`;
+  let r;
+  try {
+    if (image) {
+      const bin = Uint8Array.from(atob(image.slice(image.indexOf(',') + 1)), (c) => c.charCodeAt(0));
+      const M = '@cf/meta/llama-3.2-11b-vision-instruct';
+      const run = () => env.AI.run(M, { messages: [{ role: 'user', content: ask }], image: [...bin], max_tokens: 700 });
+      try { r = await run(); }
+      catch (e) {
+        // Meta's licence must be accepted once per account before the vision model will answer
+        if (!/agree/i.test(String(e?.message || e))) throw e;
+        await env.AI.run(M, { prompt: 'agree' }).catch(() => {});
+        r = await run();
+      }
+    } else {
+      r = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', { messages: [{ role: 'system', content: FOOD_JSON }, { role: 'user', content: ask }], max_tokens: 700 });
+    }
+  } catch (e) {
+    console.error('workers-ai food', e);
+    throw new HttpError(429, 'Gemini’s free limit is used up and the backup AI is busy too. Try again in a few minutes.');
+  }
+  const out = firstJson(r?.response ?? r);
+  if (!out) throw new HttpError(502, 'The backup AI’s answer wasn’t readable. Try again.');
+  return out;
+}
+export async function aiFood(request, config, env) {
   const b = await readJson(request, 4_000_000);
   const parts = [];
   if (b.image) {
@@ -200,9 +235,16 @@ export async function aiFood(request, config) {
   const text = clip(b.text, 600).trim();
   if (!parts.length && !text) return err(400, 'image or text required');
   parts.push({ text: `You are a careful nutrition logger. Identify each separate food or drink ${parts.length ? 'in the photo' : 'described'}${text ? ` (the person says: "${text}")` : ''}. Estimate the eaten portion in grams and its calories, protein, fat and carbs for that portion, using standard nutrition databases (USDA, IFCT for Indian dishes). Prefer realistic home or restaurant portions. Use short plain names. confidence is high, medium or low. If nothing edible is visible, return an empty list with a note.` });
-  const out = await gemini(config, parts, FOOD_SCHEMA);
+  let out, via = 'gemini';
+  try { out = await gemini(config, parts, FOOD_SCHEMA); }
+  catch (e) {
+    // Gemini's free quota used up (or Gemini down / no key): fall back to Cloudflare's free Workers AI models
+    if (!env?.AI || (e?.status && e.status !== 429 && e.status < 500 && config.geminiKey)) throw e;
+    out = await foodWorkersAI(env, b.image ? String(b.image) : '', text);
+    via = 'workers-ai';
+  }
   const items = (Array.isArray(out?.items) ? out.items : []).slice(0, 12).filter((x) => x && typeof x === 'object').map(cleanFood);
-  return json({ items, note: clip(out?.note, 200).trim() });
+  return json({ items, note: clip(out?.note, 200).trim(), via });
 }
 
 // Reel → guide. Accepts a link (YouTube works directly; Instagram/TikTok use the public caption when the

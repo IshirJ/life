@@ -211,3 +211,17 @@ test('jarvis ask returns reply + actions; widget carries live bus', async () => 
     assert.equal(w.bus.route, 'NMG'); assert.equal(w.bus.deps.length, 1);
   } finally { f.restore(); }
 });
+
+test('ai/food falls back to Workers AI when Gemini is rate limited', async () => {
+  const { aiFood } = await import('../src/extras.js');
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ error: { message: 'quota' } }), { status: 429 });
+  try {
+    const env = { AI: { run: async (m) => ({ response: 'Sure: {"items":[{"name":"chicken rice","grams":"300","kcal":520,"protein":35,"fat":12,"carbs":60}],"note":""}' }) } };
+    const req = new Request('https://x/ai/food', { method: 'POST', body: JSON.stringify({ text: 'chicken over rice' }) });
+    const r = await aiFood(req, { geminiKey: 'k' }, env);
+    const d = await r.json();
+    assert.equal(d.via, 'workers-ai');
+    assert.equal(d.items[0].grams, 300);
+  } finally { globalThis.fetch = realFetch; }
+});
