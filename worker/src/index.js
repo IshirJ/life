@@ -11,7 +11,7 @@ import {
 import { isValidTz, parseYmd } from './tz.js';
 import { searchFood } from './food.js';
 import { SyncHub } from './hub.js';
-import { getImages, imageUsed, getBus, getBusStops, aiFood, aiTest, postReel, listReels, deleteReels, ingestJobs, listJobs, logScreen, getScreen } from './extras.js';
+import { getImages, imageUsed, getBus, getBusStops, aiFood, aiTest, aiStt, postReel, listReels, deleteReels, ingestJobs, listJobs, logScreen, getScreen } from './extras.js';
 
 const MIN = 60 * 1000;
 const DUE_WINDOW = 30 * MIN;
@@ -72,6 +72,7 @@ function mergeConfig(cur, body) {
     const k = String(body.fdcKey).trim().slice(0, 100);
     if (k) next.fdcKey = k; else delete next.fdcKey;
   }
+  if (body.jarvisVoice != null) { const v = String(body.jarvisVoice); if (/^[a-z]{2}-[A-Z]{2}-[A-Za-z]+Neural$/.test(v)) next.jarvisVoice = v; else if (!v) delete next.jarvisVoice; }
   for (const k of ['unsplashKey', 'geminiKey', 'geminiModel']) {
     if (body[k] == null || body[k] === MASK) continue;
     const v = String(body[k]).trim().slice(0, 120);
@@ -400,6 +401,8 @@ async function route(request, env, url) {
       return getBus(url);
     case 'GET /bus/stops':
       return getBusStops(url);
+    case 'POST /ai/stt':
+      return aiStt(request, await config());
     case 'POST /ai/test':
       return aiTest(await config());
     case 'POST /ai/food':

@@ -1931,7 +1931,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='160';
+const APP_VER='162';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -3998,7 +3998,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=160';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=162';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -5773,7 +5773,7 @@ function jvPaint(){const L=$('#jvLog');if(!L)return;const{on,lau}=jvState();
   const nt=$('#jvNote');if(nt)nt.innerHTML=!on&&!lau?'Your laptop isn’t answering. It’s asleep, offline, or hasn’t been logged into since the update. Wake it and tap Start.':'';
   const all=[...JV.log.map(x=>({...x})),...JV.local].sort((a,b)=>(a.at||0)-(b.at||0)).slice(-30);
   const run=all.some(x=>!x.reply&&(x.state==='running'||x.state==='queued')&&(x.at||0)>=JV.since&&Date.now()-(x.at||0)<6e5);
-  L.innerHTML=all.length?all.map(x=>`<div class="jv-me">${esc(x.text)}</div>${x.reply?`<div class="jv-ai${x.local?' loc':''}">${esc(x.reply)}${x.reply!=='Stopped.'?`<button class="jvplay" data-jvplay="${esc(x.local?'':(x.id||''))}" data-jvtext="${esc(x.reply)}" aria-label="Play">${ic('play')}</button>`:''}</div>`:`<div class="jv-ai wait">${x.state==='running'?`<details class="jvsteps"${JV.open.has(x.id)?' open':''} data-jvid="${esc(x.id||'')}"><summary><span class="jvdot"></span>Working on it…${(x.steps||[]).length?`<em>${x.steps.length} step${x.steps.length>1?'s':''}</em>`:''}<i class="chev">${ic('chev')}</i></summary><ol>${(x.steps||[]).length?x.steps.map(l=>`<li>${esc(l.replace(/[\[\]]/g,'').trim())}</li>`).join(''):'<li class="mu">Waiting for the first step…</li>'}</ol></details>`:on?'Sent…':'Waiting for your laptop…'}</div>`}`).join(''):'<p class="hint">Type anything you’d say to JARVIS. Calendar and due-date questions are answered here instantly; everything else runs on your laptop.</p>';
+  L.innerHTML=all.length?all.map(x=>`<div class="jv-me">${esc(x.text==='__voicetest'?'Voice test':x.text)}</div>${x.reply?`<div class="jv-ai${x.local?' loc':''}">${esc(x.reply)}${x.reply!=='Stopped.'?`<button class="jvplay" data-jvplay="${esc(x.local?'':(x.id||''))}" data-jvtext="${esc(x.reply)}" aria-label="Play">${ic('play')}</button>`:''}</div>`:`<div class="jv-ai wait">${x.state==='running'?`<details class="jvsteps"${JV.open.has(x.id)?' open':''} data-jvid="${esc(x.id||'')}"><summary><span class="jvdot"></span>Working on it…${(x.steps||[]).length?`<em>${x.steps.length} step${x.steps.length>1?'s':''}</em>`:''}<i class="chev">${ic('chev')}</i></summary><ol>${(x.steps||[]).length?x.steps.map(l=>`<li>${esc(l.replace(/[\[\]]/g,'').trim())}</li>`).join(''):'<li class="mu">Waiting for the first step…</li>'}</ol></details>`:on?'Sent…':'Waiting for your laptop…'}</div>`}`).join(''):'<p class="hint">Type anything you’d say to JARVIS. Calendar and due-date questions are answered here instantly; everything else runs on your laptop.</p>';
   const sb=$('#jvStop');if(sb)sb.hidden=!run;if(!JV.keepScroll)L.scrollTop=L.scrollHeight;JV.keepScroll=false}
 function openJarvis(){NAV_DIR=1;FORCE_MODE='m-bottom tall';openSheet(`${sheetHead('<em>JARVIS</em>')}${needSrv()}<div class="jv-st" id="jvSt"><i></i><span>Checking…</span></div><p class="small jv-note" id="jvNote"></p><div class="jv-log" id="jvLog"></div>
   <button class="jv-stop" id="jvStop" hidden>${ic('close')}Stop</button>
@@ -5974,7 +5974,7 @@ openJarvis=function(){
   const h=document.createElement('div');h.id='jvHud';h.setAttribute('role','dialog');h.setAttribute('aria-label','JARVIS');
   h.innerHTML=`<div class="jvh-top"><span class="jvh-brand">J.A.R.V.I.S</span><button class="jvh-x" id="jvhX" aria-label="Close">${ic('close')}</button></div>
     ${syncOn()?'':`<p class="jv-note">Connect your server first (Settings → Connections).</p>`}
-    <div class="jvh-stage"><div class="jvh-r" id="jvhR" aria-hidden="true">${jvReactor()}</div><div class="jvh-mode" id="jvhMode">Standing by</div><button class="jvh-hush" id="jvhHush" hidden aria-label="Stop speaking"><i></i>Stop speaking</button><div class="jv-st jvh-st" id="jvSt"><i></i><span>Linking…</span></div><div class="jvh-sub" id="jvhSub">Tap the mic and talk.</div></div>
+    <div class="jvh-stage"><div class="jvh-r" id="jvhR" aria-hidden="true">${jvReactor()}</div><div class="jvh-mode" id="jvhMode">Standing by</div><button class="jvh-hush" id="jvhHush" hidden aria-label="Stop speaking"><i></i>Stop speaking</button><button class="jvh-vbtn" id="jvhVoice" aria-label="Change voice">${ic('sparkles')}Voice</button><div class="jvh-vlist" id="jvhVlist" hidden></div><div class="jv-st jvh-st" id="jvSt"><i></i><span>Linking…</span></div><div class="jvh-sub" id="jvhSub">Tap the mic and talk.</div></div>
     <p class="jv-note" id="jvNote"></p><div class="jvh-log jv-log" id="jvLog"></div>
     <button class="jv-stop" id="jvStop" hidden>${ic('close')}Stop</button>
     <div class="jvh-in"><button class="jvh-mic" id="jvhMic" aria-label="Talk">${ic('mic')}</button><input id="jvIn" placeholder="Or type a command" enterkeyhint="send" autocomplete="off"><button id="jvSend" aria-label="Send">${ic('send')}</button></div>
@@ -5983,7 +5983,7 @@ openJarvis=function(){
   jvLoad();clearInterval(JV.t);JV.t=setInterval(()=>{if(!$('#jvLog'))clearInterval(JV.t);else jvLoad()},4000);
   try{speechSynthesis&&speechSynthesis.getVoices()}catch(e){}
 };
-function closeJarvis(){const h=$('#jvHud');if(!h)return;try{typeof JA!=='undefined'&&JA.pause()}catch(e){}document.documentElement.classList.remove('jv-open');JH.done=true;clearTimeout(JH.quiet);clearTimeout(JH.cap);try{JH.rec&&JH.rec.abort()}catch(e){}JH.listening=false;try{speechSynthesis.cancel()}catch(e){}clearInterval(JV.t);h.classList.remove('on');setTimeout(()=>h.remove(),380)}
+function closeJarvis(){const h=$('#jvHud');if(!h)return;try{JR.on&&JR.stop&&(JR.on=false)}catch(e){}try{typeof JA!=='undefined'&&JA.pause()}catch(e){}document.documentElement.classList.remove('jv-open');JH.done=true;clearTimeout(JH.quiet);clearTimeout(JH.cap);try{JH.rec&&JH.rec.abort()}catch(e){}JH.listening=false;try{speechSynthesis.cancel()}catch(e){}clearInterval(JV.t);h.classList.remove('on');setTimeout(()=>h.remove(),380)}
 document.addEventListener('click',e=>{const b=e.target.closest('#jvhX,#jvhMic');if(!b)return;e.preventDefault();e.stopImmediatePropagation();
   if(b.id==='jvhX')return closeJarvis();jvListen()},true);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#jvHud'))closeJarvis()});
@@ -6283,6 +6283,59 @@ setInterval(()=>{const h=$('#jvhHush');if(!h)return;const on=JH.playing||(typeof
 .jv-ai{position:relative}
 .jvplay{display:inline-grid;place-items:center;width:24px;height:24px;margin:-2px -4px -6px 8px;border-radius:50%;background:rgb(255 255 255 / .08);vertical-align:middle;color:#F2A65A}
 .jvplay svg{width:12px;height:12px}
+</style>`);
+
+/* ===== JARVIS mic v2: record on the phone, transcribe with your free Gemini key on your server.
+   (iPhone home-screen apps often listen with the built-in recogniser but never return the words.) ===== */
+const JR={on:false};
+function wavEncode(chunks,rate){let n=0;for(const c of chunks)n+=c.length;const b=new ArrayBuffer(44+n*2),v=new DataView(b);
+  const w=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,rate,true);v.setUint32(28,rate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);let o=44;
+  for(const c of chunks)for(let i=0;i<c.length;i++,o+=2){const x=Math.max(-1,Math.min(1,c[i]));v.setInt16(o,x<0?x*0x8000:x*0x7fff,true)}return b}
+async function jvRecord(){
+  if(JR.on){JR.stop&&JR.stop();return}
+  if(!syncOn()){toast('Connect your server first');return}
+  let stream;try{stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}})}catch(e){jvSub('Allow the microphone for Life, then try again.');return}
+  try{speechSynthesis.cancel()}catch(e){}try{JA.pause()}catch(e){}
+  const AC=window.AudioContext||window.webkitAudioContext,ctx=new AC();await ctx.resume();
+  const src=ctx.createMediaStreamSource(stream),proc=ctx.createScriptProcessor(4096,1,1),mute=ctx.createGain();mute.gain.value=0;
+  const ratio=ctx.sampleRate/16000,chunks=[];let started=false,quiet=0,t0=performance.now(),done=false,peak=0;
+  JR.on=true;JH.listening=true;JH.boost=1;jvSub('Listening…');jvHudState();
+  const finish=async(send)=>{if(done)return;done=true;JR.on=false;JH.listening=false;try{proc.disconnect();src.disconnect();stream.getTracks().forEach(t=>t.stop());ctx.close()}catch(e){}jvHudState();
+    if(!send||!started){jvSub(started?'Cancelled.':'I didn’t hear anything.');return}
+    jvSub('Thinking…');const h=$('#jvHud');if(h)h.classList.add('think');
+    try{const b=new Blob([wavEncode(chunks,16000)]);const url=await new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result.replace(/^data:[^;]*/,'data:audio/wav'));f.readAsDataURL(b)});
+      const r=await api('/ai/stt',{method:'POST',body:JSON.stringify({audio:url})});const t=(r.text||'').trim();
+      if(!t){jvSub('I didn’t catch that.');return}jvSub(t);jvSend(t)}
+    catch(e){jvSub(/Gemini key|geminiKey|Connections → AI/i.test(e.message)?'Add your free Gemini key (Settings → Connections → AI) so I can understand speech.':'Couldn’t understand that: '+e.message)}finally{jvHudState()}};
+  JR.stop=()=>finish(true);
+  proc.onaudioprocess=e=>{if(done)return;const d=e.inputBuffer.getChannelData(0);let sum=0;for(let i=0;i<d.length;i++)sum+=d[i]*d[i];const rms=Math.sqrt(sum/d.length);peak=Math.max(peak*.95,rms);
+    const out=new Float32Array(Math.floor(d.length/ratio));for(let i=0;i<out.length;i++)out[i]=d[Math.floor(i*ratio)];chunks.push(out);
+    const dt=d.length/ctx.sampleRate,thr=0.018;if(rms>thr){started=true;quiet=0;JH.boost=Math.min(1.5,rms*25)}else if(started)quiet+=dt;
+    const el=(performance.now()-t0)/1000;if((started&&quiet>1.4)||el>15||(!started&&el>7))finish(true)};
+  src.connect(proc);proc.connect(mute);mute.connect(ctx.destination);
+}
+jvListen=jvRecord;
+
+/* voice picker: all free Microsoft neural voices, used by the laptop and played on the phone */
+const JVOICES=[['en-US-AndrewMultilingualNeural','Andrew','Warm, natural · default'],['en-US-BrianMultilingualNeural','Brian','Relaxed, conversational'],['en-GB-RyanNeural','Ryan','British, crisp'],
+  ['en-GB-ThomasNeural','Thomas','British, soft'],['en-US-ChristopherNeural','Christopher','Deep, steady'],['en-IE-ConnorNeural','Connor','Irish, friendly'],['en-US-AvaMultilingualNeural','Ava','Warm, female'],['en-GB-SoniaNeural','Sonia','British, female']];
+document.addEventListener('click',async e=>{const b=e.target.closest('#jvhVoice,[data-jvvoice]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();
+  const L=$('#jvhVlist');if(!L)return;
+  if(b.id==='jvhVoice'){if(!L.hidden){L.hidden=true;return}if(!SV.cfg)try{SV.cfg=await api('/config')}catch(x){}const cur=(SV.cfg&&SV.cfg.jarvisVoice)||JVOICES[0][0];
+    L.innerHTML=JVOICES.map(([id,n,d])=>`<button data-jvvoice="${id}" class="${id===cur?'on':''}"><b>${n}</b><small>${d}</small>${id===cur?ic('check'):''}</button>`).join('');L.hidden=false;return}
+  const v=b.dataset.jvvoice;try{SV.cfg=await api('/config',{method:'PUT',body:JSON.stringify({jarvisVoice:v})});L.hidden=true;toast('Voice changed. Saying hello in it…');
+    await api('/jarvis/cmd',{method:'POST',body:JSON.stringify({text:'__voicetest'})});jvLoad()}catch(x){toast('Couldn’t change the voice: '+x.message)}},true);
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="jvvoice">
+.jvh-vbtn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px;border-radius:999px;background:rgb(255 255 255 / .06);border:1px solid rgb(255 255 255 / .12);color:rgb(244 239 230 / .85);font:600 12px var(--ui)}
+.jvh-vbtn svg{width:13px;height:13px;color:#F2A65A}
+.jvh-vlist{position:absolute;left:50%;top:50%;transform:translate(-50%,-30%);z-index:5;width:min(92%,360px);max-height:52vh;overflow:auto;padding:6px;border-radius:var(--r-l);background:rgb(20 22 20 / .96);border:1px solid rgb(255 255 255 / .12);box-shadow:0 20px 50px rgb(0 0 0 / .6);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px)}
+.jvh-vlist[hidden]{display:none}
+.jvh-vlist button{display:grid;grid-template-columns:1fr auto;align-items:center;width:100%;text-align:left;padding:10px 14px;border-radius:var(--r-m);color:#F4EFE6}
+.jvh-vlist button b{font:700 15px var(--ui)}.jvh-vlist button small{grid-column:1;font:500 12px var(--ui);color:rgb(244 239 230 / .6)}
+.jvh-vlist button svg{grid-row:1/3;grid-column:2;width:18px;height:18px;color:#86CFA0}
+.jvh-vlist button.on{background:rgb(134 207 160 / .12)}
+.jvh-stage{position:relative}
 </style>`);
 
 /* ===================== boot ===================== */

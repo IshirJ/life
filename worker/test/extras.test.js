@@ -174,3 +174,16 @@ test('jarvis voice: laptop uploads mp3, phone downloads it', async () => {
   const g = await call(env, req('/jarvis/voice?id=abc123', { key }));
   assert.equal(g.headers.get('content-type'), 'audio/mpeg'); assert.equal((await g.arrayBuffer()).byteLength, 6);
 });
+
+test('ai stt: audio goes to Gemini and text comes back; jarvis voice saved in config', async () => {
+  const { env, key } = await paired();
+  await call(env, req('/config', { method: 'PUT', key, body: { geminiKey: 'G', jarvisVoice: 'en-US-AndrewMultilingualNeural' } }));
+  const f = mockFetch((url, init) => { const b = JSON.parse(init.body); assert.equal(b.contents[0].parts[0].inline_data.mime_type, 'audio/wav');
+    return Response.json({ candidates: [{ content: { parts: [{ text: '{"text":"what time is it"}' }] } }] }); });
+  try {
+    const r = await (await call(env, req('/ai/stt', { method: 'POST', key, body: { audio: 'data:audio/wav;base64,UklGRg==' } }))).json();
+    assert.equal(r.text, 'what time is it');
+  } finally { f.restore(); }
+  const c = await (await call(env, req('/config', { key }))).json();
+  assert.equal(c.jarvisVoice, 'en-US-AndrewMultilingualNeural');
+});

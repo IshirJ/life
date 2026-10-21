@@ -253,3 +253,15 @@ export async function logScreen(request, env) {
   return json({ ok: true });
 }
 export async function getScreen(env) { return json((await kvGet(env, 'screen')) || { days: {} }); }
+
+// Speech to text for JARVIS on the phone (iPhone home-screen apps can't use the browser's own recogniser reliably).
+export async function aiStt(request, config) {
+  const b = await readJson(request, 3_000_000);
+  const a = String(b.audio || ''), comma = a.indexOf(','), head = a.slice(0, Math.max(0, comma));
+  const mt = /^data:(audio\/(?:wav|x-wav|mp3|mpeg|aac|ogg|flac|webm|mp4));base64$/.exec(head);
+  if (!mt || comma < 0) return err(400, 'audio must be a base64 data URL');
+  const out = await gemini(config, [{ inline_data: { mime_type: mt[1] === 'audio/x-wav' ? 'audio/wav' : mt[1], data: a.slice(comma + 1) } },
+    { text: 'Transcribe exactly what the speaker says, in English, as one line of plain text with normal punctuation. It is a short voice command for a personal assistant named Jarvis. If there is no clear speech, return an empty string.' }],
+    { type: 'OBJECT', properties: { text: { type: 'STRING' } }, required: ['text'] });
+  return json({ text: clip(out.text, 500).trim() });
+}
