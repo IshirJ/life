@@ -84,6 +84,7 @@ function gemHint(status, msg) {
   const m = String(msg || '');
   if (status === 400 && /API key not valid|API_KEY_INVALID/i.test(m)) return 'Your Gemini key isn’t valid. Copy it again from aistudio.google.com/apikey and paste it in Settings → Connections → AI.';
   if (status === 403) return 'Gemini refused this key (403). Make sure the Generative Language API is enabled for the key’s project, or create a new key in AI Studio.';
+  if (status === 504) return 'Gemini took too long to answer. Try again, or describe the food instead.';
   if (status === 429) return 'Gemini’s free limit is used up for now. Try again in a minute (or tomorrow if it’s the daily limit).';
   if (/location is not supported/i.test(m)) return 'Gemini isn’t available from the server’s region right now.';
   return `Gemini ${status}: ${clip(m, 200)}`;
@@ -91,7 +92,13 @@ function gemHint(status, msg) {
 async function gemini(config, parts, schema, model) {
   if (!config.geminiKey) throw new HttpError(400, 'Add your free Gemini key in Life → Settings → Connections → AI');
   const body = { contents: [{ role: 'user', parts }], generationConfig: { temperature: 0.2, responseMimeType: 'application/json', ...(schema ? { responseSchema: schema } : {}) } };
-  const call = (m) => fetch(`${GEM}/v1beta/models/${m}:generateContent`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': config.geminiKey }, body: JSON.stringify(body) });
+  // no "thinking" on 2.5 models: food and reels don't need it, and it made photo answers slow
+  const payload = (m) => JSON.stringify(/2\.5/.test(m) ? { ...body, generationConfig: { ...body.generationConfig, thinkingConfig: { thinkingBudget: 0 } } } : body);
+  const call = async (m) => {
+    try {
+      return await fetch(`${GEM}/v1beta/models/${m}:generateContent`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': config.geminiKey }, body: payload(m), signal: AbortSignal.timeout(35000) });
+    } catch (e) { return new Response(JSON.stringify({ error: { message: e?.name === 'TimeoutError' ? 'took too long' : String(e?.message || e) } }), { status: 504 }); }
+  };
   const tries = model ? [model] : [...new Set([gemModel(config), ...GEM_FALLBACK])];
   let last = null;
   for (const m of tries) {
@@ -106,7 +113,7 @@ async function gemini(config, parts, schema, model) {
     last = new HttpError(r.status === 429 ? 429 : 502, gemHint(r.status, msg));
     // a bad key won't work on any model: stop now
     if (r.status === 400 && /API key/i.test(msg)) break;
-    if (r.status === 403) break;
+    if (r.status === 403 || r.status === 504) break;
     if (!(r.status === 404 || r.status === 429 || (r.status === 400 && /model/i.test(msg)) || r.status >= 500)) break;
   }
   throw last;
@@ -122,9 +129,11 @@ export async function aiFood(request, config) {
   const b = await readJson(request, 4_000_000);
   const parts = [];
   if (b.image) {
-    const m = /^data:(image\/(?:jpeg|png|webp|heic));base64,([A-Za-z0-9+/=]+)$/.exec(String(b.image));
-    if (!m) return err(400, 'image must be a base64 data URL');
-    parts.push({ inline_data: { mime_type: m[1], data: m[2] } });
+    // cheap check (a regex over a 300 KB string can blow the free plan's CPU limit)
+    const img = String(b.image), comma = img.indexOf(','), head = img.slice(0, Math.max(0, comma));
+    const mt = /^data:(image\/(?:jpeg|png|webp|heic));base64$/.exec(head);
+    if (!mt || comma < 0) return err(400, 'image must be a base64 data URL');
+    parts.push({ inline_data: { mime_type: mt[1], data: img.slice(comma + 1) } });
   }
   const text = clip(b.text, 600).trim();
   if (!parts.length && !text) return err(400, 'image or text required');

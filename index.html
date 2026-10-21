@@ -1929,7 +1929,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='120';
+const APP_VER='127';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -1957,6 +1957,7 @@ function lookPanel(){
     <div class="lookset"><span class="cap">Corners</span>${seg('corners',[['round','Round'],['tight','Tight']],g.corners)}</div>
     <div class="lookset"><span class="cap">Icons</span>${seg('icons',[['color','Colour'],['mono','Plain']],g.icons)}</div>
     <div class="lookset"><span class="cap">Animations</span>${seg('motion',[['1','On'],['0','Off']],g.motion?'1':'0')}</div>
+    <div class="lookset"><span class="cap">Opening animation</span>${seg('intro',[['orbit','Phone orbit'],['classic','Classic']],g.intro||'orbit')}${(g.intro||'orbit')==='orbit'?'<button class="link" data-introplay style="margin-top:8px">Play it now</button>':''}</div>
     <div class="lookset"><span class="cap">Tick sound when you finish a task</span><div class="seg2"><button data-snd="1" aria-pressed="${!!g.sound}">On</button><button data-snd="0" aria-pressed="${!g.sound}">Off</button></div></div>
     <label class="lookset" for="lkGlass"><span class="cap">Glass blur · <span id="glassVal">${g.glass}</span></span><input id="lkGlass" type="range" min="0" max="50" value="${g.glass}" style="--p:${g.glass*2}%" data-look="glass"></label>
     <div class="sh-actions"><button class="secondary" data-look="reset">Reset to default</button></div>`;
@@ -3985,7 +3986,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=120';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=127';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -5186,7 +5187,7 @@ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitHello);
 
 /* ---------- living foliage: soft, out-of-focus leaves at the edges, three depths like a camera shot through plants ---------- */
 (function(){
-  const host=document.getElementById('bgcurve');if(!host||document.getElementById('flora'))return;
+  const host=document.getElementById('bgcurve');if(!host||document.getElementById('flora')||!document.documentElement.classList.contains('classic-bg'))return; /* replaced by the gradient background */
   const F=document.createElement('div');F.id='flora';F.setAttribute('aria-hidden','true');
   F.innerHTML=['fx0','fx1','fx2'].map((c,i)=>`<div class="flx ${c}"><div class="fxd" style="--t:${[22,17,13][i]}s;animation-delay:-${i*4}s"><canvas></canvas></div></div>`).join('');host.after(F);
   const layers=[...F.querySelectorAll('.flx')],cvs=[...F.querySelectorAll('canvas')];
@@ -5343,7 +5344,11 @@ body::before{background:linear-gradient(to bottom,rgb(0 0 0 / .5),rgb(0 0 0 / 0)
 /* floating header = compact glass pill: one line title, smaller controls, a blur strip behind so nothing peeks around it */
 .top .hello h1,.top .av,.top .ib,.top .hello .cap{transition:font-size .3s cubic-bezier(.22,1,.36,1),width .3s,height .3s,opacity .2s,margin .3s}
 .top.float{padding:7px 7px 7px 12px;border-radius:var(--r-xl);min-height:56px;
-  background:color-mix(in srgb,var(--surface) 86%,transparent);-webkit-backdrop-filter:blur(22px) saturate(1.6);backdrop-filter:blur(22px) saturate(1.6)}
+  background:linear-gradient(135deg,rgb(255 255 255 / .11),rgb(255 255 255 / .03)),color-mix(in srgb,var(--bg) 40%,transparent);
+  -webkit-backdrop-filter:blur(30px) saturate(1.9);backdrop-filter:blur(30px) saturate(1.9);
+  box-shadow:inset 0 1px 0 rgb(255 255 255 / .18),inset 0 0 0 1px rgb(255 255 255 / .10),0 12px 30px rgb(0 0 0 / .28)}
+:root[data-theme="light"] .top.float{background:linear-gradient(135deg,rgb(255 255 255 / .55),rgb(255 255 255 / .25))}
+.hello .cap,.hello h1{margin-left:0;padding-left:0;text-indent:0;text-align:left}
 .top.float .hello .cap{opacity:0;height:0;margin:0;overflow:hidden}
 .top.float .hello h1{font-size:21px!important;line-height:1.15;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .top.float .hello h1 br{display:none}
@@ -5352,8 +5357,8 @@ body::before{background:linear-gradient(to bottom,rgb(0 0 0 / .5),rgb(0 0 0 / 0)
 .top.float .av{width:36px;height:36px;font-size:12.5px;margin:0 4px 0 2px}
 .top.float .ib{width:38px;height:38px;border-radius:var(--r-s)}
 .top.float::before{content:"";position:absolute;z-index:-1;left:-40px;right:-40px;top:calc(-6px - env(safe-area-inset-top,0px));bottom:-18px;
-  background:linear-gradient(to bottom,color-mix(in srgb,var(--bg) 55%,transparent),color-mix(in srgb,var(--bg) 25%,transparent) 70%,transparent);
-  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);pointer-events:none;
+  background:linear-gradient(to bottom,rgb(0 0 0 / .35),transparent);
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);pointer-events:none;
   -webkit-mask:linear-gradient(to bottom,#000 72%,transparent);mask:linear-gradient(to bottom,#000 72%,transparent)}
 .ib.jvb{color:var(--accent)}
 
@@ -5369,18 +5374,36 @@ body::before{background:linear-gradient(to bottom,rgb(0 0 0 / .5),rgb(0 0 0 / 0)
 .menu{border-radius:var(--r-l)}
 
 
-/* real photos in the section cards, tinted to each section's colour */
-.hero .hph{position:absolute;inset:0;z-index:0;overflow:hidden;border-radius:inherit;pointer-events:none}
-.hero .hph img{width:100%;height:100%;object-fit:cover;opacity:0;mix-blend-mode:luminosity;transition:opacity 1.2s ease,transform 8s ease-out;transform:scale(1.08)}
-.hero .hph img.in{opacity:.62;transform:scale(1)}
-.hero .hph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgb(0 0 0 / .05) 0%,rgb(0 0 0 / .18) 45%,rgb(0 0 0 / .48) 100%)}
+/* background: deep near-black with slow orange + green light, film grain, vignette (no photos, no lines) */
+#mesh{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;background:#090C0A}
+#mesh i{position:absolute;border-radius:50%;will-change:transform}
+#mesh .m1{width:130vmax;height:130vmax;left:-62vmax;top:-70vmax;background:radial-gradient(closest-side,rgb(240 109 68 / .42),rgb(240 109 68 / .16) 48%,transparent 74%);animation:mx1 34s ease-in-out infinite alternate}
+#mesh .m2{width:140vmax;height:140vmax;right:-70vmax;bottom:-72vmax;background:radial-gradient(closest-side,rgb(46 125 82 / .62),rgb(31 92 62 / .22) 50%,transparent 75%);animation:mx2 41s ease-in-out infinite alternate}
+#mesh .m3{width:70vmax;height:70vmax;right:-28vmax;top:8vh;background:radial-gradient(closest-side,rgb(242 166 90 / .22),transparent 70%);animation:mx3 29s ease-in-out infinite alternate}
+#mesh .m4{width:80vmax;height:80vmax;left:-34vmax;bottom:-18vh;background:radial-gradient(closest-side,rgb(134 207 160 / .16),transparent 70%);animation:mx1 47s ease-in-out infinite alternate-reverse}
+#mesh::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 40%,transparent 40%,rgb(0 0 0 / .55) 100%)}
+#mesh::after{content:"";position:absolute;inset:-50%;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");background-size:180px;opacity:.10;mix-blend-mode:overlay;animation:grain 1.2s steps(4) infinite}
+@keyframes mx1{to{transform:translate3d(12vmax,9vmax,0) scale(1.08)}}
+@keyframes mx2{to{transform:translate3d(-10vmax,-12vmax,0) scale(1.1)}}
+@keyframes mx3{to{transform:translate3d(-14vmax,16vmax,0) scale(.9)}}
+@keyframes grain{25%{transform:translate(-3%,2%)}50%{transform:translate(2%,-3%)}75%{transform:translate(-1%,3%)}}
+:root[data-theme="light"] #mesh{background:#F2EDE3}:root[data-theme="light"] #mesh::before{opacity:.25}:root[data-theme="light"] #mesh i{opacity:.55}
+@media (prefers-reduced-motion:reduce){#mesh i,#mesh::after{animation:none}}
+#flora,#bgPhoto{display:none!important}
+#bgcurve>canvas:not(#bgFx){opacity:0;transition:opacity 1.2s}
+html.classic-bg #bgcurve>canvas:not(#bgFx){opacity:1}
+/* hero art: the section's own colour as soft light, a warm/green counter-glow, grain, and a huge faded word layered behind */
+.hero .hart{position:absolute;inset:0;z-index:0;overflow:hidden;border-radius:inherit;pointer-events:none}
+.hart i{position:absolute;border-radius:50%}
+.hart .g1{width:110%;aspect-ratio:1;right:-48%;top:-62%;background:radial-gradient(closest-side,color-mix(in srgb,var(--hc,#F06D44) 70%,#fff 0%),transparent 72%);opacity:.55;animation:hg 14s ease-in-out infinite alternate}
+.hart .g2{width:90%;aspect-ratio:1;left:-40%;bottom:-70%;background:radial-gradient(closest-side,rgb(240 109 68 / .45),transparent 70%);opacity:.6;animation:hg 18s ease-in-out infinite alternate-reverse}
+.h-food .hart .g2,.h-expense .hart .g2,.h-trip .hart .g2{background:radial-gradient(closest-side,rgb(134 207 160 / .35),transparent 70%)}
+.hart::after{content:"";position:absolute;inset:0;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");background-size:160px;opacity:.13;mix-blend-mode:overlay}
+.hart .hw{position:absolute;right:.12em;top:.08em;font:800 clamp(72px,22vw,118px)/.86 var(--ui);letter-spacing:-.055em;white-space:nowrap;
+  background:linear-gradient(180deg,rgb(255 255 255 / .22),rgb(255 255 255 / .03) 85%);-webkit-background-clip:text;background-clip:text;color:transparent}
+@keyframes hg{to{transform:translate3d(-8%,6%,0) scale(1.12)}}
 .hero.hasph .hero-art{opacity:0!important;transition:opacity .6s}
-.hero>.phcred{display:none;position:absolute;right:14px;bottom:8px;z-index:2;font:500 9.5px var(--ui);color:rgb(255 255 255 / .55);text-decoration:none;letter-spacing:.01em}
-.hero>.phcred a{color:inherit;text-decoration:none}
-#bgPhoto{position:fixed;inset:-4%;z-index:0;pointer-events:none;opacity:0;transition:opacity 2s ease}
-#bgPhoto img{width:100%;height:100%;object-fit:cover;filter:blur(3px) brightness(.42) saturate(1.15)}
-#bgPhoto.in{opacity:1}
-:root[data-theme="light"] #bgPhoto img{filter:blur(4px) brightness(1.08) saturate(.9);opacity:.45}
+.hero.h-today .hart .g2{display:none}
 
 /* Today summary */
 .tsum{padding:20px 18px 18px}
@@ -5487,27 +5510,22 @@ function deEmoji(root){
     span.innerHTML=esc(n.nodeValue).replace(EMO_RE,m=>`<svg class="ie" viewBox="0 0 24 24" aria-hidden="true">${P[EMO[m]]||''}</svg>`).replace(/️/g,'');n.replaceWith(span)}}
 const _openSheet4=openSheet;openSheet=function(h){const r=_openSheet4(h);try{deEmoji($('#sheetBody'))}catch(e){}return r};
 
-/* ---------- photos: a fixed, hand-picked set of dark foliage photos (Unsplash License, no key, never changes) ---------- */
-const PHOTO={palm:'1672219286179-8925a7306d62',black:'1496309732348-3627f3f040ee',grove:'1692520883599-d543cfe6d43d',deep:'1552152974-19b9caf99137',
-  fern:'1533563906091-fdfdffc3e3c4',pinnate:'1502239608882-93b729c6af43',moss:'1740984430593-8d4c131c91d5',monstera:'1743001737846-a5e1c06816ab',
-  rock:'1592748886453-1d88d13198cc',leafy:'1493673272479-a20888bcee10'};
-const PHQ={'h-today':'palm','h-activity':'fern','h-weight':'pinnate','h-workout':'grove','h-injury':'rock','h-sleep':'black','h-task':'deep','h-meeting':'leafy','h-project':'moss',
-  'h-job':'monstera','h-grades':'pinnate','h-expense':'rock','h-work':'deep','h-idea':'black','h-note':'leafy','h-reminder':'fern','h-scrap':'moss','h-cards':'grove','h-trip':'palm','h-mind':'black'};
-const phUrl=(id,w)=>`https://images.unsplash.com/photo-${id}?w=${w}&q=62&auto=format&fit=crop&dpr=${Math.min(2,devicePixelRatio||1)}`;
-async function hydratePhotos(){
-  for(const h of $$('#view .hero[data-ph]:not(.hasph):not(.fdc)')){
-    const id=PHOTO[PHQ[h.dataset.ph]];if(!id)continue;
+/* ---------- art instead of photos: layered gradient light + grain + one big editorial word per section ---------- */
+const HWORD={'h-food':'Fuel','h-activity':'Move','h-weight':'Weight','h-workout':'Train','h-injury':'Heal','h-sleep':'Rest','h-task':'Tasks','h-meeting':'Meet','h-project':'Build',
+  'h-job':'Career','h-grades':'Grades','h-expense':'Money','h-work':'Work','h-idea':'Ideas','h-note':'Notes','h-reminder':'Remind','h-scrap':'Scrap','h-cards':'Cards','h-trip':'Trips','h-mind':'Ideas','h-today':''};
+function hydratePhotos(){
+  for(const h of $$('#view .hero[data-ph]:not(.hasph),#view .hero.fdc:not(.hasph)')){
+    const t=h.dataset.ph||'h-food',w=h.classList.contains('fdc')?'':HWORD[t];if(w===undefined)continue;
     h.classList.add('hasph');
-    const box=document.createElement('div');box.className='hph';const img=new Image();img.alt='';img.decoding='async';img.src=phUrl(id,Math.round(Math.min(800,h.clientWidth+40)));
-    img.onload=()=>img.classList.add('in');img.onerror=()=>{box.remove();h.classList.remove('hasph')};box.appendChild(img);h.prepend(box);
+    const box=document.createElement('div');box.className='hph hart';box.innerHTML=`<i class="g1"></i><i class="g2"></i>${w?`<span class="hw">${w}</span>`:''}`;h.prepend(box);
   }
 }
-async function bgPhoto(){
-  if($('#bgPhoto'))return;
-  const d=document.createElement('div');d.id='bgPhoto';d.setAttribute('aria-hidden','true');const img=new Image();img.alt='';img.src=phUrl(PHOTO.grove,Math.min(1000,Math.round(innerWidth*1.1)));
-  img.onload=()=>d.classList.add('in');d.appendChild(img);const host=document.getElementById('bgcurve');if(host)host.before(d);
+function bgPhoto(){
+  if($('#mesh'))return;
+  const m=document.createElement('div');m.id='mesh';m.setAttribute('aria-hidden','true');m.innerHTML='<i class="m1"></i><i class="m2"></i><i class="m3"></i><i class="m4"></i>';
+  const host=document.getElementById('bgcurve');if(host)host.before(m);else document.body.prepend(m);
 }
-
+bgPhoto();
 /* ---------- JARVIS one tap away: header button on every tab ---------- */
 const _header4=header;header=function(){return _header4().replace('<button class="ib" id="searchBtn"',`<button class="ib jvb" data-jarvis aria-label="JARVIS">${ic('bot')}</button><button class="ib" id="searchBtn"`)};
 
@@ -5650,14 +5668,14 @@ const _flBody4=flBody;flBody=function(){if(FL.tab!=='ai')return _flBody4();
     <button class="primary" id="aifGo" ${AIF.busy?'disabled':''}>${AIF.busy?'Looking…':`${ic('sparkles')}Find the foods`}</button>
     ${AIF.err?`<div class="notice">${esc(AIF.err)}</div>`:''}
     ${AIF.items?(AIF.items.length?`<div>${AIF.items.map((x,i)=>`<div class="aif-row"><input type="checkbox" data-aifon="${i}" ${x.on!==false?'checked':''} aria-label="Include ${esc(x.name)}"><div><b>${esc(x.name)}</b><small>${fmtN(x.kcal)} kcal · ${x.protein}P ${x.fat}F ${x.carbs}C${x.confidence?` · ${esc(x.confidence)} confidence`:''}</small></div><input type="number" inputmode="decimal" data-aifg="${i}" value="${x.grams}" aria-label="Grams"></div>`).join('')}</div><button class="primary" id="aifAdd">${ic('plus')}Add to picked foods</button><p class="small">Estimates from a photo can be off by 20–30%. Adjust the grams before adding.</p>`:'<p class="hint">No food found in that.</p>'):''}</div>`};
-function shrink(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{const s=Math.min(1,1024/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.82))};im.onerror=()=>rej(new Error('Couldn’t read that photo'));im.src=u})}
+function shrink(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{const s=Math.min(1,800/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.74))};im.onerror=()=>rej(new Error('Couldn’t read that photo'));im.src=u})}
 document.addEventListener('change',async e=>{if(e.target.id!=='aifCam'&&e.target.id!=='aifLib')return;const f=e.target.files&&e.target.files[0];if(!f)return;try{AIF.img=await shrink(f);AIF.items=null;AIF.err='';flRefresh(false)}catch(x){toast(x.message)}});
 document.addEventListener('input',e=>{if(e.target.id==='aifTxt')AIF.text=e.target.value;const g=e.target.dataset&&e.target.dataset.aifg;if(g!==undefined&&AIF.items){const x=AIF.items[+g],n=num(e.target.value);if(x&&n>0&&x.grams>0){const f=n/x.grams;x.kcal=Math.round(x.kcal*f);x.protein=+(x.protein*f).toFixed(1);x.fat=+(x.fat*f).toFixed(1);x.carbs=+(x.carbs*f).toFixed(1);x.grams=n}}});
 document.addEventListener('click',async e=>{const b=e.target.closest('#aifGo,#aifAdd,[data-aifon]');if(!b)return;
   if(b.dataset.aifon!==undefined){AIF.items[+b.dataset.aifon].on=b.checked;return}
   e.stopImmediatePropagation();e.preventDefault();
   if(b.id==='aifGo'){if(!AIF.img&&!AIF.text.trim()){toast('Take a photo or describe what you ate');return}AIF.busy=true;AIF.err='';flRefresh(false);
-    try{const r=await api('/ai/food',{method:'POST',body:JSON.stringify({image:AIF.img||undefined,text:AIF.text})});AIF.items=r.items||[]}catch(x){AIF.err=x.message}AIF.busy=false;flRefresh(false);return}
+    try{const r=await Promise.race([api('/ai/food',{method:'POST',body:JSON.stringify({image:AIF.img||undefined,text:AIF.text})}),new Promise((_,rej)=>setTimeout(()=>rej(new Error('No answer after 50 seconds. Check your connection, or tap Find again.')),50000))]);AIF.items=r.items||[];if(!AIF.items.length)AIF.err=r.note||'No food found in that photo. Try closer, or describe it.'}catch(x){AIF.err=/^5\d\d$|1102|exceeded/.test(x.message)?'Your server hit a limit on that photo. Try again (photos are now sent smaller).':x.message}AIF.busy=false;flRefresh(false);return}
   if(b.id==='aifAdd'){const pick=(AIF.items||[]).filter(x=>x.on!==false);pick.forEach(x=>FL.cart.push({name:x.name,grams:x.grams,per100:null,servings:null,k:x.kcal,p:x.protein,f:x.fat,c:x.carbs}));AIF.items=null;AIF.img=null;AIF.text='';flRefresh();tick();toast(`${pick.length} added. Tap Log to save them.`)}
 },true);
 
@@ -5699,7 +5717,7 @@ function jvPaint(){const L=$('#jvLog');if(!L)return;const{on,lau}=jvState();
     const txt=on?'Laptop online':JV.waking?'Starting JARVIS on your laptop…':JV.seen?`JARVIS off · last seen ${esc(ago(JV.seen))}`:'JARVIS hasn’t checked in yet';
     const act=on?`<button class="jv-act" data-jvwake="restart">${ic('refresh')}Restart</button>`:`<button class="jv-act pri" data-jvwake="start" ${JV.waking?'disabled':''}>${ic('play')}${JV.waking?'Starting…':'Start JARVIS'}</button>`;
     st.innerHTML=`<i></i><span>${txt}</span>${act}`}
-  const nt=$('#jvNote');if(nt)nt.innerHTML=!on&&!lau?'Your laptop isn’t listening right now (asleep, offline, or JARVIS’s launcher hasn’t run since the update). Run <b>start_ishir.bat</b> once on the laptop and Start will work from here after that.':'';
+  const nt=$('#jvNote');if(nt)nt.innerHTML=!on&&!lau?'Your laptop isn’t answering. It’s asleep, offline, or hasn’t been logged into since the update. Wake it and tap Start.':'';
   const all=[...JV.log.map(x=>({...x})),...JV.local].sort((a,b)=>(a.at||0)-(b.at||0)).slice(-30);
   const run=all.some(x=>!x.reply&&(x.state==='running'||x.state==='queued'));
   L.innerHTML=all.length?all.map(x=>`<div class="jv-me">${esc(x.text)}</div>${x.reply?`<div class="jv-ai${x.local?' loc':''}">${esc(x.reply)}</div>`:`<div class="jv-ai wait">${x.state==='running'?'Working on it…':on?'Sent…':'Waiting for your laptop…'}</div>`}`).join(''):'<p class="hint">Type anything you’d say to JARVIS. Calendar and due-date questions are answered here instantly; everything else runs on your laptop.</p>';
@@ -5789,6 +5807,188 @@ document.addEventListener('click',async e=>{const b=e.target.closest('#keyNew');
   try{const r=await api('/key/rotate',{method:'POST',body:'{}'});if(!r.key)throw new Error('no key');SYNC.key=r.key;saveSync();
     toast('New key saved on this device. Update your other devices, Gmail script, widget and JARVIS.');setTimeout(()=>location.reload(),2200)}
   catch(x){toast('Couldn’t replace it: '+x.message);b.disabled=false;delete b.dataset.arm;b.textContent='Make a new key (if this one leaked)'}},true);
+
+/* ===================== JARVIS HUD: arc-reactor screen, talk to it (free: the phone's own speech recognition + voice) ===================== */
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="jvhcss">
+#jvHud{position:fixed;inset:0;z-index:80;display:flex;flex-direction:column;color:#F4EFE6;background:radial-gradient(90% 60% at 50% 32%,rgb(240 109 68 / .16),transparent 70%),radial-gradient(80% 60% at 50% 110%,rgb(46 125 82 / .32),transparent 70%),#070908;
+  padding:calc(env(safe-area-inset-top,0px) + 10px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 12px) max(16px,env(safe-area-inset-left,0px));
+  opacity:0;transform:scale(1.04);transition:opacity .35s ease,transform .45s cubic-bezier(.22,1,.36,1);font-family:var(--ui)}
+#jvHud.on{opacity:1;transform:none}
+#jvHud::before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgb(255 255 255 / .025) 0 1px,transparent 1px 3px),radial-gradient(circle at 50% 36%,transparent 0 30%,rgb(0 0 0 / .45) 75%)}
+#jvHud>*{position:relative}
+.jvh-top{display:flex;align-items:center;gap:10px;min-height:44px}
+.jvh-brand{font:700 13px/1 var(--mono);letter-spacing:.32em;color:#F06D44;text-shadow:0 0 12px rgb(240 109 68 / .6)}
+.jvh-top .jv-st{flex:1;margin:0;font:400 11px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:rgb(244 239 230 / .6);min-height:0}
+.jvh-top .jv-st i{width:7px;height:7px;flex:none}.jvh-top .jv-st span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.jvh-top .jv-act{height:30px;font-size:12px;padding:0 11px;background:rgb(255 255 255 / .08);color:#F4EFE6;border:1px solid rgb(255 255 255 / .12)}
+.jvh-top .jv-act.pri{background:#86CFA0;color:#08140D;border:0}
+.jvh-x{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:rgb(255 255 255 / .07);border:1px solid rgb(255 255 255 / .12);color:#F4EFE6}
+.jvh-stage{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.jvh-r{width:min(74vw,46vh,330px);aspect-ratio:1;position:relative;border-radius:50%;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.jvh-r svg{width:100%;height:100%;overflow:visible}
+.jvh-r g{transform-box:view-box;transform-origin:100px 100px}
+.jvh-r .r0{animation:jvspin 70s linear infinite}.jvh-r .r1{animation:jvspin 26s linear infinite reverse}.jvh-r .r2{animation:jvspin 16s linear infinite}
+.jvh-r .r3{animation:jvspin 11s linear infinite reverse}.jvh-r .r4{animation:jvspin 38s linear infinite}
+.jvh-r .core{transition:transform .3s;transform-box:view-box;transform-origin:100px 100px}
+.jvh-r .glow{filter:drop-shadow(0 0 6px rgb(240 109 68 / .9)) drop-shadow(0 0 18px rgb(240 109 68 / .45))}
+.jvh-r .gl2{filter:drop-shadow(0 0 5px rgb(134 207 160 / .9))}
+@keyframes jvspin{to{transform:rotate(360deg)}}
+@keyframes jvpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.09)}}
+#jvHud.listen .r1,#jvHud.listen .r3{animation-duration:3.2s}#jvHud.listen .r2{animation-duration:2.4s}#jvHud.listen .core{animation:jvpulse .9s ease-in-out infinite}
+#jvHud.think .r3{animation-duration:1.6s}#jvHud.think .r1{animation-duration:6s}
+#jvHud.speak .r1{animation-duration:4s}#jvHud.speak .r2{animation-duration:3s}#jvHud.speak .core{animation:jvpulse .5s ease-in-out infinite}
+.jvh-mode{font:400 11px var(--mono);letter-spacing:.3em;text-transform:uppercase;color:#86CFA0;text-shadow:0 0 10px rgb(134 207 160 / .5)}
+.jvh-sub{min-height:2.6em;max-width:92%;text-align:center;font:italic 500 21px/1.3 var(--serif);color:#F4EFE6;opacity:.92}
+.jvh-log{max-height:24vh;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:10px;margin:0 0 10px;border-radius:var(--r-l);background:rgb(255 255 255 / .04);border:1px solid rgb(255 255 255 / .08);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.jvh-log:empty,.jvh-log:has(>.hint:only-child){display:none}
+.jvh-log .jv-me{background:linear-gradient(135deg,#F06D44,#E0582F);color:#1A0D07}.jvh-log .jv-ai{background:rgb(255 255 255 / .08);color:#F4EFE6}
+.jvh-log .jv-me,.jvh-log .jv-ai{font-size:14px;padding:8px 12px}
+#jvHud .jv-stop{margin:0 0 10px}
+#jvHud .jv-note{color:#F2A65A;text-align:center;font-size:12.5px;margin:0 0 8px}
+.jvh-in{display:flex;gap:8px;align-items:center}
+.jvh-in input{flex:1;min-width:0;height:50px;border-radius:var(--r-xl);border:1px solid rgb(255 255 255 / .14);background:rgb(255 255 255 / .06);color:#F4EFE6;padding:0 18px;font:500 15px var(--ui)}
+.jvh-in input::placeholder{color:rgb(244 239 230 / .45)}
+.jvh-mic,.jvh-in #jvSend{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;flex:none}
+.jvh-mic{background:radial-gradient(circle at 35% 30%,#FFB089,#F06D44 60%,#B9431F);color:#1A0D07;box-shadow:0 0 0 6px rgb(240 109 68 / .14),0 0 26px rgb(240 109 68 / .5)}
+#jvHud.listen .jvh-mic{background:radial-gradient(circle at 35% 30%,#CFF5DC,#86CFA0 60%,#2E7D52);box-shadow:0 0 0 8px rgb(134 207 160 / .18),0 0 30px rgb(134 207 160 / .6)}
+.jvh-in #jvSend{background:rgb(255 255 255 / .1);color:#F4EFE6}
+#jvHud .jv-sugg{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-top:10px}#jvHud .jv-sugg::-webkit-scrollbar{display:none}
+#jvHud .jv-sugg button{flex:none;background:rgb(255 255 255 / .06);border:1px solid rgb(255 255 255 / .1);color:#F4EFE6}
+.jvh-foot{font:400 10.5px/1.4 var(--mono);color:rgb(244 239 230 / .4);text-align:center;margin-top:8px;letter-spacing:.02em}
+@media (prefers-reduced-motion:reduce){.jvh-r g{animation:none!important}}
+</style>`);
+function jvReactor(){
+  let t='';for(let i=0;i<72;i++){const a=i*5*Math.PI/180,l=i%6?92:88,c=Math.cos(a),s=Math.sin(a);t+=`<line x1="${(100+96*c).toFixed(2)}" y1="${(100+96*s).toFixed(2)}" x2="${(100+l*c).toFixed(2)}" y2="${(100+l*s).toFixed(2)}"/>`}
+  let coils='';for(let i=0;i<10;i++){coils+=`<path d="M ${100+40*Math.cos(i*.628)} ${100+40*Math.sin(i*.628)} A 40 40 0 0 1 ${100+40*Math.cos(i*.628+.45)} ${100+40*Math.sin(i*.628+.45)}"/>`}
+  return`<svg viewBox="0 0 200 200" aria-hidden="true"><defs><radialGradient id="jvCore"><stop offset="0" stop-color="#FFF7EC"/><stop offset=".35" stop-color="#FFC9A8"/><stop offset=".7" stop-color="#F06D44" stop-opacity=".85"/><stop offset="1" stop-color="#F06D44" stop-opacity="0"/></radialGradient></defs>
+  <g class="r0" stroke="#F4EFE6" stroke-opacity=".38" stroke-width=".7">${t}</g>
+  <g class="r1 glow" fill="none" stroke="#F06D44" stroke-width="2.6" stroke-linecap="round"><circle cx="100" cy="100" r="83" stroke-dasharray="46 10 8 10 2 10" /></g>
+  <g class="r2 gl2" fill="none" stroke="#86CFA0" stroke-width="5" stroke-opacity=".75"><circle cx="100" cy="100" r="72" stroke-dasharray="1.6 3.2"/></g>
+  <g class="r3" fill="none" stroke="#F2A65A" stroke-width="1.4"><circle cx="100" cy="100" r="61" stroke-dasharray="70 26 20 26"/><circle cx="100" cy="100" r="56" stroke-opacity=".35" stroke-dasharray="4 8"/></g>
+  <g class="r4 glow" fill="none" stroke="#F06D44" stroke-width="9" stroke-opacity=".9">${coils}</g>
+  <g class="core"><circle cx="100" cy="100" r="30" fill="url(#jvCore)"/><circle cx="100" cy="100" r="19" fill="none" stroke="#FFF2E4" stroke-opacity=".8" stroke-width="1.2"/>
+  <text x="100" y="103.5" text-anchor="middle" font-family="Space Mono,monospace" font-size="8.5" font-weight="700" letter-spacing="1.6" fill="#2A1208">JARVIS</text></g></svg>`}
+const SRC=window.SpeechRecognition||window.webkitSpeechRecognition;
+const JH={rec:null,listening:false,heard:'',seen:new Set(),voice:null,lastSub:''};
+function jvHudState(){const h=$('#jvHud');if(!h)return;const run=[...JV.log].some(x=>!x.reply&&(x.state==='running'||x.state==='queued'));
+  const speaking=typeof speechSynthesis!=='undefined'&&speechSynthesis.speaking;
+  h.classList.toggle('listen',JH.listening);h.classList.toggle('think',!JH.listening&&run);h.classList.toggle('speak',!JH.listening&&!run&&speaking);
+  const m=$('#jvhMode');if(m)m.textContent=JH.listening?'Listening':run?'Working':speaking?'Speaking':'Standing by'}
+function jvSay(text){try{if(typeof speechSynthesis==='undefined'||!text)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(text).slice(0,400));
+  const vs=speechSynthesis.getVoices();JH.voice=JH.voice||vs.find(v=>/Daniel|Arthur|en-GB/i.test(v.name+' '+v.lang)&&/en-GB/i.test(v.lang))||vs.find(v=>/en-GB/i.test(v.lang))||null;
+  if(JH.voice)u.voice=JH.voice;u.lang=JH.voice?JH.voice.lang:'en-GB';u.rate=1.02;u.pitch=.92;u.onstart=u.onend=()=>jvHudState();speechSynthesis.speak(u);setTimeout(jvHudState,60)}catch(e){}}
+function jvSub(t){const s=$('#jvhSub');if(s&&t!==JH.lastSub){JH.lastSub=t;s.textContent=t;try{s.animate([{opacity:0,transform:'translateY(6px)'},{opacity:.92,transform:'none'}],{duration:320,easing:'ease-out'})}catch(e){}}}
+const _jvPaintH=jvPaint;jvPaint=function(){_jvPaintH();if(!$('#jvHud'))return;
+  /* speak + subtitle replies that arrive while the screen is open */
+  const all=[...JV.log,...JV.local];for(const x of all){const k=(x.id||x.at)+'|'+(x.reply?1:0);if(x.reply&&!JH.seen.has(k)){JH.seen.add(k);if(JH.armed){jvSub(x.reply);jvSay(x.reply)}}}
+  JH.armed=true;jvHudState()};
+function jvListen(){
+  if(JH.listening){try{JH.rec&&JH.rec.stop()}catch(e){}return}
+  if(!SRC){toast('Voice isn’t available here. Tap the text box and use the keyboard’s mic instead.');const i=$('#jvIn');if(i)i.focus();return}
+  try{speechSynthesis&&speechSynthesis.cancel()}catch(e){}
+  const r=new SRC();JH.rec=r;r.lang='en-US';r.interimResults=true;r.continuous=false;r.maxAlternatives=1;JH.heard='';
+  r.onstart=()=>{JH.listening=true;jvSub('…');jvHudState()};
+  r.onresult=e=>{let t='';for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;JH.heard=t;jvSub(t)};
+  r.onerror=e=>{JH.listening=false;jvHudState();if(e.error==='not-allowed'||e.error==='service-not-allowed')jvSub('Allow the microphone for Life in Settings, then try again.');else if(e.error==='no-speech')jvSub('I didn’t catch that.')};
+  r.onend=()=>{JH.listening=false;jvHudState();const t=JH.heard.trim();if(t)jvSend(t)};
+  try{r.start()}catch(e){JH.listening=false;jvHudState()}}
+openJarvis=function(){
+  if($('#jvHud'))return;
+  const h=document.createElement('div');h.id='jvHud';h.setAttribute('role','dialog');h.setAttribute('aria-label','JARVIS');
+  h.innerHTML=`<div class="jvh-top"><span class="jvh-brand">J.A.R.V.I.S</span><div class="jv-st" id="jvSt"><i></i><span>Linking…</span></div><button class="jvh-x" id="jvhX" aria-label="Close">${ic('close')}</button></div>
+    ${syncOn()?'':`<p class="jv-note">Connect your server first (Settings → Connections).</p>`}
+    <div class="jvh-stage"><div class="jvh-r" id="jvhR" role="button" aria-label="Tap to talk">${jvReactor()}</div><div class="jvh-mode" id="jvhMode">Standing by</div><div class="jvh-sub" id="jvhSub">Tap the core and talk.</div></div>
+    <p class="jv-note" id="jvNote"></p><div class="jvh-log jv-log" id="jvLog"></div>
+    <button class="jv-stop" id="jvStop" hidden>${ic('close')}Stop what it’s doing</button>
+    <div class="jvh-in"><button class="jvh-mic" id="jvhMic" aria-label="Talk">${ic('mic')}</button><input id="jvIn" placeholder="Or type a command" enterkeyhint="send" autocomplete="off"><button id="jvSend" aria-label="Send">${ic('send')}</button></div>
+    <div class="jv-sugg">${['What’s on my calendar today?','What’s due this week?','Open Canvas in Opera','Open Outlook','Open Spotify','Lock my laptop'].map(s=>`<button data-jvs="${esc(s)}">${esc(s)}</button>`).join('')}</div>
+    <div class="jvh-foot">Free: your phone’s voice + JARVIS’s free brains. It never buys or pays for anything, and asks you to say “confirm” before a final submit or send.</div>`;
+  document.body.appendChild(h);JH.armed=false;JH.seen.clear();requestAnimationFrame(()=>h.classList.add('on'));
+  jvLoad();clearInterval(JV.t);JV.t=setInterval(()=>{if(!$('#jvLog'))clearInterval(JV.t);else jvLoad()},4000);
+  try{speechSynthesis&&speechSynthesis.getVoices()}catch(e){}
+};
+function closeJarvis(){const h=$('#jvHud');if(!h)return;try{JH.rec&&JH.rec.abort()}catch(e){}JH.listening=false;try{speechSynthesis.cancel()}catch(e){}clearInterval(JV.t);h.classList.remove('on');setTimeout(()=>h.remove(),380)}
+document.addEventListener('click',e=>{const b=e.target.closest('#jvhX,#jvhR,#jvhMic');if(!b)return;e.preventDefault();e.stopImmediatePropagation();
+  if(b.id==='jvhX')return closeJarvis();jvListen()},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#jvHud'))closeJarvis()});
+
+/* ===================== opening: "Welcome, Ishir" · a phone twirls in 3D showing the app · glowing curves orbit
+   around it (passing behind AND in front) · the phone's screen grows into the real app. Classic intro kept as an option. ===================== */
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="ixcss">
+#ix{position:fixed;inset:0;z-index:95;overflow:hidden;background:radial-gradient(80% 55% at 50% 42%,rgb(240 109 68 / .20),transparent 70%),radial-gradient(90% 60% at 50% 105%,rgb(46 125 82 / .38),transparent 70%),#080A09;
+  display:grid;place-items:center;transition:opacity .45s ease}
+#ix canvas{position:absolute;inset:0;width:100%;height:100%}
+#ix .ixs{position:relative;width:150px;height:310px;perspective:900px;z-index:2}
+#ix .ixp{position:absolute;inset:0;transform-style:preserve-3d;will-change:transform}
+#ix .ixf,#ix .ixb{position:absolute;inset:0;border-radius:34px;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+#ix .ixb{transform:rotateY(180deg);background:linear-gradient(145deg,#2A2D2A,#121412 60%,#1C1F1C);box-shadow:inset 0 0 0 2px #3A3F3A}
+#ix .ixb::before{content:"";position:absolute;left:16px;top:16px;width:44px;height:44px;border-radius:var(--r-m);background:#0A0B0A;box-shadow:inset 0 0 0 2px #2F332F}
+#ix .ixb::after{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at 50% 55%,rgb(240 109 68 / .5),transparent 18%)}
+#ix .ixf{background:#0B0D0B;box-shadow:0 0 0 3px #2F332F,0 0 0 4px #4A504A,0 30px 70px rgb(0 0 0 / .6),0 0 60px rgb(240 109 68 / .18);overflow:hidden}
+#ix .ixsc{position:absolute;inset:6px;border-radius:var(--r-xl);overflow:hidden;background:radial-gradient(120% 60% at 0 0,rgb(240 109 68 / .45),transparent 60%),radial-gradient(120% 60% at 100% 100%,rgb(46 125 82 / .6),transparent 60%),#0E110E}
+#ix .ixsc i{position:absolute;display:block;border-radius:var(--r-s)}
+#ix .ixisl{left:50%;top:7px;width:44px;height:13px;margin-left:-22px;border-radius:var(--r-xs)!important;background:#000}
+#ix .k1{left:10px;right:10px;top:30px;height:96px;border-radius:var(--r-m)!important;background:linear-gradient(140deg,#5E7C63,#2C4234);box-shadow:inset 0 1px 0 rgb(255 255 255 / .2)}
+#ix .k1::before{content:"";position:absolute;left:12px;top:16px;width:52px;height:52px;border-radius:50%;border:6px solid #F06D44;border-right-color:#F2A65A;border-bottom-color:rgb(255 255 255 / .15)}
+#ix .k1::after{content:"";position:absolute;left:76px;right:12px;top:22px;height:6px;border-radius:3px;background:rgb(255 255 255 / .55);box-shadow:0 14px 0 rgb(255 255 255 / .3),0 28px 0 rgb(255 255 255 / .3)}
+#ix .k2{left:10px;width:58px;top:134px;height:50px;background:rgb(255 255 255 / .08)}
+#ix .k3{right:10px;width:58px;top:134px;height:50px;background:rgb(240 109 68 / .5)}
+#ix .k4{left:10px;right:10px;top:192px;height:40px;background:rgb(255 255 255 / .07)}
+#ix .k5{left:10px;right:44px;bottom:12px;height:26px;border-radius:var(--r-m)!important;background:rgb(255 255 255 / .1)}
+#ix .k6{right:10px;bottom:12px;width:26px;height:26px;border-radius:50%!important;background:#F06D44}
+#ix .ixsc::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgb(255 255 255 / .16) 45%,transparent 60%);transform:translateX(-120%);animation:ixsheen 1.2s .5s ease-in-out forwards}
+@keyframes ixsheen{to{transform:translateX(120%)}}
+#ix .ixw{position:absolute;left:0;right:0;top:calc(50% - 250px);text-align:center;z-index:3;font:500 clamp(30px,9vw,44px)/1.1 var(--serif);color:#F4EFE6;opacity:0;letter-spacing:-.01em}
+#ix .ixw em{font-style:italic;color:#F06D44}
+</style>`);
+function ixRun(preview){
+  if($('#ix'))return;
+  const el=document.createElement('div');el.id='ix';el.setAttribute('aria-hidden','true');
+  el.innerHTML=`<canvas class="ixbk"></canvas><div class="ixw">Welcome, <em>${esc(firstName())}</em></div><div class="ixs"><div class="ixp"><div class="ixf"><div class="ixsc"><i class="ixisl"></i><i class="k1"></i><i class="k2"></i><i class="k3"></i><i class="k4"></i><i class="k5"></i><i class="k6"></i></div></div><div class="ixb"></div></div></div><canvas class="ixfr"></canvas>`;
+  document.body.appendChild(el);
+  const bk=el.querySelector('.ixbk'),fr=el.querySelector('.ixfr'),ph=el.querySelector('.ixp'),stage=el.querySelector('.ixs'),word=el.querySelector('.ixw');
+  const W=innerWidth,H=innerHeight,dpr=Math.min(2,devicePixelRatio||1);
+  for(const c of [bk,fr]){c.width=W*dpr;c.height=H*dpr}
+  const xb=bk.getContext('2d'),xf=fr.getContext('2d');xb.scale(dpr,dpr);xf.scale(dpr,dpr);
+  if(!preview)SC.style.opacity='0';
+  /* phone twirl */
+  try{ph.animate([{transform:'rotateY(-560deg) rotateX(18deg) scale(.55)'},{transform:'rotateY(-140deg) rotateX(10deg) scale(.86)',offset:.55},{transform:'rotateY(-8deg) rotateX(4deg) scale(1)',offset:.9},{transform:'rotateY(0deg) rotateX(0deg) scale(1)'}],{duration:1500,easing:'cubic-bezier(.2,.75,.25,1)',fill:'forwards'})}catch(e){}
+  try{word.animate([{opacity:0,transform:'translateY(14px)',filter:'blur(8px)'},{opacity:1,transform:'none',filter:'blur(0)'}],{duration:700,delay:250,easing:'cubic-bezier(.22,1,.36,1)',fill:'forwards'})}catch(e){}
+  /* orbits: tilted 3D rings; the part of each ring nearer the viewer is drawn on the front canvas, the rest behind the phone */
+  const cx=W/2,cy=H/2,R=Math.min(W,H)*.42;
+  const rings=[{r:R*1.0,tilt:1.15,yaw:.35,spd:2.6,col:'240,109,68',w:3.4,ph:0},{r:R*.82,tilt:-1.05,yaw:-.5,spd:-3.2,col:'134,207,160',w:3,ph:1.7},
+    {r:R*1.18,tilt:.55,yaw:1.2,spd:2.0,col:'242,166,90',w:2.4,ph:3.1},{r:R*.66,tilt:1.45,yaw:-1.1,spd:3.8,col:'240,109,68',w:2.2,ph:4.4}];
+  const t0=performance.now();let raf=0;
+  function pt(g,a){const x=g.r*Math.cos(a),y=g.r*Math.sin(a)*.0,z=g.r*Math.sin(a);
+    /* tilt around X, then yaw around Y */
+    const y1=y*Math.cos(g.tilt)-z*Math.sin(g.tilt),z1=y*Math.sin(g.tilt)+z*Math.cos(g.tilt);
+    const x2=x*Math.cos(g.yaw)+z1*Math.sin(g.yaw),z2=-x*Math.sin(g.yaw)+z1*Math.cos(g.yaw);
+    const p=900/(900-z2*.6);return[cx+x2*p,cy+y1*p,z2]}
+  function frame(now){
+    const t=(now-t0)/1000;xb.clearRect(0,0,W,H);xf.clearRect(0,0,W,H);
+    const appear=Math.min(1,Math.max(0,(t-.15)/.6)),fade=t>1.9?Math.max(0,1-(t-1.9)/.45):1;
+    for(const g of rings){
+      const head=g.ph+t*g.spd,len=(1.2+appear*3.6)*Math.sign(g.spd||1),N=70;
+      for(let i=0;i<N;i++){
+        const a1=head-len*i/N,a2=head-len*(i+1)/N,p1=pt(g,a1),p2=pt(g,a2),k=1-i/N;
+        const ctx=(p1[2]+p2[2])/2>0?xf:xb;const al=k*k*appear*fade*(ctx===xf?1:.55);
+        ctx.strokeStyle=`rgba(${g.col},${al.toFixed(3)})`;ctx.lineWidth=g.w*(.6+k*.9)*(ctx===xf?1.15:.85);ctx.shadowColor=`rgba(${g.col},${(al*.9).toFixed(3)})`;ctx.shadowBlur=14*k;
+        ctx.beginPath();ctx.moveTo(p1[0],p1[1]);ctx.lineTo(p2[0],p2[1]);ctx.stroke()}
+      const h=pt(g,head),c=h[2]>0?xf:xb;c.shadowBlur=24;c.shadowColor=`rgba(${g.col},${fade})`;c.fillStyle=`rgba(255,246,236,${(appear*fade).toFixed(3)})`;c.beginPath();c.arc(h[0],h[1],g.w*1.6,0,7);c.fill();
+    }
+    if(t<2.5)raf=requestAnimationFrame(frame)}
+  raf=requestAnimationFrame(frame);
+  /* finale: words lift away, the phone's screen grows to fill the display and becomes the app */
+  setTimeout(()=>{try{word.animate([{opacity:1},{opacity:0,transform:'translateY(-12px)',filter:'blur(6px)'}],{duration:380,fill:'forwards'})}catch(e){}},1650);
+  setTimeout(()=>{const sc=Math.max(W/150,H/310)*1.12;
+    try{stage.animate([{transform:'scale(1)'},{transform:`scale(${sc})`}],{duration:620,easing:'cubic-bezier(.7,0,.2,1)',fill:'forwards'})}catch(e){}
+    if(!preview){SC.style.transition='opacity .5s ease .25s';SC.style.opacity='1'}
+    el.style.transition='opacity .5s ease .28s';el.style.opacity='0'},1900);
+  setTimeout(()=>{cancelAnimationFrame(raf);el.remove();if(!preview){SC.style.transition='';endSplash()}},2750);
+}
+const _runSplash4=runSplash;runSplash=function(){if((db.settings.intro||'orbit')==='classic')return _runSplash4();
+  try{splash.style.display='none'}catch(e){}const go=()=>ixRun(false);try{document.fonts.load('500 40px Newsreader').then(go,go)}catch(e){go()}setTimeout(()=>{if(!$('#ix')&&SPLASHING)go()},450)};
+document.addEventListener('click',e=>{if(e.target.closest('[data-introplay]')){e.preventDefault();e.stopImmediatePropagation();closeSheet();setTimeout(()=>ixRun(true),350)}},true);
 
 /* ===================== boot ===================== */
 load();
