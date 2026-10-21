@@ -1869,9 +1869,12 @@ function openMenu(btn){
   const m=document.createElement('div');m.className='menu hide';m.setAttribute('role','listbox');
   m.innerHTML=opts.map(([v,l])=>`<button type="button" role="option" aria-selected="${v===cur}" data-opt="${esc(v)}"><span>${esc(l)}</span>${ic('check')}</button>`).join('');
   $('#menuLayer').appendChild(m);
-  const r=btn.getBoundingClientRect(),mh=m.offsetHeight,below=innerHeight-r.bottom;
-  m.style.left=r.left+'px';m.style.width=r.width+'px';
-  if(below<mh+16&&r.top>mh+16){m.classList.add('up');m.style.top=(r.top-mh-8)+'px'}else m.style.top=(r.bottom+8)+'px';
+  const r=btn.getBoundingClientRect(),below=innerHeight-r.bottom-16,above=r.top-16;
+  m.style.left=r.left+'px';m.style.width=r.width+'px';m.style.overflowY='auto';m.style.overscrollBehavior='contain';m.style.webkitOverflowScrolling='touch';
+  /* long lists scroll inside the menu instead of running off the screen; open on whichever side has more room */
+  let mh=m.offsetHeight;const up=below<mh+8&&above>below,room=Math.max(140,(up?above:below)-8);
+  if(mh>room){m.style.maxHeight=room+'px';mh=room}
+  if(up){m.classList.add('up');m.style.top=(r.top-mh-8)+'px'}else m.style.top=(r.bottom+8)+'px';
   btn.setAttribute('aria-expanded','true');openMenuFor=btn;
   requestAnimationFrame(()=>m.classList.remove('hide'));
   m.querySelector('[aria-selected="true"]')?.focus({preventScroll:true});
@@ -1963,7 +1966,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='173';
+const APP_VER='174';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -3243,7 +3246,7 @@ function openConn(){
       :`<label class="fld" for="srvUrl"><span>Server address</span><input id="srvUrl" type="url" inputmode="url" placeholder="https://life-sync.yourname.workers.dev" autocomplete="off"></label>
         <label class="fld" for="srvKey"><span>Key (only if this server is already paired)</span><input id="srvKey" autocomplete="off" placeholder="Leave empty the first time"></label>
         <div class="sh-actions" style="margin-top:0"><button class="primary" id="srvGo" style="flex:1">${ic('link')}Connect</button></div>`}
-    ${syncOn()?`<div class="sh-actions" style="margin-top:0"><button class="primary" id="diagGo" style="flex:1">Check everything</button></div>`:''}
+    ${syncOn()?`<div class="sh-actions" style="margin-top:14px"><button class="primary" id="diagGo" style="flex:1">Check everything</button></div>`:''}
     <div class="set-grp">What it powers</div>
     ${syncOn()?trow('id="syncTg"',SYNC.syncOn!==false,'Sync across devices',syncStatusText()):''}
     ${syncOn()?connRow('syncstat','cloud','Sync status','See what this device and the server each have',LIVE.state==='live'):''}
@@ -4136,7 +4139,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=173';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=174';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
