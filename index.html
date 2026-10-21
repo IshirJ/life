@@ -1963,7 +1963,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='170';
+const APP_VER='171';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -4136,7 +4136,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=170';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=171';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -6806,7 +6806,8 @@ function jvBriefing(){const td=today(),h=new Date().getHours(),g=db.settings,par
    "check off X", "I took/drank my X" for habits); anything else returns null and goes to the AI or the laptop. */
 function jvIntent(t){const q=jvQ(t);let m;if(!q)return null;
   if(/^(?:yes|yeah|yep|yup|yes please|correct|that one|do it|right)$/.test(q))return{k:'yes'};
-  if(/^(?:brief me|morning briefing|briefing|good morning|what'?s my day(?: look like)?|give me (?:a|my) (?:rundown|briefing))$/.test(q))return{k:'brief'};
+  if(/^(?:brief me|morning briefing|briefing|good morning|what'?s my day(?: look like)?|give me (?:a|my) (?:rundown|briefing))$/.test(q)||
+     (/\b(?:brief|briefing|rundown)\b/.test(q)&&q.split(/\s+/).length<=8&&!/\b(?:email|send|write|draft|text|message|slack|teams|doc|document|report)\b/.test(q)))return{k:'brief'};
   if((m=/^(?:mark|set)\s+(.+?)\s+(?:as\s+)?(?:done|complete|completed|finished)$/.exec(q)))return{k:'complete',what:m[1]};
   if((m=/^(?:tick|tick off|check off|cross off)\s+(.+?)(?:\s+(?:as\s+)?(?:done|complete|completed|finished))?$/.exec(q)))return{k:'complete',what:m[1]};
   if((m=/^i(?: just)? (?:took|drank) (?:my |the )?(.+)$/.exec(q))&&!/\b\d/.test(m[1]))return{k:'habit',what:m[1]};
