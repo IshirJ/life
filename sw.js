@@ -1,5 +1,5 @@
 /* Offline cache for the app itself only. Your entries live in this phone's storage and are never put in this cache. */
-const VERSION='life-v177';
+const VERSION='life-v179';
 const SHELL=['./','./index.html','./foods.txt','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./notes.js','./pf.js','./exercises.json','./pdfjs/pdf.min.mjs','./pdfjs/pdf.worker.min.mjs'];
 const CDN=['https://images.unsplash.com/','https://cdn.jsdelivr.net/','https://fonts.googleapis.com/','https://fonts.gstatic.com/'];
 const CDN_MAX=80;

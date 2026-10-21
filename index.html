@@ -1966,7 +1966,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='177';
+const APP_VER='179';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -4140,7 +4140,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=177';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=179';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -6452,7 +6452,11 @@ function ixRun(preview){
   A(el.querySelector('.sh'),[{opacity:0},{opacity:1,offset:.25},{opacity:1,offset:.6},{opacity:0}],{duration:D,fill:'forwards'});
   /* greeting: appears in the centre, then flies into the header and becomes the Home greeting */
   const wl=el.querySelector('.wl'),hi=document.getElementById('hi');
-  const wr=wl.getBoundingClientRect(),hr=hi&&hi.getBoundingClientRect();
+  /* say exactly what the header says, so the words land on themselves; shrink-wrap the text so we measure the words, not the full-width box */
+  if(hi&&hi.textContent.trim()){wl.innerHTML=hi.innerHTML;wl.querySelectorAll('br').forEach(x=>x.replaceWith(' '))}
+  wl.style.right='auto';wl.style.width='max-content';wl.style.whiteSpace='nowrap';wl.style.left=Math.max(8,(innerWidth-wl.offsetWidth)/2)+'px';
+  const tr2=n=>{const r=document.createRange();r.selectNodeContents(n);return r.getBoundingClientRect()};
+  const wr=tr2(wl),hr=hi&&tr2(hi);
   if(hr&&hr.width){const sc=Math.max(.35,Math.min(1.2,hr.height/Math.max(1,wr.height))),dx=hr.left-wr.left,dy=(hr.top+hr.height/2)-(wr.top+wr.height/2);
     wl.style.transformOrigin='0 50%';
     A(wl,[{opacity:0,transform:'translateY(12px) scale(.96)'},{opacity:1,transform:'none',offset:.28},{opacity:1,transform:'none',offset:.5,easing:'cubic-bezier(.65,0,.25,1)'},
@@ -6919,6 +6923,17 @@ const _openJarvisB=openJarvis;openJarvis=function(){_openJarvisB();const d=today
 .card-s,.chip,.ts-grid>button,.ts-grid>div{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
 .card-s{background:color-mix(in srgb,var(--surface) calc((var(--glass-tint,69) + 17) * 1%),transparent)}
 @supports not (background:color-mix(in srgb,red 50%,blue)){.card-s{background:rgb(24 26 24 / .86)}}
+</style>`);
+
+/* laptop/desktop: full-screen background blurs cost far more on a big window (the blur is redrawn for every pixel behind it).
+   On wide screens the dimmed backdrop behind sheets is a flat tint, and big glass panels use a lighter blur. */
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="perfwide">
+@media (min-width:900px){
+  .wrap.blurred .scrim{-webkit-backdrop-filter:none!important;backdrop-filter:none!important;background:rgb(6 8 7 / .62)!important}
+  .sheet{-webkit-backdrop-filter:blur(12px) saturate(1.3)!important;backdrop-filter:blur(12px) saturate(1.3)!important}
+  .tabs,.dock::before,.top.float,.ib,.fd-search,.banner{-webkit-backdrop-filter:blur(8px)!important;backdrop-filter:blur(8px)!important}
+  #flora,#mesh,#bgcurve{will-change:auto!important}
+}
 </style>`);
 
 /* ===================== boot ===================== */
