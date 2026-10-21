@@ -7,14 +7,14 @@
 <meta name="theme-color" content="#0E1A14">
 <meta name="referrer" content="no-referrer">
 <title>Pause · Life</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700;800&family=Newsreader:ital,opsz,wght@1,6..72,500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@500;600;700;800&family=Newsreader:ital,opsz,wght@1,6..72,500&display=swap">
 <style>
 :root{--bg:#0E1A14;--ink:#EEF2EA;--muted:#9FB3A5;--accent:#F06D44;--sage:#86CFA0}
 *{box-sizing:border-box;margin:0}
 html,body{height:100%}
-body{background:radial-gradient(120% 80% at 50% 20%,#1E3A2B 0%,#0E1A14 60%,#080F0B 100%);color:var(--ink);font:500 16px/1.45 Figtree,system-ui,-apple-system,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;
+body{background:radial-gradient(120% 80% at 50% 20%,#1E3A2B 0%,#0E1A14 60%,#080F0B 100%);color:var(--ink);font:500 16px/1.45 Geist,system-ui,-apple-system,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;
   padding:max(24px,env(safe-area-inset-top)) 24px max(24px,env(safe-area-inset-bottom));overflow:hidden;-webkit-font-smoothing:antialiased;text-align:center}
-.cap{font:600 12px Figtree;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.cap{font:600 12px Geist;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 h1{font:italic 500 clamp(30px,8vw,40px)/1.15 Newsreader,Georgia,serif;margin:10px 0 0}
 h1 b{font-style:normal;color:var(--accent);font-weight:500}
 .stage{position:relative;width:min(78vw,320px);aspect-ratio:1;margin:34px 0 26px;display:grid;place-items:center}
@@ -23,18 +23,18 @@ h1 b{font-style:normal;color:var(--accent);font-weight:500}
 .ring{inset:6%;border:1.5px solid rgb(238 242 234 / .16)}
 .core{inset:22%;background:radial-gradient(circle at 35% 30%,rgb(255 255 255 / .55),rgb(134 207 160 / .55) 35%,rgb(46 106 71 / .9));box-shadow:0 0 60px rgb(134 207 160 / .45),inset 0 1px 0 rgb(255 255 255 / .4);transform:scale(.55);transition:transform var(--t,4s) cubic-bezier(.45,0,.55,1)}
 .big .core,.big .halo{transform:scale(1)}
-.word{position:relative;font:700 20px Figtree;letter-spacing:.02em;text-shadow:0 1px 10px rgb(0 0 0 / .4)}
-.count{display:block;font:500 13px Figtree;color:rgb(238 242 234 / .75);margin-top:4px}
+.word{position:relative;font:700 20px Geist;letter-spacing:.02em;text-shadow:0 1px 10px rgb(0 0 0 / .4)}
+.count{display:block;font:500 13px Geist;color:rgb(238 242 234 / .75);margin-top:4px}
 .dots{display:flex;gap:8px;justify-content:center;margin-top:6px}
 .dots i{width:7px;height:7px;border-radius:50%;background:rgb(238 242 234 / .2);transition:background .4s}
 .dots i.on{background:var(--sage)}
 .acts{display:flex;flex-direction:column;gap:10px;width:min(100%,360px);margin-top:28px;opacity:0;transform:translateY(10px);transition:opacity .6s,transform .6s;pointer-events:none}
 .acts.on{opacity:1;transform:none;pointer-events:auto}
-.btn{display:block;height:54px;line-height:54px;border-radius:27px;font:800 16px Figtree;text-decoration:none;border:0;cursor:pointer}
+.btn{display:block;height:54px;line-height:54px;border-radius:27px;font:800 16px Geist;text-decoration:none;border:0;cursor:pointer}
 .btn.pri{background:var(--ink);color:#0E1A14}
 .btn.sec{background:rgb(238 242 234 / .1);color:var(--ink);box-shadow:inset 0 0 0 1px rgb(238 242 234 / .16)}
 .note{font-size:13.5px;color:var(--muted);margin-top:14px;min-height:1.4em}
-.skip{position:fixed;top:max(16px,env(safe-area-inset-top));right:18px;font:600 13px Figtree;color:var(--muted);background:none;border:0}
+.skip{position:fixed;top:max(16px,env(safe-area-inset-top));right:18px;font:600 13px Geist;color:var(--muted);background:none;border:0}
 @media (prefers-reduced-motion:reduce){.core,.halo{transition:none}}
 </style>
 </head>
