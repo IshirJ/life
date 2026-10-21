@@ -410,9 +410,16 @@ Never invent data he didn't give you; answer questions about his day only from t
     return json({ reply: str(out?.reply, 800), actions: cleanActions(out?.actions), via: 'gemini' });
   } catch (e) {
     if (!env?.AI) throw e;
-    const r = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', { messages: [{ role: 'system', content: sys + ' Reply as JSON: {"reply": "...", "actions": [...]}.' }, { role: 'user', content: text }], max_tokens: 400 });
-    let o = {}; try { o = JSON.parse(String(r?.response || '').replace(/^[^{]*/, '').replace(/[^}]*$/, '')); } catch { o = { reply: String(r?.response || '').slice(0, 600) }; }
-    if (!o || typeof o !== 'object') o = {};
-    return json({ reply: str(o.reply, 800), actions: cleanActions(o.actions), via: 'workers-ai' });
+    const msgs = [{ role: 'system', content: sys + ' Reply ONLY as JSON: {"reply": "...", "actions": [...]}.' }, { role: 'user', content: text }];
+    for (const m of ['@cf/meta/llama-3.3-70b-instruct-fp8-fast', '@cf/meta/llama-3.1-8b-instruct']) {
+      try {
+        const r = await env.AI.run(m, { messages: msgs, max_tokens: 500 });
+        const raw = r?.response ?? r;
+        const o = firstJson(raw) || { reply: typeof raw === 'string' ? raw.slice(0, 600) : '' };
+        if (!str(o.reply, 800) && !Array.isArray(o.actions)) continue;
+        return json({ reply: str(o.reply, 800), actions: cleanActions(o.actions), via: 'workers-ai' });
+      } catch (x) { console.error('jarvis ask fallback', m, x); }
+    }
+    return json({ reply: 'Both of my free AI brains are busy right now. Try again in a minute.', actions: [], via: 'none' });
   }
 }
