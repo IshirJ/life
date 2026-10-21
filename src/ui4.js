@@ -864,18 +864,46 @@ function ixRun(preview){
     {opacity:1,transform:`rotate(${-10-i*6}deg) scale(1)`,offset:.48,easing:'cubic-bezier(.5,0,.35,1)'},
     {opacity:0,transform:`translate(${x-cx}px,${y-cy}px) rotate(${150+i*40}deg) scale(.03)`}],{duration:D+i*60,fill:'forwards'}));
   A(el.querySelector('.sh'),[{opacity:0},{opacity:1,offset:.25},{opacity:1,offset:.6},{opacity:0}],{duration:D,fill:'forwards'});
-  /* greeting: appears in the centre, then flies into the header and becomes the Home greeting */
-  const wl=el.querySelector('.wl'),hi=document.getElementById('hi');
-  /* say exactly what the header says, so the words land on themselves; shrink-wrap the text so we measure the words, not the full-width box */
-  if(hi&&hi.textContent.trim()){wl.innerHTML=hi.innerHTML;wl.querySelectorAll('br').forEach(x=>x.replaceWith(' '))}
-  wl.style.right='auto';wl.style.width='max-content';wl.style.whiteSpace='nowrap';wl.style.left=Math.max(8,(innerWidth-wl.offsetWidth)/2)+'px';
-  const tr2=n=>{const r=document.createRange();r.selectNodeContents(n);return r.getBoundingClientRect()};
-  const wr=tr2(wl),hr=hi&&tr2(hi);
-  if(hr&&hr.width){const sc=Math.max(.35,Math.min(1.2,hr.height/Math.max(1,wr.height))),dx=hr.left-wr.left,dy=(hr.top+hr.height/2)-(wr.top+wr.height/2);
-    wl.style.transformOrigin='0 50%';
-    A(wl,[{opacity:0,transform:'translateY(12px) scale(.96)'},{opacity:1,transform:'none',offset:.28},{opacity:1,transform:'none',offset:.5,easing:'cubic-bezier(.65,0,.25,1)'},
-      {opacity:1,transform:`translate(${dx}px,${dy}px) scale(${sc})`,offset:.9},{opacity:0,transform:`translate(${dx}px,${dy}px) scale(${sc})`}],{duration:D+150,fill:'forwards'});
-    A(hi,[{opacity:0},{opacity:0,offset:.8},{opacity:1}],{duration:D+150,fill:'backwards'});
+  /* greeting: shown big in the centre, then flies onto Home's own greeting (#hi) and becomes it.
+     It uses #hi's exact font at #hi's size (scaled up in the centre), and re-aims at #hi's LIVE text box every frame,
+     so header font swaps, fitHello and the float/compact switch can't make it land in the wrong place. */
+  const wl=el.querySelector('.wl'),HI=()=>document.getElementById('hi'),hi0=HI();
+  const rng=n=>{const r=document.createRange();r.selectNodeContents(n);return r.getBoundingClientRect()};
+  const vis=n=>{if(!n||!n.textContent.trim())return null;const r=rng(n);return r.width>0&&r.bottom>0&&r.top<innerHeight?r:null};
+  if(vis(hi0)){
+    const cs=getComputedStyle(hi0),em0=hi0.querySelector('em');
+    wl.innerHTML=hi0.innerHTML;
+    Object.assign(wl.style,{left:'0',top:'0',right:'auto',width:'max-content',whiteSpace:'nowrap',transformOrigin:'0 0',
+      fontFamily:cs.fontFamily,fontWeight:cs.fontWeight,fontStyle:cs.fontStyle,fontSize:cs.fontSize,lineHeight:cs.lineHeight,letterSpacing:cs.letterSpacing,color:cs.color});
+    wl.querySelectorAll('br').forEach(n=>n.remove());
+    wl.querySelectorAll('.gl').forEach(n=>n.style.display='inline-block');
+    const em=wl.querySelector('em');if(em&&em0){const ec=getComputedStyle(em0);em.style.marginLeft=ec.marginLeft;em.style.color=ec.color;em.style.fontStyle=ec.fontStyle}
+    /* untransformed text box of the flying copy (re-measured once web fonts finish loading) */
+    let ox=0,oy=0,w0=1,h0=1;
+    const meas=()=>{const tf=wl.style.transform;wl.style.transform='none';const b=wl.getBoundingClientRect(),r=rng(wl);ox=r.left-b.left;oy=r.top-b.top;w0=Math.max(1,r.width);h0=Math.max(1,r.height);wl.style.transform=tf};
+    meas();try{document.fonts&&document.fonts.ready.then(meas)}catch(e){}
+    const T=D+150,t0=performance.now(),big=Math.min(40,Math.max(28,innerWidth*.085));
+    const ez=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
+    let lastT=null;
+    const step=now=>{
+      if(!el.isConnected){const h=HI();if(h)h.style.opacity='';return}
+      const p=Math.min(1,(now-t0)/T),h=HI(),fs=parseFloat(wl.style.fontSize)||16;
+      const S=Math.min((innerWidth-32)/w0,Math.max(1.15,big/fs));
+      /* centre pose: text box centred on screen at scale S */
+      const cxT=(innerWidth-w0*S)/2,cyT=innerHeight/2-h0*S/2;
+      let X=cxT-ox*S,Y=cyT-oy*S,s=S,o=1;
+      if(p<.28){const k=p/.28;o=k;s=S*(.96+.04*k);X=(innerWidth-w0*s)/2-ox*s;Y=innerHeight/2-h0*s/2-oy*s+12*(1-k)}
+      else if(p>.5){
+        const t=vis(h)||lastT;if(t)lastT=t;
+        if(t){const st=t.width/w0,tx=t.left-ox*st,ty=t.top-oy*st,e=ez(Math.min(1,(p-.5)/.4));
+          X+= (tx-X)*e;Y+=(ty-Y)*e;s+=(st-s)*e}
+      }
+      if(p>.9){const k=(p-.9)/.1;o=1-k;if(h)h.style.opacity=String(k)}else if(h)h.style.opacity='0';
+      wl.style.opacity=String(o);wl.style.transform=`translate(${X}px,${Y}px) scale(${s})`;
+      if(p<1)requestAnimationFrame(step);else if(h)h.style.opacity='';
+    };
+    requestAnimationFrame(step);
+    setTimeout(()=>{const h=HI();if(h)h.style.opacity=''},T+600);
   }else A(wl,[{opacity:0},{opacity:1,offset:.3},{opacity:1,offset:.62},{opacity:0}],{duration:D,fill:'forwards'});
   A(rg,[{opacity:0,transform:'scale(2.4)'},{opacity:1,transform:'scale(1)',offset:.7},{opacity:0,transform:'scale(1.12)'}],{duration:1100,delay:D*.62,easing:'cubic-bezier(.22,1,.36,1)',fill:'forwards'});
   /* glowing outlines peel off the swirl, spin out and settle exactly onto Home's cards and buttons, then hand over to them */
