@@ -1931,7 +1931,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='157';
+const APP_VER='159';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -3998,7 +3998,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=157';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=159';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -5773,7 +5773,7 @@ function jvPaint(){const L=$('#jvLog');if(!L)return;const{on,lau}=jvState();
   const nt=$('#jvNote');if(nt)nt.innerHTML=!on&&!lau?'Your laptop isn’t answering. It’s asleep, offline, or hasn’t been logged into since the update. Wake it and tap Start.':'';
   const all=[...JV.log.map(x=>({...x})),...JV.local].sort((a,b)=>(a.at||0)-(b.at||0)).slice(-30);
   const run=all.some(x=>!x.reply&&(x.state==='running'||x.state==='queued')&&(x.at||0)>=JV.since&&Date.now()-(x.at||0)<6e5);
-  L.innerHTML=all.length?all.map(x=>`<div class="jv-me">${esc(x.text)}</div>${x.reply?`<div class="jv-ai${x.local?' loc':''}">${esc(x.reply)}</div>`:`<div class="jv-ai wait">${x.state==='running'?`<details class="jvsteps"${JV.open.has(x.id)?' open':''} data-jvid="${esc(x.id||'')}"><summary><span class="jvdot"></span>Working on it…${(x.steps||[]).length?`<em>${x.steps.length} step${x.steps.length>1?'s':''}</em>`:''}<i class="chev">${ic('chev')}</i></summary><ol>${(x.steps||[]).length?x.steps.map(l=>`<li>${esc(l.replace(/[\[\]]/g,'').trim())}</li>`).join(''):'<li class="mu">Waiting for the first step…</li>'}</ol></details>`:on?'Sent…':'Waiting for your laptop…'}</div>`}`).join(''):'<p class="hint">Type anything you’d say to JARVIS. Calendar and due-date questions are answered here instantly; everything else runs on your laptop.</p>';
+  L.innerHTML=all.length?all.map(x=>`<div class="jv-me">${esc(x.text)}</div>${x.reply?`<div class="jv-ai${x.local?' loc':''}">${esc(x.reply)}${x.reply!=='Stopped.'?`<button class="jvplay" data-jvplay="${esc(x.local?'':(x.id||''))}" data-jvtext="${esc(x.reply)}" aria-label="Play">${ic('play')}</button>`:''}</div>`:`<div class="jv-ai wait">${x.state==='running'?`<details class="jvsteps"${JV.open.has(x.id)?' open':''} data-jvid="${esc(x.id||'')}"><summary><span class="jvdot"></span>Working on it…${(x.steps||[]).length?`<em>${x.steps.length} step${x.steps.length>1?'s':''}</em>`:''}<i class="chev">${ic('chev')}</i></summary><ol>${(x.steps||[]).length?x.steps.map(l=>`<li>${esc(l.replace(/[\[\]]/g,'').trim())}</li>`).join(''):'<li class="mu">Waiting for the first step…</li>'}</ol></details>`:on?'Sent…':'Waiting for your laptop…'}</div>`}`).join(''):'<p class="hint">Type anything you’d say to JARVIS. Calendar and due-date questions are answered here instantly; everything else runs on your laptop.</p>';
   const sb=$('#jvStop');if(sb)sb.hidden=!run;if(!JV.keepScroll)L.scrollTop=L.scrollHeight;JV.keepScroll=false}
 function openJarvis(){NAV_DIR=1;FORCE_MODE='m-bottom tall';openSheet(`${sheetHead('<em>JARVIS</em>')}${needSrv()}<div class="jv-st" id="jvSt"><i></i><span>Checking…</span></div><p class="small jv-note" id="jvNote"></p><div class="jv-log" id="jvLog"></div>
   <button class="jv-stop" id="jvStop" hidden>${ic('close')}Stop</button>
@@ -5974,7 +5974,7 @@ openJarvis=function(){
   const h=document.createElement('div');h.id='jvHud';h.setAttribute('role','dialog');h.setAttribute('aria-label','JARVIS');
   h.innerHTML=`<div class="jvh-top"><span class="jvh-brand">J.A.R.V.I.S</span><button class="jvh-x" id="jvhX" aria-label="Close">${ic('close')}</button></div>
     ${syncOn()?'':`<p class="jv-note">Connect your server first (Settings → Connections).</p>`}
-    <div class="jvh-stage"><div class="jvh-r" id="jvhR" aria-hidden="true">${jvReactor()}</div><div class="jvh-mode" id="jvhMode">Standing by</div><div class="jv-st jvh-st" id="jvSt"><i></i><span>Linking…</span></div><div class="jvh-sub" id="jvhSub">Tap the mic and talk.</div></div>
+    <div class="jvh-stage"><div class="jvh-r" id="jvhR" aria-hidden="true">${jvReactor()}</div><div class="jvh-mode" id="jvhMode">Standing by</div><button class="jvh-hush" id="jvhHush" hidden aria-label="Stop speaking"><i></i>Stop speaking</button><div class="jv-st jvh-st" id="jvSt"><i></i><span>Linking…</span></div><div class="jvh-sub" id="jvhSub">Tap the mic and talk.</div></div>
     <p class="jv-note" id="jvNote"></p><div class="jvh-log jv-log" id="jvLog"></div>
     <button class="jv-stop" id="jvStop" hidden>${ic('close')}Stop</button>
     <div class="jvh-in"><button class="jvh-mic" id="jvhMic" aria-label="Talk">${ic('mic')}</button><input id="jvIn" placeholder="Or type a command" enterkeyhint="send" autocomplete="off"><button id="jvSend" aria-label="Send">${ic('send')}</button></div>
@@ -6259,6 +6259,32 @@ function jvPickVoice(){const vs=speechSynthesis.getVoices().filter(v=>/^en/i.tes
 jvSay=function(text){try{if(typeof speechSynthesis==='undefined'||!text)return;if(speechSynthesis.speaking||speechSynthesis.pending)speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(String(text).slice(0,400));const v=jvPickVoice();if(v){u.voice=v;u.lang=v.lang}else u.lang='en-GB';u.rate=1;u.pitch=1;
   u.onstart=u.onend=()=>jvHudState();speechSynthesis.speak(u);setTimeout(jvHudState,60)}catch(e){}};
+
+/* replay a reply, stop speaking, and say why if the phone can't play the voice */
+async function jvSpeak2(text,id){
+  if(id&&syncOn()){for(let k=0;k<2;k++){try{const r=await fetch(SYNC.url.replace(/\/+$/,'')+'/jarvis/voice?id='+encodeURIComponent(id),{headers:{'X-Life-Key':SYNC.key}});
+      if(r.ok){const b=await r.blob();if(b.size>200){if(JA.dataset.u)URL.revokeObjectURL(JA.dataset.u);const u=URL.createObjectURL(b);JA.dataset.u=u;JA.src=u;try{await JA.play();return}catch(e){JH.why='This app is blocking sound until you tap somewhere in JARVIS.'}}}
+      else JH.why=r.status===404?'The laptop didn’t send its voice for this reply (restart JARVIS on the laptop).':'Voice download failed ('+r.status+').'}catch(e){JH.why='Couldn’t download the voice.'}
+    if(k===0)await new Promise(r=>setTimeout(r,1500))}}
+  const hasTTS=typeof speechSynthesis!=='undefined'&&speechSynthesis.getVoices().length;
+  if(!hasTTS){toast(JH.why||'This browser has no voice to speak with.');return}
+  jvSay(text)}
+jvSpeak=jvSpeak2;
+function jvHush(){try{JA.pause();JA.currentTime=0}catch(e){}try{speechSynthesis.cancel()}catch(e){}JH.playing=false;jvHudState()}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-jvplay],#jvhHush');if(!b)return;e.preventDefault();e.stopImmediatePropagation();
+  if(b.id==='jvhHush')return jvHush();jvHush();jvSpeak(b.dataset.jvtext,b.dataset.jvplay||null)},true);
+setInterval(()=>{const h=$('#jvhHush');if(!h)return;const on=JH.playing||(typeof speechSynthesis!=='undefined'&&speechSynthesis.speaking);if(h.hidden===on)h.hidden=!on},250);
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="jvfix3">
+#jvHud .jvh-stage{overflow:hidden;min-height:0}
+#jvHud .jvh-sub{-webkit-line-clamp:2;font-size:clamp(15px,4.4vw,19px);min-height:0;max-height:2.8em;margin-bottom:4px}
+#jvHud .jvh-r{width:min(58vw,27vh,270px)}
+.jvh-hush{display:inline-flex;align-items:center;gap:7px;height:28px;padding:0 12px;border-radius:999px;background:rgb(255 255 255 / .08);border:1px solid rgb(255 255 255 / .14);color:#F4EFE6;font:600 12px var(--ui)}
+.jvh-hush[hidden]{display:none}
+.jvh-hush i{width:9px;height:9px;border-radius:2px;background:#F06D44;box-shadow:0 0 8px #F06D44}
+.jv-ai{position:relative}
+.jvplay{display:inline-grid;place-items:center;width:24px;height:24px;margin:-2px -4px -6px 8px;border-radius:50%;background:rgb(255 255 255 / .08);vertical-align:middle;color:#F2A65A}
+.jvplay svg{width:12px;height:12px}
+</style>`);
 
 /* ===================== boot ===================== */
 load();
