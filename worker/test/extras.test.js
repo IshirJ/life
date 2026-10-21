@@ -49,7 +49,7 @@ test('ai food: Gemini JSON mapped to items', async () => {
   const { env, key } = await paired();
   await call(env, req('/config', { method: 'PUT', key, body: { geminiKey: 'G' } }));
   const f = mockFetch((url, init) => {
-    assert.match(url, /generativelanguage\.googleapis\.com\/v1beta\/models\/gemini-flash-latest:generateContent/);
+    assert.match(url, /generativelanguage\.googleapis\.com\/v1beta\/models\/gemini-2\.5-flash:generateContent/);
     assert.equal(init.headers['x-goog-api-key'], 'G');
     const body = JSON.parse(init.body); assert.ok(body.contents[0].parts.some((p) => p.inline_data));
     return Response.json({ candidates: [{ content: { parts: [{ text: JSON.stringify({ items: [{ name: 'Dal', grams: 200, kcal: 230.4, protein: 12.33, fat: 6, carbs: 30 }] }) }] } }] });
@@ -97,4 +97,45 @@ test('screen pauses counted per day', async () => {
   const s = await (await call(env, req('/screen', { key }))).json();
   const day = Object.values(s.days)[0];
   assert.equal(day['instagram:paused'], 2);
+});
+
+test('ai: falls back to another model when the free quota is zero, and reports a bad key plainly', async () => {
+  const { env, key } = await paired();
+  await call(env, req('/config', { method: 'PUT', key, body: { geminiKey: 'G' } }));
+  const seen = [];
+  let f = mockFetch((url) => {
+    seen.push(url.match(/models\/([^:]+)/)[1]);
+    if (seen.length === 1) return Response.json({ error: { message: 'Quota exceeded, limit: 0' } }, { status: 429 });
+    return Response.json({ candidates: [{ content: { parts: [{ text: '{"ok":true}' }] } }] });
+  });
+  try {
+    const r = await call(env, req('/ai/test', { method: 'POST', key, body: {} }));
+    assert.equal(r.status, 200); assert.deepEqual(await r.json(), { ok: true });
+    assert.deepEqual(seen, ['gemini-2.5-flash', 'gemini-2.5-flash-lite']);
+  } finally { f.restore(); }
+  f = mockFetch(() => Response.json({ error: { message: 'API key not valid. Please pass a valid API key.' } }, { status: 400 }));
+  try {
+    const r = await call(env, req('/ai/test', { method: 'POST', key, body: {} }));
+    assert.equal(r.status, 502); assert.match((await r.json()).error, /key isn’t valid/);
+  } finally { f.restore(); }
+});
+
+test('jarvis wake + stop: phone can start JARVIS and stop a running task', async () => {
+  const { env, key } = await paired();
+  await call(env, req('/jarvis/wake', { method: 'POST', key, body: { mode: 'start' } }));
+  assert.deepEqual(await (await call(env, req('/jarvis/wake', { key }))).json(), { mode: 'start' });
+  assert.deepEqual(await (await call(env, req('/jarvis/wake', { key }))).json(), {});
+  await call(env, req('/jarvis/cmd', { method: 'POST', key, body: { text: 'check my calendar' } }));
+  await call(env, req('/jarvis/next', { key }));
+  await call(env, req('/jarvis/wake', { method: 'POST', key, body: { mode: 'stop' } }));
+  assert.deepEqual(await (await call(env, req('/jarvis/next', { key }))).json(), { stop: true });
+  const log = await (await call(env, req('/jarvis/log', { key }))).json();
+  assert.equal(log.log[0].state, 'error'); assert.equal(log.log[0].reply, 'Stopped.');
+});
+
+test('jarvis busy poll does not hand over the next command', async () => {
+  const { env, key } = await paired();
+  await call(env, req('/jarvis/cmd', { method: 'POST', key, body: { text: 'one' } }));
+  assert.deepEqual(await (await call(env, req('/jarvis/next?busy=1', { key }))).json(), {});
+  assert.equal((await (await call(env, req('/jarvis/next', { key }))).json()).text, 'one');
 });

@@ -77,17 +77,43 @@ export async function getBusStops(url) {
 
 // ---------------- Gemini (free tier) ----------------
 const GEM = 'https://generativelanguage.googleapis.com';
-function gemModel(config) { return clip(config.geminiModel || 'gemini-flash-latest', 60).replace(/[^a-z0-9.\-]/gi, ''); }
+function gemModel(config) { return clip(config.geminiModel || 'gemini-2.5-flash', 60).replace(/[^a-z0-9.\-]/gi, ''); }
+// Free-tier quotas differ per model (some new models have none), so on a quota/model error try the next one.
+const GEM_FALLBACK = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash', 'gemini-flash-latest'];
+function gemHint(status, msg) {
+  const m = String(msg || '');
+  if (status === 400 && /API key not valid|API_KEY_INVALID/i.test(m)) return 'Your Gemini key isn’t valid. Copy it again from aistudio.google.com/apikey and paste it in Settings → Connections → AI.';
+  if (status === 403) return 'Gemini refused this key (403). Make sure the Generative Language API is enabled for the key’s project, or create a new key in AI Studio.';
+  if (status === 429) return 'Gemini’s free limit is used up for now. Try again in a minute (or tomorrow if it’s the daily limit).';
+  if (/location is not supported/i.test(m)) return 'Gemini isn’t available from the server’s region right now.';
+  return `Gemini ${status}: ${clip(m, 200)}`;
+}
 async function gemini(config, parts, schema, model) {
   if (!config.geminiKey) throw new HttpError(400, 'Add your free Gemini key in Life → Settings → Connections → AI');
   const body = { contents: [{ role: 'user', parts }], generationConfig: { temperature: 0.2, responseMimeType: 'application/json', ...(schema ? { responseSchema: schema } : {}) } };
   const call = (m) => fetch(`${GEM}/v1beta/models/${m}:generateContent`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': config.geminiKey }, body: JSON.stringify(body) });
-  let r = await call(model || gemModel(config));
-  if (r.status === 404 && !model) r = await call('gemini-2.5-flash');      // older accounts may not have the alias
-  const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw new HttpError(r.status === 429 ? 429 : 502, `Gemini ${r.status}: ${clip(d?.error?.message, 200)}`);
-  const text = (d.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('');
-  try { return JSON.parse(text); } catch { throw new HttpError(502, 'Gemini returned something that isn’t JSON'); }
+  const tries = model ? [model] : [...new Set([gemModel(config), ...GEM_FALLBACK])];
+  let last = null;
+  for (const m of tries) {
+    const r = await call(m);
+    const d = await r.json().catch(() => ({}));
+    if (r.ok) {
+      const text = (d.candidates?.[0]?.content?.parts || []).filter((p) => !p.thought).map((p) => p.text || '').join('').trim();
+      const clean = text.replace(/^```(?:json)?\s*|\s*```$/g, '');
+      try { return JSON.parse(clean); } catch { last = new HttpError(502, d.candidates?.[0]?.finishReason === 'SAFETY' ? 'Gemini blocked this photo. Try another angle or describe it instead.' : 'Gemini’s answer wasn’t readable. Try again.'); continue; }
+    }
+    const msg = d?.error?.message || '';
+    last = new HttpError(r.status === 429 ? 429 : 502, gemHint(r.status, msg));
+    // a bad key won't work on any model: stop now
+    if (r.status === 400 && /API key/i.test(msg)) break;
+    if (r.status === 403) break;
+    if (!(r.status === 404 || r.status === 429 || (r.status === 400 && /model/i.test(msg)) || r.status >= 500)) break;
+  }
+  throw last;
+}
+export async function aiTest(config) {
+  const out = await gemini(config, [{ text: 'Reply with {"ok":true}' }], { type: 'OBJECT', properties: { ok: { type: 'BOOLEAN' } }, required: ['ok'] });
+  return json({ ok: !!out.ok });
 }
 const FOOD_SCHEMA = { type: 'OBJECT', properties: { items: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
   name: { type: 'STRING' }, grams: { type: 'NUMBER' }, kcal: { type: 'NUMBER' }, protein: { type: 'NUMBER' }, fat: { type: 'NUMBER' }, carbs: { type: 'NUMBER' }, confidence: { type: 'STRING' } },

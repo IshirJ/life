@@ -1929,7 +1929,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='113';
+const APP_VER='119';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -3985,7 +3985,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=113';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=119';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -4635,8 +4635,8 @@ Object.assign(P,{
 .fd-when{opacity:.7}
 .fdc .vw{opacity:0;transform:translateY(8px);pointer-events:none}
 .fdc[data-pg="1"] .vd{opacity:0;transform:translateY(-8px)}.fdc[data-pg="1"] .vw{opacity:1;transform:none}
-.fdp .kv{display:none}.fdp .dn,.fdp .kv{transition:opacity .3s}
-.fdc[data-pg="1"] .fdp .dn{display:none}.fdc[data-pg="1"] .fdp .kv{display:block;font-size:13px}
+.fdp .wkv{display:none;background:none!important;padding:0!important;border-radius:0!important;box-shadow:none!important}.fdp .dn,.fdp .wkv{transition:opacity .3s}
+.fdc[data-pg="1"] .fdp .dn{display:none}.fdc[data-pg="1"] .fdp .wkv{display:block;font:700 13px/1 var(--mono)}.fdp .wkv.z{opacity:.4}
 .fdc[data-pg="1"] .fdp.on{background:none;border-color:rgb(255 255 255 / .22)}
 .fdp.fut{border-style:dashed;opacity:.8}
 .fd-sep{height:1px;background:rgb(255 255 255 / .13);margin:0 0 12px}
@@ -4660,7 +4660,8 @@ details.fd-wk .fdw{overflow:hidden}
 .fdp b{font:600 16px/1 var(--ui)}
 .fdp span{font:500 11px/1 var(--ui);opacity:.75}
 .fdp.on{background:rgb(255 255 255 / .16);border-color:rgb(255 255 255 / .75)}
-.fdp.td::after{content:"";position:absolute;bottom:6px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:currentColor}
+.fdp.td span{opacity:1;font-weight:800;color:var(--hc,#fff)}
+.fdp.td:not(.on){border-color:color-mix(in srgb,var(--hc,#fff) 70%,transparent)}
 .fdp:active{transform:scale(.94)}
 .fd-pager{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;margin:12px -16px 0;-webkit-overflow-scrolling:touch}
 .fd-pager::-webkit-scrollbar{display:none}
@@ -4671,13 +4672,15 @@ details.fd-wk .fdw{overflow:hidden}
 .fd-m .cap{color:rgb(243 240 230 / .7);font-size:10px}
 .fd-m .mbar{height:4px;border-radius:2px;background:rgb(255 255 255 / .16);margin-top:6px;overflow:hidden}
 .fd-m .mbar i{display:block;height:100%;border-radius:2px;background:var(--hc);transition:width .5s}
-.fd-m .mbar i.over{background:var(--accent)}
+.fd-m .mbar i.over,.hero .fd-m .mbar i.over{background:#FF7A5C!important;box-shadow:0 0 8px rgb(255 122 92 / .6)}
 .fd-dots{display:flex;justify-content:center;gap:6px;margin-top:12px}
 .fd-dots i{width:6px;height:6px;border-radius:50%;background:rgb(255 255 255 / .3);transition:background .25s,transform .25s}
 .fd-dots i.on{background:#fff;transform:scale(1.15)}
 .fd-search{display:flex;align-items:center;gap:10px;width:100%;margin-top:12px;height:52px;border-radius:var(--r-xl);padding:0 8px 0 18px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--card-shadow);color:var(--muted);font:500 16px var(--ui);text-align:left}
 .fd-search svg{width:19px;height:19px;flex:none}
 .fd-search span{flex:1}
+.fd-search .sc.ai{color:var(--accent)}
+.fd-search .sc+.sc{margin-left:-4px}
 .fd-search .sc{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--surface2);color:var(--ink)}
 details.fd-wk{margin-top:12px;border-radius:var(--r-l);overflow:hidden}
 details.fd-wk summary{list-style:none;display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer}
@@ -4922,8 +4925,8 @@ function foodView(){
   const g=db.settings,d=fdDay(),days=weekDays(d),T=dayTot(d),left=g.kcal-T.k;
   const wt=days.map(dayTot),logged=wt.filter(x=>x.a.length),sum=k=>wt.reduce((s,x)=>s+x[k],0),avg=k=>logged.length?sum(k)/logged.length:0;
   const thisWk=days.includes(today());
-  const kfmt=v=>v>=1000?(v/1000).toFixed(1).replace(/\.0$/,'')+'k':v?String(Math.round(v)):'–';
-  const pills=days.map((x,i)=>{const t=wt[i],f=Math.min(100,t.k/g.kcal*100);return`<button class="fdp${x===d?' on':''}${x===today()?' td':''}${t.k>g.kcal?' over':''}${x>today()?' fut':''}" data-fdday="${x}" aria-pressed="${x===d}" aria-label="${esc(fmtLong(x))}: ${fmtN(t.k)} kcal" style="--f:${f.toFixed(1)}%"><i class="fill"></i><b class="num dn">${+x.slice(8)}</b><b class="num kv">${kfmt(t.k)}</b><span>${wdOf(x).slice(0,2)}</span></button>`}).join('');
+  const kfmt=v=>v>=1000?(v/1000).toFixed(1).replace(/\.0$/,'')+'k':v?String(Math.round(v)):'0';
+  const pills=days.map((x,i)=>{const t=wt[i],f=Math.min(100,t.k/g.kcal*100);return`<button class="fdp${x===d?' on':''}${x===today()?' td':''}${t.k>g.kcal?' over':''}${x>today()?' fut':''}" data-fdday="${x}" aria-pressed="${x===d}" aria-label="${esc(fmtLong(x))}: ${fmtN(t.k)} kcal" style="--f:${f.toFixed(1)}%"><i class="fill"></i><b class="num dn">${+x.slice(8)}</b><b class="num wkv${t.k?'':' z'}">${kfmt(t.k)}</b><span>${wdOf(x).slice(0,2)}</span></button>`}).join('');
   const mac=(lab,v,goal,unit='g')=>`<div class="fd-m"><div class="fd-l">${lab}</div><b>${fmtN(v)}${unit&&v?`<small>${unit}</small>`:''}</b><small class="fd-g">of ${fmtN(goal)}${unit}</small><div class="mbar"><i class="${v>goal?'over':''}" style="width:${Math.min(100,goal?v/goal*100:0).toFixed(1)}%"></i></div></div>`;
   const stat=(lab,v,sub)=>`<div class="fd-s"><div class="fd-l">${lab}</div><b>${v}</b><small>${sub}</small></div>`;
   const label=d===today()?'Today':d===addDays(-1)?'Yesterday':d===addDays(1)?'Tomorrow':`${wdOf(d)} ${fmtDate(d)}`;
@@ -4938,7 +4941,7 @@ function foodView(){
       <div class="fd-pg">${stat('Total',fmtN(sum('k')),'kcal')}${stat('Per day',fmtN(avg('k')),'kcal avg')}${stat('Protein',fmtN(avg('p'))+'g','per day')}${stat('Logged',`${logged.length}/7`,'days')}</div></div>
     <div class="fd-dots" id="fdDots"><i class="${FD.page?'':'on'}"></i><i class="${FD.page?'on':''}"></i></div>
   </section>`;
-  const search=`<button class="fd-search" data-fdlog=""><svg class="i" viewBox="0 0 24 24">${P.search}</svg><span>Search for a food</span><i class="sc" data-fdscan="1">${ic('scan')}</i></button>`;
+  const search=`<button class="fd-search" data-fdlog=""><svg class="i" viewBox="0 0 24 24">${P.search}</svg><span>Search for a food</span><i class="sc ai" data-fdai="1" aria-label="Log with AI photo">${ic('sparkles')}</i><i class="sc" data-fdscan="1" aria-label="Scan barcode">${ic('scan')}</i></button>`;
   /* weekly grid: folded away until you want it */
   const rows=[['kcal','🔥','k',g.kcal,'#F06D44'],['P','P','p',g.protein,'#E8B04B'],['F','F','f',g.fat,'#8FCB8B'],['C','C','c',g.carbs,'#7FB8E0']];
   const di=days.indexOf(d);
@@ -4965,7 +4968,7 @@ document.addEventListener('click',e=>{
   if(d.fdwk){FD.day=shiftDays(fdDay(),+d.fdwk);if(FD.day===today())FD.day=null;fdRefresh(Math.sign(+d.fdwk));return}
   if(d.fdgo){FD.day=null;fdRefresh(1);return}
   if(d.fdmode){FD.mode=d.fdmode;fdRefresh(0);return}
-  if(d.fdlog!==undefined){openFoodLog(fdDay(),d.fdlog||null);if(e.target.closest('[data-fdscan]'))setTimeout(()=>{const t=$('[data-ftab="scan"]');if(t)t.click();setTimeout(()=>{const g=$('#scanStart');if(g)g.click()},120)},60)}
+  if(d.fdlog!==undefined){openFoodLog(fdDay(),d.fdlog||null);if(e.target.closest('[data-fdai]'))setTimeout(()=>{const t=$('[data-ftab="ai"]');if(t)t.click()},60);if(e.target.closest('[data-fdscan]'))setTimeout(()=>{const t=$('[data-ftab="scan"]');if(t)t.click();setTimeout(()=>{const g=$('#scanStart');if(g)g.click()},120)},60)}
 },true);
 document.addEventListener('click',e=>{const sm=e.target.closest('#fdWk>summary');if(!sm)return;e.preventDefault();e.stopImmediatePropagation();
   const d=sm.parentElement,body=d.querySelector('.fdw');if(d._anim)return;
@@ -5330,14 +5333,41 @@ svg.ie{width:1.05em;height:1.05em;vertical-align:-.16em;fill:none;stroke:current
 .ib,.chip,.banner,.fd-search{-webkit-backdrop-filter:blur(16px) saturate(1.5);backdrop-filter:blur(16px) saturate(1.5)}
 .ib{border-radius:var(--r-m);background:color-mix(in srgb,var(--surface) 70%,transparent)}
 .banner{background:color-mix(in srgb,var(--surface) 70%,transparent);border-radius:var(--r-l)}
-.sheet{border-radius:var(--r-xl) var(--r-xl) 0 0}
 .card-s:active,.tile:active{transform:scale(.985)}
 .card-s,.tile{transition:transform .25s cubic-bezier(.3,1.4,.5,1)}
-/* header: when it floats, a soft glass fade covers the strip above and beside it so nothing peeks through */
-.top.float::before{content:"";position:absolute;z-index:-1;left:-24px;right:-24px;top:calc(-10px - env(safe-area-inset-top,0px));bottom:-14px;
-  background:linear-gradient(to bottom,var(--bg) 0%,color-mix(in srgb,var(--bg) 82%,transparent) 55%,transparent);pointer-events:none;
-  -webkit-mask:linear-gradient(to bottom,#000 70%,transparent);mask:linear-gradient(to bottom,#000 70%,transparent)}
-.top.float .hello h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* status bar: no solid band; content and photo run edge to edge, a soft fade keeps the clock readable */
+body::before{background:linear-gradient(to bottom,rgb(0 0 0 / .5),rgb(0 0 0 / 0))!important;height:calc(env(safe-area-inset-top,0px) + 14px)!important;pointer-events:none}
+:root[data-theme="light"] body::before{background:linear-gradient(to bottom,rgb(255 255 255 / .6),rgb(255 255 255 / 0))!important}
+.top{top:calc(env(safe-area-inset-top,0px) + 4px);gap:8px}
+.top .ib{width:42px;height:42px;border-radius:var(--r-m)}
+/* floating header = compact glass pill: one line title, smaller controls, a blur strip behind so nothing peeks around it */
+.top .hello h1,.top .av,.top .ib,.top .hello .cap{transition:font-size .3s cubic-bezier(.22,1,.36,1),width .3s,height .3s,opacity .2s,margin .3s}
+.top.float{padding:7px 7px 7px 12px;border-radius:var(--r-xl);min-height:56px;
+  background:color-mix(in srgb,var(--surface) 86%,transparent);-webkit-backdrop-filter:blur(22px) saturate(1.6);backdrop-filter:blur(22px) saturate(1.6)}
+.top.float .hello .cap{opacity:0;height:0;margin:0;overflow:hidden}
+.top.float .hello h1{font-size:21px!important;line-height:1.15;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top.float .hello h1 br{display:none}
+.top.float #hi .hl1{display:none}
+.top .avr{transition:opacity .25s}.top.float .avr{opacity:0}
+.top.float .av{width:36px;height:36px;font-size:12.5px;margin:0 4px 0 2px}
+.top.float .ib{width:38px;height:38px;border-radius:var(--r-s)}
+.top.float::before{content:"";position:absolute;z-index:-1;left:-40px;right:-40px;top:calc(-6px - env(safe-area-inset-top,0px));bottom:-18px;
+  background:linear-gradient(to bottom,color-mix(in srgb,var(--bg) 55%,transparent),color-mix(in srgb,var(--bg) 25%,transparent) 70%,transparent);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);pointer-events:none;
+  -webkit-mask:linear-gradient(to bottom,#000 72%,transparent);mask:linear-gradient(to bottom,#000 72%,transparent)}
+.ib.jvb{color:var(--accent)}
+
+/* one radius system everywhere: sheet/hero 30 · card 22 · tile 16 · small 12 · chips round. Nothing square. */
+:where(.card-s){border-radius:var(--r-l)}
+.card-s.bus,.card-s.rdy,.tray.card-s,.gcard.card-s{border-radius:var(--r-l);overflow:hidden}
+.wk-cols{border-radius:var(--r-m)}
+.sheet{border-radius:var(--r-xl)!important}
+.sheet.m-bottom{left:8px;right:8px;bottom:calc(8px + var(--gap,0px));max-width:560px;padding-bottom:calc(18px + env(safe-area-inset-bottom,0px) * .5)}
+.sheet.m-bottom.tall{top:calc(8px + env(safe-area-inset-top,0px));padding-bottom:calc(10px + env(safe-area-inset-bottom,0px) * .5)}
+.sheet.m-top,.sheet.m-zoom{border-radius:var(--r-xl)!important}
+.nb-mcard{border-radius:var(--r-xl)!important;margin-bottom:8px}
+.menu{border-radius:var(--r-l)}
+
 
 /* real photos in the section cards, tinted to each section's colour */
 .hero .hph{position:absolute;inset:0;z-index:0;overflow:hidden;border-radius:inherit;pointer-events:none}
@@ -5345,7 +5375,7 @@ svg.ie{width:1.05em;height:1.05em;vertical-align:-.16em;fill:none;stroke:current
 .hero .hph img.in{opacity:.62;transform:scale(1)}
 .hero .hph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgb(0 0 0 / .05) 0%,rgb(0 0 0 / .18) 45%,rgb(0 0 0 / .48) 100%)}
 .hero.hasph .hero-art{opacity:0!important;transition:opacity .6s}
-.hero>.phcred{position:absolute;right:14px;bottom:8px;z-index:2;font:500 9.5px var(--ui);color:rgb(255 255 255 / .55);text-decoration:none;letter-spacing:.01em}
+.hero>.phcred{display:none;position:absolute;right:14px;bottom:8px;z-index:2;font:500 9.5px var(--ui);color:rgb(255 255 255 / .55);text-decoration:none;letter-spacing:.01em}
 .hero>.phcred a{color:inherit;text-decoration:none}
 #bgPhoto{position:fixed;inset:-4%;z-index:0;pointer-events:none;opacity:0;transition:opacity 2s ease}
 #bgPhoto img{width:100%;height:100%;object-fit:cover;filter:blur(3px) brightness(.42) saturate(1.15)}
@@ -5409,7 +5439,11 @@ svg.ie{width:1.05em;height:1.05em;vertical-align:-.16em;fill:none;stroke:current
 .rbar span{color:var(--muted)}.rbar b{font:700 12px var(--mono)}
 
 /* chat (JARVIS) */
-.jv-st{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-bottom:12px}
+.jv-st{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-bottom:10px;min-height:36px}.jv-st span{flex:1}
+.jv-act{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:999px;background:var(--surface2);font:700 13px var(--ui);color:var(--ink)}.jv-act svg{width:15px;height:15px}.jv-act.pri{background:var(--good);color:#0E1A14}.jv-act:disabled{opacity:.6}
+.jv-note:empty{display:none}.jv-note{margin:0 0 10px}
+.jv-stop{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:40px;margin-top:6px;border-radius:999px;background:color-mix(in srgb,var(--late) 18%,transparent);color:var(--late);font:700 13.5px var(--ui)}.jv-stop svg{width:15px;height:15px}.jv-stop[hidden]{display:none}
+.jv-ai.loc{border:1px solid color-mix(in srgb,var(--good) 40%,transparent)}
 .jv-st i{width:8px;height:8px;border-radius:50%;background:var(--muted)}.jv-st.on i{background:var(--good);box-shadow:0 0 10px var(--good)}
 .jv-log{display:flex;flex-direction:column;gap:10px;max-height:50vh;overflow-y:auto;padding:4px 2px 10px}
 .jv-me,.jv-ai{max-width:85%;padding:10px 14px;border-radius:var(--r-m);font-size:14.5px;line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere}
@@ -5453,39 +5487,29 @@ function deEmoji(root){
     span.innerHTML=esc(n.nodeValue).replace(EMO_RE,m=>`<svg class="ie" viewBox="0 0 24 24" aria-hidden="true">${P[EMO[m]]||''}</svg>`).replace(/️/g,'');n.replaceWith(span)}}
 const _openSheet4=openSheet;openSheet=function(h){const r=_openSheet4(h);try{deEmoji($('#sheetBody'))}catch(e){}return r};
 
-/* ---------- photos (Unsplash through your server, cached) ---------- */
-const PHQ={'h-food':'healthy food bowl dark moody','h-activity':'trail running forest morning','h-weight':'zen stones balance','h-workout':'gym dumbbells dark','h-injury':'calm green nature recovery','h-task':'minimal desk workspace dark','h-meeting':'coffee meeting table','h-project':'architecture blueprint','h-job':'city skyline office evening','h-grades':'university library books','h-expense':'money plant coins','h-idea':'lightbulb dark','h-note':'notebook pen journal','h-reminder':'alarm clock morning','h-scrap':'paper texture minimal','h-cards':'study notes desk','h-trip':'mountain road travel','h-work':'minimal desk workspace dark','h-mind':'lightbulb dark'};
-function todayQ(){const h=new Date().getHours();return h<5?'night forest stars':h<11?'misty forest sunrise':h<17?'sunlight through green leaves':h<20?'forest golden hour':'night forest moon'}
-const IMGC=(()=>{try{return JSON.parse(localStorage.getItem('ishiros.img')||'{}')}catch(e){return{}}})();
-const IMGP={};
-function saveImgc(){try{const k=Object.keys(IMGC);if(k.length>60)k.sort((a,b)=>IMGC[a].at-IMGC[b].at).slice(0,k.length-60).forEach(x=>delete IMGC[x]);localStorage.setItem('ishiros.img',JSON.stringify(IMGC))}catch(e){}}
-async function photosFor(q,o='landscape'){
-  const k=o+':'+q,c=IMGC[k];if(c&&Date.now()-c.at<3*864e5&&c.photos.length)return c.photos;
-  if(!syncOn())return c?c.photos:[];
-  if(IMGP[k])return IMGP[k];
-  return IMGP[k]=api(`/img?q=${encodeURIComponent(q)}&o=${o}`).then(r=>{const ph=r.photos||[];if(ph.length){IMGC[k]={at:Date.now(),photos:ph};saveImgc()}return ph}).catch(()=>c?c.photos:[]).finally(()=>delete IMGP[k]);
-}
-const pickPhoto=(ph,q)=>{if(!ph.length)return null;const d=Math.floor(Date.now()/864e5);let h=d;for(const ch of q)h=(h*31+ch.charCodeAt(0))>>>0;return ph[h%ph.length]};
-const phUrl=(p,w)=>`${p.raw}${p.raw.includes('?')?'&':'?'}w=${w}&q=72&auto=format&fit=crop&dpr=${Math.min(2,devicePixelRatio||1)}`;
-const USED=new Set();
-function markUsed(p){if(!p.dl||USED.has(p.id)||!syncOn())return;USED.add(p.id);api('/img/used',{method:'POST',body:JSON.stringify({dl:p.dl})}).catch(()=>{})}
-const UTM='?utm_source=life_tracker&utm_medium=referral';
+/* ---------- photos: a fixed, hand-picked set of dark foliage photos (Unsplash License, no key, never changes) ---------- */
+const PHOTO={palm:'1672219286179-8925a7306d62',black:'1496309732348-3627f3f040ee',grove:'1692520883599-d543cfe6d43d',deep:'1552152974-19b9caf99137',
+  fern:'1533563906091-fdfdffc3e3c4',pinnate:'1502239608882-93b729c6af43',moss:'1740984430593-8d4c131c91d5',monstera:'1743001737846-a5e1c06816ab',
+  rock:'1592748886453-1d88d13198cc',leafy:'1493673272479-a20888bcee10'};
+const PHQ={'h-today':'palm','h-activity':'fern','h-weight':'pinnate','h-workout':'grove','h-injury':'rock','h-sleep':'black','h-task':'deep','h-meeting':'leafy','h-project':'moss',
+  'h-job':'monstera','h-grades':'pinnate','h-expense':'rock','h-work':'deep','h-idea':'black','h-note':'leafy','h-reminder':'fern','h-scrap':'moss','h-cards':'grove','h-trip':'palm','h-mind':'black'};
+const phUrl=(id,w)=>`https://images.unsplash.com/photo-${id}?w=${w}&q=62&auto=format&fit=crop&dpr=${Math.min(2,devicePixelRatio||1)}`;
 async function hydratePhotos(){
   for(const h of $$('#view .hero[data-ph]:not(.hasph):not(.fdc)')){
-    const t=h.dataset.ph,q=t==='h-today'?todayQ():PHQ[t];if(!q)continue;
+    const id=PHOTO[PHQ[h.dataset.ph]];if(!id)continue;
     h.classList.add('hasph');
-    const ph=pickPhoto(await photosFor(q),q);if(!ph){h.classList.remove('hasph');continue}
-    const box=document.createElement('div');box.className='hph';const img=new Image();img.alt='';img.decoding='async';img.src=phUrl(ph,Math.round(Math.min(900,h.clientWidth+40)));
-    img.onload=()=>{img.classList.add('in');markUsed(ph)};box.appendChild(img);h.prepend(box);
-    h.insertAdjacentHTML('beforeend',`<span class="phcred">Photo <a href="${esc(ph.user)}${UTM}" target="_blank" rel="noopener">${esc(ph.name)}</a> · <a href="https://unsplash.com/${UTM}" target="_blank" rel="noopener">Unsplash</a></span>`);
+    const box=document.createElement('div');box.className='hph';const img=new Image();img.alt='';img.decoding='async';img.src=phUrl(id,Math.round(Math.min(800,h.clientWidth+40)));
+    img.onload=()=>img.classList.add('in');img.onerror=()=>{box.remove();h.classList.remove('hasph')};box.appendChild(img);h.prepend(box);
   }
 }
 async function bgPhoto(){
-  if(!syncOn()||$('#bgPhoto'))return;const q='dark tropical leaves';const ph=pickPhoto(await photosFor(q,'portrait'),q);if(!ph)return;
-  const d=document.createElement('div');d.id='bgPhoto';d.setAttribute('aria-hidden','true');const img=new Image();img.alt='';img.src=phUrl(ph,Math.min(1200,Math.round(innerWidth*1.1)));
-  img.onload=()=>{d.classList.add('in');markUsed(ph);BGCRED=ph};d.appendChild(img);const host=document.getElementById('bgcurve');if(host)host.before(d);
+  if($('#bgPhoto'))return;
+  const d=document.createElement('div');d.id='bgPhoto';d.setAttribute('aria-hidden','true');const img=new Image();img.alt='';img.src=phUrl(PHOTO.grove,Math.min(1000,Math.round(innerWidth*1.1)));
+  img.onload=()=>d.classList.add('in');d.appendChild(img);const host=document.getElementById('bgcurve');if(host)host.before(d);
 }
-let BGCRED=null;
+
+/* ---------- JARVIS one tap away: header button on every tab ---------- */
+const _header4=header;header=function(){return _header4().replace('<button class="ib" id="searchBtn"',`<button class="ib jvb" data-jarvis aria-label="JARVIS">${ic('bot')}</button><button class="ib" id="searchBtn"`)};
 
 /* ---------- radius & render hooks ---------- */
 const _render4=render;render=function(a,f,d){_render4(a,f,d);try{deEmoji($('#view'));deEmoji($('#top'))}catch(e){}hydratePhotos();if(state.tab==='today')busTick(true);if(state.tab==='work'&&state.sub.work==='job')importJobs()};
@@ -5656,18 +5680,43 @@ afterSplash(()=>setTimeout(()=>importReels(true),5000));
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){importReels();importJobs()}});
 
 /* ---------- JARVIS on your laptop, from here ---------- */
-let JV={log:[],seen:0,t:0};
-async function jvLoad(){try{const r=await api('/jarvis/log');JV.log=r.log||[];JV.seen=r.seen||0;jvPaint()}catch(e){}}
-function jvPaint(){const L=$('#jvLog');if(!L)return;const on=Date.now()-JV.seen<20000;
-  const st=$('#jvSt');if(st){st.className='jv-st'+(on?' on':'');st.innerHTML=`<i></i>${on?'Laptop online':JV.seen?`Laptop last seen ${esc(ago(JV.seen))}`:'Laptop hasn’t checked in yet'}`}
-  L.innerHTML=JV.log.length?JV.log.map(x=>`<div class="jv-me">${esc(x.text)}</div>${x.reply?`<div class="jv-ai">${esc(x.reply)}</div>`:`<div class="jv-ai wait">${x.state==='running'?'Working on it…':'Waiting for your laptop…'}</div>`}`).join(''):'<p class="hint">Type anything you’d say to JARVIS. It runs on your laptop and replies here.</p>';L.scrollTop=L.scrollHeight}
-function openJarvis(){NAV_DIR=1;openSheet(`${sheetHead('<em>JARVIS</em>')}${needSrv()}<div class="jv-st" id="jvSt"><i></i>Checking…</div><div class="jv-log" id="jvLog"></div>
+let JV={log:[],seen:0,launcher:0,waking:null,t:0,local:[]};
+async function jvLoad(){try{const r=await api('/jarvis/log');JV.log=r.log||[];JV.seen=r.seen||0;JV.launcher=r.launcher||0;JV.waking=r.waking||null;jvPaint()}catch(e){}}
+/* questions the app can answer itself, instantly, without the laptop */
+function jvTime(e){const t=e.allDay?'':(e.type==='meeting'?e.time:e.start)||'';const hm=t.length>5?t.slice(11,16):t;return hm?fmtT(hm):'All day'}
+function jvLocal(t){const q=t.toLowerCase();
+  const day=/tomorrow/.test(q)?addDays(1):today(),when=day===today()?'today':'tomorrow';
+  if(/calendar|schedule|classes|meetings|my day|what('|’)?s on|what do i have/.test(q)&&!/open|add|create|book/.test(q)){
+    const it=dayItems(day);if(!it.length)return`Nothing on your calendar ${when}.`;
+    return`${when==='today'?'Today':'Tomorrow'}:\n`+it.slice(0,12).map(e=>`${jvTime(e)} · ${e.title||e.name||e.course||'(busy)'}`).join('\n')}
+  if(/\b(due|assignments?|homework|deadlines?)\b/.test(q)&&!/open|add|create/.test(q)){
+    const d=dueWeek().filter(e=>!e.done&&!(typeof isExtDone==='function'&&e.xid&&isExtDone(e)));if(!d.length)return'Nothing due this week.';
+    return'Due this week:\n'+d.slice(0,10).map(e=>`${fmtLong(e.due||e.date)} · ${e.title||e.name}`).join('\n')}
+  return null}
+function jvState(){const now=Date.now(),on=now-JV.seen<20000,lau=now-JV.launcher<60000;return{on,lau}}
+function jvPaint(){const L=$('#jvLog');if(!L)return;const{on,lau}=jvState();
+  const st=$('#jvSt');if(st){st.className='jv-st'+(on?' on':'');
+    const txt=on?'Laptop online':JV.waking?'Starting JARVIS on your laptop…':JV.seen?`JARVIS off · last seen ${esc(ago(JV.seen))}`:'JARVIS hasn’t checked in yet';
+    const act=on?`<button class="jv-act" data-jvwake="restart">${ic('refresh')}Restart</button>`:`<button class="jv-act pri" data-jvwake="start" ${JV.waking?'disabled':''}>${ic('play')}${JV.waking?'Starting…':'Start JARVIS'}</button>`;
+    st.innerHTML=`<i></i><span>${txt}</span>${act}`}
+  const nt=$('#jvNote');if(nt)nt.innerHTML=!on&&!lau?'Your laptop isn’t listening right now (asleep, offline, or JARVIS’s launcher hasn’t run since the update). Run <b>start_ishir.bat</b> once on the laptop and Start will work from here after that.':'';
+  const all=[...JV.log.map(x=>({...x})),...JV.local].sort((a,b)=>(a.at||0)-(b.at||0)).slice(-30);
+  const run=all.some(x=>!x.reply&&(x.state==='running'||x.state==='queued'));
+  L.innerHTML=all.length?all.map(x=>`<div class="jv-me">${esc(x.text)}</div>${x.reply?`<div class="jv-ai${x.local?' loc':''}">${esc(x.reply)}</div>`:`<div class="jv-ai wait">${x.state==='running'?'Working on it…':on?'Sent…':'Waiting for your laptop…'}</div>`}`).join(''):'<p class="hint">Type anything you’d say to JARVIS. Calendar and due-date questions are answered here instantly; everything else runs on your laptop.</p>';
+  const sb=$('#jvStop');if(sb)sb.hidden=!run;L.scrollTop=L.scrollHeight}
+function openJarvis(){NAV_DIR=1;FORCE_MODE='m-bottom tall';openSheet(`${sheetHead('<em>JARVIS</em>')}${needSrv()}<div class="jv-st" id="jvSt"><i></i><span>Checking…</span></div><p class="small jv-note" id="jvNote"></p><div class="jv-log" id="jvLog"></div>
+  <button class="jv-stop" id="jvStop" hidden>${ic('close')}Stop what it’s doing</button>
   <div class="jv-in"><input id="jvIn" placeholder="Ask JARVIS to do something" enterkeyhint="send" autocomplete="off"><button id="jvSend" aria-label="Send">${ic('send')}</button></div>
-  <div class="jv-sugg">${['Open Outlook','What’s on my calendar today?','Open Canvas in Opera','Lock my laptop'].map(s=>`<button data-jvs="${esc(s)}">${esc(s)}</button>`).join('')}</div>
-  <p class="small">Commands go through your server to the JARVIS app on your laptop (it must be running). Final submit, pay and send steps still need you to say "confirm" there.</p>`);jvLoad();clearInterval(JV.t);JV.t=setInterval(()=>{if(!$('#jvLog'))clearInterval(JV.t);else jvLoad()},6000)}
-async function jvSend(t){t=(t||'').trim();if(!t)return;const i=$('#jvIn');if(i)i.value='';JV.log.push({text:t,state:'queued'});jvPaint();try{await api('/jarvis/cmd',{method:'POST',body:JSON.stringify({text:t})});jvLoad()}catch(e){toast('Couldn’t send: '+e.message)}}
-document.addEventListener('click',e=>{const b=e.target.closest('[data-jarvis],#jvSend,[data-jvs]');if(!b)return;e.stopImmediatePropagation();e.preventDefault();
-  if(b.dataset.jarvis!==undefined)return openJarvis();if(b.id==='jvSend')return jvSend($('#jvIn').value);jvSend(b.dataset.jvs)},true);
+  <div class="jv-sugg">${['What’s on my calendar today?','What’s due this week?','Open Canvas in Opera','Open Outlook','Lock my laptop'].map(s=>`<button data-jvs="${esc(s)}">${esc(s)}</button>`).join('')}</div>
+  <p class="small">Final submit, pay and send steps still need you to say "confirm" on the laptop.</p>`);jvLoad();clearInterval(JV.t);JV.t=setInterval(()=>{if(!$('#jvLog'))clearInterval(JV.t);else jvLoad()},5000)}
+async function jvSend(t){t=(t||'').trim();if(!t)return;const i=$('#jvIn');if(i)i.value='';
+  const loc=jvLocal(t);if(loc){JV.local.push({text:t,reply:loc,at:Date.now(),local:true});jvPaint();return}
+  JV.log.push({text:t,state:'queued',at:Date.now()});jvPaint();
+  try{await api('/jarvis/cmd',{method:'POST',body:JSON.stringify({text:t})});if(!jvState().on&&!JV.waking)await jvWake('start',true);jvLoad()}catch(e){toast('Couldn’t send: '+e.message)}}
+async function jvWake(mode,quiet){try{await api('/jarvis/wake',{method:'POST',body:JSON.stringify({mode})});if(mode!=='stop')JV.waking=mode;jvPaint();if(!quiet)toast(mode==='stop'?'Stopping…':mode==='restart'?'Restarting JARVIS…':'Starting JARVIS…');setTimeout(jvLoad,1500)}catch(e){toast('Couldn’t reach your server: '+e.message)}}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-jarvis],#jvSend,[data-jvs],[data-jvwake],#jvStop');if(!b)return;e.stopImmediatePropagation();e.preventDefault();
+  if(b.dataset.jarvis!==undefined)return openJarvis();if(b.id==='jvSend')return jvSend($('#jvIn').value);
+  if(b.dataset.jvwake)return jvWake(b.dataset.jvwake);if(b.id==='jvStop')return jvWake('stop');jvSend(b.dataset.jvs)},true);
 document.addEventListener('keydown',e=>{if(e.target.id==='jvIn'&&e.key==='Enter'){e.preventDefault();jvSend(e.target.value)}});
 addEventListener('life-live',e=>{const m=e.detail||{};if(m.t==='jarvis'&&$('#jvLog'))jvLoad()});
 
@@ -5676,8 +5725,7 @@ const _openConn4=openConn;openConn=function(){_openConn4();if(!syncOn())return;c
   const cfg=SV.cfg||{};
   w.insertAdjacentHTML('afterend',`<div class="set-grp">Private &amp; smart</div>
     ${connRow('e2e','lock',`End-to-end encryption`,E2E.key?'On · the server only stores scrambled data':'Off · turn on so only your devices can read your data',!!E2E.key)}
-    ${connRow('photos','image','Photos','Unsplash photos in the section cards and background',lsGet('ishiros.imgok')==='1')}
-    ${connRow('ai','sparkles','AI (free Gemini)','Food from a photo, reels into guides',false)}
+    ${connRow('ai','sparkles','AI (free Gemini)','Food from a photo, reels into guides',lsGet('ishiros.aiok')==='1')}
     ${connRow('jarvis','bot','JARVIS','Send commands to your laptop',false)}
     ${connRow('jobs','job','Job emails','Applications from your Gmail labels',false)}
     ${connRow('reels','video','Reel saver','Share a reel → recipe or workout guide',false)}
@@ -5696,7 +5744,7 @@ function openE2E(){NAV_DIR=1;openSheet(`${sheetHead('End-to-end <em>encryption</
     <label class="fld" for="e2eP2"><span>Same again</span><input id="e2eP2" type="password" autocomplete="new-password"></label>
     <div class="sh-actions"><button class="primary" id="e2eOn" style="flex:1">${ic('lock')}Turn on</button></div>
     <p class="small">What stays readable on the server: health numbers from Google (they come from Google, not this app), the widget summary (your Home-screen widget needs it) and quick-capture text from Shortcuts.</p>`}`)}
-document.addEventListener('click',async e=>{const b=e.target.closest('[data-panel="e2e"],[data-panel="photos"],[data-panel="ai"],[data-panel="jarvis"],[data-panel="jobs"],[data-panel="reels"],[data-panel="stopper"],#e2eOn,#e2eForget,#phSave,#aiSave,#jobsNow');if(!b)return;e.preventDefault();e.stopImmediatePropagation();
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-panel="e2e"],[data-panel="photos"],[data-panel="ai"],[data-panel="jarvis"],[data-panel="jobs"],[data-panel="reels"],[data-panel="stopper"],#e2eOn,#e2eForget,#aiSave,#aiTest,#jobsNow');if(!b)return;e.preventDefault();e.stopImmediatePropagation();
   const p=b.dataset.panel;
   if(p==='e2e')return openE2E();
   if(b.id==='e2eForget'){arm(b,'Tap again — this device stops syncing until you enter it again',()=>{try{localStorage.removeItem('ishiros.e2e')}catch(x){}E2E.key=null;E2E.on=false;openE2E()});return}
@@ -5706,14 +5754,13 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-pane
       const r=await api('/sync');if(r.doc&&r.doc.e2e){try{await e2eOpen(r.doc)}catch(x){E2E.key=null;E2E.on=false;toast('That passphrase doesn’t match the one your other device used');b.disabled=false;b.textContent='Turn on';return}}
       localStorage.setItem('ishiros.e2e',e2eB64(raw));await syncNow(true);try{await syncNotes(true)}catch(x){}cloudBackup(true);toast('Encrypted. Enter the same passphrase on your other devices.');openE2E()}
     catch(x){toast('Couldn’t turn on: '+x.message);b.disabled=false;b.textContent='Turn on'}return}
-  if(p==='photos'){NAV_DIR=1;openSheet(`${sheetHead('<em>Photos</em>','conn')}<p class="small" style="margin-top:0">Section cards and the background use real photos from Unsplash (free). Your server looks each topic up once a week, so you stay far under Unsplash’s free limit.</p>
-    <ol class="steps"><li>Go to <a href="https://unsplash.com/oauth/applications" target="_blank" rel="noopener">unsplash.com/oauth/applications</a> → your app (or New Application).</li><li>Copy the <b>Access Key</b> only. Never the Secret key.</li><li>Paste it below and tap Save.</li></ol>
-    ${keyForm('phKey','Unsplash Access Key',SV.cfg&&SV.cfg.unsplashKey?'Saved (paste to replace)':'Paste here','')}<div class="sh-actions"><button class="primary" id="phSave" style="flex:1">Save</button></div>${BGCRED?`<p class="small">Background photo by <a href="${esc(BGCRED.user)}${UTM}" target="_blank" rel="noopener">${esc(BGCRED.name)}</a> on <a href="https://unsplash.com/${UTM}" target="_blank" rel="noopener">Unsplash</a>.</p>`:''}`);if(!SV.cfg)loadCfg();return}
-  if(b.id==='phSave'){const k=$('#phKey').value.trim();if(!k){toast('Paste the Access Key first');return}try{SV.cfg=await api('/config',{method:'PUT',body:JSON.stringify({unsplashKey:k})});for(const x of Object.keys(IMGC))delete IMGC[x];saveImgc();lsSet('ishiros.imgok','1');toast('Saved. Photos appear in a moment.');$$('.hero.hasph').forEach(h=>h.classList.remove('hasph'));render(false);bgPhoto();openConn()}catch(x){toast('Couldn’t save: '+x.message)}return}
   if(p==='ai'){NAV_DIR=1;openSheet(`${sheetHead('AI · <em>Gemini</em>','conn')}<p class="small" style="margin-top:0">Gemini’s free tier powers food-from-a-photo (Food → Log → AI) and the reel saver. Free-tier requests may be used by Google to improve its products.</p>
     <ol class="steps"><li>Open <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> and sign in.</li><li>Tap <b>Create API key</b> and copy it.</li><li>Paste it below. It’s stored on your server only, never in this app.</li></ol>
-    ${keyForm('aiKey','Gemini API key',SV.cfg&&SV.cfg.geminiKey?'Saved (paste to replace)':'Paste here','')}<div class="sh-actions"><button class="primary" id="aiSave" style="flex:1">Save</button></div>`);if(!SV.cfg)loadCfg();return}
-  if(b.id==='aiSave'){const k=$('#aiKey').value.trim();if(!k){toast('Paste the key first');return}try{SV.cfg=await api('/config',{method:'PUT',body:JSON.stringify({geminiKey:k})});toast('Saved');openConn()}catch(x){toast('Couldn’t save: '+x.message)}return}
+    ${keyForm('aiKey','Gemini API key',SV.cfg&&SV.cfg.geminiKey?'Saved (paste to replace)':'Paste here','')}<div class="sh-actions"><button class="primary" id="aiSave" style="flex:1">Save &amp; test</button>${SV.cfg&&SV.cfg.geminiKey?'<button id="aiTest" style="flex:1">Test key</button>':''}</div><p class="small" id="aiRes" aria-live="polite"></p>`);if(!SV.cfg)loadCfg();return}
+  if(b.id==='aiSave'||b.id==='aiTest'){const k=b.id==='aiSave'?$('#aiKey').value.trim():'';if(b.id==='aiSave'&&!k){toast('Paste the key first');return}
+    const out=$('#aiRes');b.disabled=true;if(out)out.textContent=k?'Saving and testing…':'Testing…';
+    try{if(k)SV.cfg=await api('/config',{method:'PUT',body:JSON.stringify({geminiKey:k})});await api('/ai/test',{method:'POST',body:'{}'});lsSet('ishiros.aiok','1');if(out)out.innerHTML='<b style="color:var(--good)">Working.</b> Food → Log → AI is ready.';}
+    catch(x){if(out)out.innerHTML='<b style="color:var(--late)">Not working:</b> '+esc(x.message)}b.disabled=false;return}
   if(p==='jarvis')return openJarvis();
   if(p==='jobs'){NAV_DIR=1;openSheet(`${sheetHead('Job <em>emails</em>','conn')}<p class="small" style="margin-top:0">Your Google Apps Script sends Life one line per email in your job labels: sender, subject, date and label. Never the body. Life turns them into applications in Work → Jobs and moves each one forward as interviews and rejections come in.</p>
     <ol class="steps"><li>Open your “Life Gmail sync” project at <a href="https://script.google.com" target="_blank" rel="noopener">script.google.com</a> (or create it).</li><li>Replace the code with the new <a href="${GH}apps-script/Gmail.gs" target="_blank" rel="noopener">Gmail.gs</a>, keeping your WORKER_URL and LIFE_KEY lines.</li><li>Choose <b>setup</b> → Run. The first run sends your whole job-email history; after that it checks every hour.</li></ol>

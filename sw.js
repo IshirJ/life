@@ -1,7 +1,7 @@
 /* Offline cache for the app itself only. Your entries live in this phone's storage and are never put in this cache. */
-const VERSION='life-v113';
+const VERSION='life-v119';
 const SHELL=['./','./index.html','./foods.txt','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./notes.js','./pf.js','./exercises.json','./pdfjs/pdf.min.mjs','./pdfjs/pdf.worker.min.mjs'];
-const CDN=['https://cdn.jsdelivr.net/','https://fonts.googleapis.com/','https://fonts.gstatic.com/'];
+const CDN=['https://images.unsplash.com/','https://cdn.jsdelivr.net/','https://fonts.googleapis.com/','https://fonts.gstatic.com/'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(VERSION).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==VERSION&&k!=='life-cdn').map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 self.addEventListener('fetch',e=>{
@@ -15,7 +15,7 @@ self.addEventListener('fetch',e=>{
   }
   if(CDN.some(p=>req.url.startsWith(p))){
     /* fonts and pinned libraries never change: cache first */
-    e.respondWith(caches.match(req).then(r=>r||fetch(req).then(n=>{if(n.ok){const c=n.clone();caches.open('life-cdn').then(x=>x.put(req,c))}return n})));
+    e.respondWith(caches.match(req).then(r=>r||fetch(req).then(n=>{if(n.ok||n.type==='opaque'){const c=n.clone();caches.open('life-cdn').then(x=>x.put(req,c))}return n})));
   }
   /* everything else (food lookups) goes straight to the network and is never cached */
 });

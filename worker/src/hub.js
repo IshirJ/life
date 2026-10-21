@@ -146,8 +146,12 @@ export class SyncHub {
       const j = (await this.ctx.storage.get('jarvis')) || { q: [], log: [], seen: 0 };
       const first = Date.now() - j.seen > 60000;
       j.seen = Date.now();
-      const next = j.q.shift() || null;
+      const stop = j.stop && Date.now() - j.stop < 60000;
+      if (j.stop) { delete j.stop; j.q = []; }
+      const busy = url.searchParams.get('busy') === '1';   // laptop still working: only hand over a stop
+      const next = stop || busy ? null : (j.q.shift() || null);
       if (next) { const l = j.log.find((x) => x.id === next.id); if (l) l.state = 'running'; }
+      if (stop) { for (const l of j.log) if (l.state === 'running' || l.state === 'queued') { l.state = 'error'; l.reply = 'Stopped.'; l.done = Date.now(); } await this.ctx.storage.put('jarvis', j); this.broadcast({ t: 'jarvis' }, null); return Response.json({ stop: true }); }
       if (next || first) { await this.ctx.storage.put('jarvis', j); this.broadcast({ t: 'jarvis' }, null); }
       else this.seenMem = Date.now();
       return Response.json(next || {});
@@ -162,9 +166,28 @@ export class SyncHub {
       this.broadcast({ t: 'jarvis' }, null);
       return Response.json({ ok: true });
     }
+    // Phone → "start / restart JARVIS" or "stop what you're doing". The launcher on the laptop (always on,
+    // tiny) picks up wake; the running bridge picks up stop with its next poll.
+    if (path === '/jarvis/wake' && method === 'POST') {
+      const b = await request.json().catch(() => ({}));
+      const mode = ['start', 'restart', 'stop'].includes(b.mode) ? b.mode : 'start';
+      const j = (await this.ctx.storage.get('jarvis')) || { q: [], log: [], seen: 0 };
+      if (mode === 'stop') j.stop = Date.now(); else j.wake = { mode, at: Date.now() };
+      await this.ctx.storage.put('jarvis', j);
+      this.broadcast({ t: 'jarvis' }, null);
+      return Response.json({ ok: true });
+    }
+    if (path === '/jarvis/wake' && method === 'GET') {
+      this.launcherMem = Date.now();
+      const j = (await this.ctx.storage.get('jarvis')) || { q: [], log: [], seen: 0 };
+      const w = j.wake && Date.now() - j.wake.at < 120000 ? j.wake : null;
+      if (j.wake) { delete j.wake; await this.ctx.storage.put('jarvis', j); }
+      if (w) this.broadcast({ t: 'jarvis' }, null);
+      return Response.json(w ? { mode: w.mode } : {});
+    }
     if (path === '/jarvis/log' && method === 'GET') {
       const j = (await this.ctx.storage.get('jarvis')) || { q: [], log: [], seen: 0 };
-      return Response.json({ log: j.log, seen: Math.max(j.seen || 0, this.seenMem || 0), queued: j.q.length });
+      return Response.json({ log: j.log, seen: Math.max(j.seen || 0, this.seenMem || 0), queued: j.q.length, launcher: this.launcherMem || 0, waking: j.wake ? j.wake.mode : null });
     }
 
     return Response.json({ error: 'not found' }, { status: 404 });

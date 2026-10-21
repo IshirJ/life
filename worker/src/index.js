@@ -11,7 +11,7 @@ import {
 import { isValidTz, parseYmd } from './tz.js';
 import { searchFood } from './food.js';
 import { SyncHub } from './hub.js';
-import { getImages, imageUsed, getBus, getBusStops, aiFood, postReel, listReels, deleteReels, ingestJobs, listJobs, logScreen, getScreen } from './extras.js';
+import { getImages, imageUsed, getBus, getBusStops, aiFood, aiTest, postReel, listReels, deleteReels, ingestJobs, listJobs, logScreen, getScreen } from './extras.js';
 
 const MIN = 60 * 1000;
 const DUE_WINDOW = 30 * MIN;
@@ -394,6 +394,8 @@ async function route(request, env, url) {
       return getBus(url);
     case 'GET /bus/stops':
       return getBusStops(url);
+    case 'POST /ai/test':
+      return aiTest(await config());
     case 'POST /ai/food':
       return aiFood(request, await config());
     case 'POST /reels':
@@ -414,6 +416,8 @@ async function route(request, env, url) {
     case 'GET /jarvis/next':
     case 'POST /jarvis/reply':
     case 'GET /jarvis/log':
+    case 'POST /jarvis/wake':
+    case 'GET /jarvis/wake':
       return hub(env, request);
     case 'GET /sync':
     case 'PUT /sync':
