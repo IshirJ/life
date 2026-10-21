@@ -886,7 +886,7 @@ function ixRun(preview){
     if(gOK){if(t>T-140){const k=Math.min(1,(t-(T-140))/140);o=1-k;if(h)h.style.opacity=String(k)}else if(h)h.style.opacity='0'}
     else{o=t<TA?t/TA:Math.max(0,1-(t-TA)/MOVE)}
     wl.style.opacity=String(o);wl.style.transform=`translate(${X}px,${Y}px) scale(${s})`;
-    if(t<T)requestAnimationFrame(greet);else{wl.style.opacity='0';if(h){h.style.opacity='';h.classList.add('ixt');setTimeout(()=>h.classList.remove('ixt'),900)}window.__ixEnd=t;setTimeout(done,150)}
+    if(t<T)requestAnimationFrame(greet);else{wl.style.opacity='0';if(h)h.style.opacity='';window.__ixEnd=t;ixGlowAll();setTimeout(done,150)}
   };
   /* --- phase B (started by the same frame clock at TA): everything moves together --- */
   function phaseB(){
@@ -916,6 +916,41 @@ function ixRun(preview){
   requestAnimationFrame(greet);
   const done=()=>{if(!el.isConnected||window.__ixHold)return;el.remove();const h=HI();if(h)h.style.opacity='';if(!preview){SC.style.transition='';endSplash()}};
   setTimeout(done,T+2500);
+}
+/* end of intro: a lot of Home lights up at once (one bloom, same moment), then fades.
+   Halos are drawn on their own layer so the cards' glass/blur is never touched. */
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="ixglocss">
+#ixGlo{position:fixed;inset:0;z-index:2147482999;pointer-events:none;overflow:hidden}
+#ixGlo i{position:absolute;box-sizing:border-box;opacity:0;will-change:opacity,transform}
+.ixtg{animation:ixtg 1.4s cubic-bezier(.22,1,.36,1) both}
+@keyframes ixtg{0%{text-shadow:0 0 0 rgb(240 109 68 / 0)}20%{text-shadow:0 0 10px rgb(255 176 122 / .95),0 0 26px rgb(240 109 68 / .7)}100%{text-shadow:0 0 0 rgb(240 109 68 / 0)}}
+.ixsg{animation:ixsg 1.4s cubic-bezier(.22,1,.36,1) both}
+@keyframes ixsg{0%{filter:none}20%{filter:drop-shadow(0 0 6px rgb(255 176 122 / .95)) drop-shadow(0 0 16px rgb(240 109 68 / .6))}100%{filter:none}}
+@media (prefers-reduced-motion:reduce){#ixGlo{display:none}.ixtg,.ixsg{animation:none}}
+</style>`);
+function ixGlowAll(){
+  try{
+    const old=document.getElementById('ixGlo');if(old)old.remove();
+    const vis=n=>{const r=n.getBoundingClientRect();return r.width>=16&&r.height>=16&&r.bottom>0&&r.top<innerHeight&&r.right>0&&r.left<innerWidth&&getComputedStyle(n).visibility!=='hidden'?r:null};
+    const sel='#avBtn,.top .ib,#view .hero,#view .card-s,#view .banner,#view .tile,#view .ts-tile,#view .chip,#view .pill,#view button,#view input,.dock .fab,.dock';
+    const seen=new Set(),items=[];
+    document.querySelectorAll(sel).forEach(n=>{if(seen.has(n)||n.closest('#ix3,#ixGlo'))return;seen.add(n);const r=vis(n);if(!r)return;const br=parseFloat(getComputedStyle(n).borderTopLeftRadius)||0;if(br<6)return;if(!n.matches('.dock,.dock *,#view .hero,#view .card-s')){const t=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);if(!t||!(n===t||n.contains(t)))return}items.push([n,r])});
+    const lay=document.createElement('div');lay.id='ixGlo';lay.setAttribute('aria-hidden','true');
+    const C=['240 109 68','134 207 160','242 166 90','99 196 133'];
+    items.slice(0,60).forEach(([n,r],i)=>{
+      const c=C[i%4],big=r.width*r.height>40000,b=document.createElement('i');
+      b.style.cssText=`left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;border-radius:${getComputedStyle(n).borderRadius||'16px'};`+
+        `border:2px solid rgb(${c} / 1);box-shadow:0 0 ${big?26:16}px rgb(${c} / .8),0 0 ${big?60:34}px rgb(${c} / .45),inset 0 0 ${big?24:12}px rgb(${c} / .45)`;
+      lay.appendChild(b);
+      try{b.animate([{opacity:0,transform:'scale(1)'},{opacity:1,transform:'scale(1.012)',offset:.2},{opacity:.85,offset:.45},{opacity:0,transform:'scale(1)'}],{duration:1600,easing:'cubic-bezier(.22,1,.36,1)',fill:'forwards'})}catch(e){}
+    });
+    document.body.appendChild(lay);setTimeout(()=>lay.remove(),1700);
+    const tx=[...document.querySelectorAll('#hi,#view .big,#view .hero h2,#view .hero b,#view .sec-h h2,.dock .tab.on')].filter(vis);
+    const sv=[...document.querySelectorAll('#avBtn .avr,#view .ring svg,#view .ts-dial svg')].filter(vis);
+    tx.forEach(n=>{n.classList.remove('ixtg');void n.offsetWidth;n.classList.add('ixtg')});
+    sv.forEach(n=>{n.classList.remove('ixsg');void n.offsetWidth;n.classList.add('ixsg')});
+    setTimeout(()=>{tx.forEach(n=>n.classList.remove('ixtg'));sv.forEach(n=>n.classList.remove('ixsg'))},1500);
+  }catch(e){}
 }
 const _runSplash4=runSplash;runSplash=function(){if((db.settings.intro||'orbit')==='classic')return _runSplash4();ixRun(false)};
 document.addEventListener('click',e=>{if(e.target.closest('[data-introplay]')){e.preventDefault();e.stopImmediatePropagation();closeSheet();setTimeout(()=>ixRun(true),350)}},true);
