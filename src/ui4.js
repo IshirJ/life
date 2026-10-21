@@ -843,7 +843,7 @@ function ixRun(preview){
   const W=innerWidth,H=innerHeight+140,cx=W/2,cy=innerHeight*.5;
   /* ONE clock for everything: a short spin-in (0..TA), then vines, greeting, outlines and Home all move together
      with the same easing and land on the same frame (T). Every target is measured live, never from frame 0. */
-  const TA=480,T=1450,MOVE=T-TA,EZ='cubic-bezier(.65,0,.35,1)';
+  const TA=680,T=2050,MOVE=T-TA,EZ='cubic-bezier(.65,0,.35,1)';
   const ez=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
   const el=document.createElement('div');el.id='ix3';el.setAttribute('aria-hidden','true');
   el.innerHTML=`<div class="bg"></div><canvas></canvas><canvas></canvas><canvas></canvas><div class="sh"></div><div class="wl">Welcome, <em>${esc(firstName())}</em></div><i class="rg"></i>`;
@@ -883,7 +883,7 @@ function ixRun(preview){
     if(t<TA){const k=t/TA;o=k;s=S*(.94+.06*k);({X,Y}=centre(s));Y+=10*(1-k)}
     else if(gOK){const r=tvis(h)||lastT;if(r){lastT=r;const st=r.width/w0,e=ez(Math.min(1,(t-TA)/MOVE));
       X+=(r.left-ox*st-X)*e;Y+=(r.top-oy*st-Y)*e;s+=(st-s)*e}}
-    if(gOK){if(t>T-140){const k=Math.min(1,(t-(T-140))/140);o=1-k;if(h)h.style.opacity=String(k)}else if(h)h.style.opacity='0'}
+    if(gOK){if(t>T-200){const k=Math.min(1,(t-(T-200))/200);o=1-k;if(h)h.style.opacity=String(k)}else if(h)h.style.opacity='0'}
     else{o=t<TA?t/TA:Math.max(0,1-(t-TA)/MOVE)}
     wl.style.opacity=String(o);wl.style.transform=`translate(${X}px,${Y}px) scale(${s})`;
     if(t<T)requestAnimationFrame(greet);else{wl.style.opacity='0';if(h)h.style.opacity='';window.__ixEnd=t;ixGlowAll();setTimeout(done,150)}
@@ -922,9 +922,9 @@ function ixRun(preview){
 (document.body||document.head).insertAdjacentHTML('beforeend',`<style id="ixglocss">
 #ixGlo{position:fixed;inset:0;z-index:2147482999;pointer-events:none;overflow:hidden}
 #ixGlo i{position:absolute;box-sizing:border-box;opacity:0;will-change:opacity,transform}
-.ixtg{animation:ixtg 1.4s cubic-bezier(.22,1,.36,1) both}
+.ixtg{animation:ixtg 1.8s cubic-bezier(.22,1,.36,1) both}
 @keyframes ixtg{0%{text-shadow:0 0 0 rgb(240 109 68 / 0)}20%{text-shadow:0 0 10px rgb(255 176 122 / .95),0 0 26px rgb(240 109 68 / .7)}100%{text-shadow:0 0 0 rgb(240 109 68 / 0)}}
-.ixsg{animation:ixsg 1.4s cubic-bezier(.22,1,.36,1) both}
+.ixsg{animation:ixsg 1.8s cubic-bezier(.22,1,.36,1) both}
 @keyframes ixsg{0%{filter:none}20%{filter:drop-shadow(0 0 6px rgb(255 176 122 / .95)) drop-shadow(0 0 16px rgb(240 109 68 / .6))}100%{filter:none}}
 @media (prefers-reduced-motion:reduce){#ixGlo{display:none}.ixtg,.ixsg{animation:none}}
 </style>`);
@@ -942,14 +942,14 @@ function ixGlowAll(){
       b.style.cssText=`left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;border-radius:${getComputedStyle(n).borderRadius||'16px'};`+
         `border:2px solid rgb(${c} / 1);box-shadow:0 0 ${big?26:16}px rgb(${c} / .8),0 0 ${big?60:34}px rgb(${c} / .45),inset 0 0 ${big?24:12}px rgb(${c} / .45)`;
       lay.appendChild(b);
-      try{b.animate([{opacity:0,transform:'scale(1)'},{opacity:1,transform:'scale(1.012)',offset:.2},{opacity:.85,offset:.45},{opacity:0,transform:'scale(1)'}],{duration:1600,easing:'cubic-bezier(.22,1,.36,1)',fill:'forwards'})}catch(e){}
+      try{b.animate([{opacity:0,transform:'scale(1)'},{opacity:1,transform:'scale(1.012)',offset:.2},{opacity:.85,offset:.45},{opacity:0,transform:'scale(1)'}],{duration:2000,easing:'cubic-bezier(.22,1,.36,1)',fill:'forwards'})}catch(e){}
     });
-    document.body.appendChild(lay);setTimeout(()=>lay.remove(),1700);
+    document.body.appendChild(lay);setTimeout(()=>lay.remove(),2100);
     const tx=[...document.querySelectorAll('#hi,#view .big,#view .hero h2,#view .hero b,#view .sec-h h2,.dock .tab.on')].filter(vis);
     const sv=[...document.querySelectorAll('#avBtn .avr,#view .ring svg,#view .ts-dial svg')].filter(vis);
     tx.forEach(n=>{n.classList.remove('ixtg');void n.offsetWidth;n.classList.add('ixtg')});
     sv.forEach(n=>{n.classList.remove('ixsg');void n.offsetWidth;n.classList.add('ixsg')});
-    setTimeout(()=>{tx.forEach(n=>n.classList.remove('ixtg'));sv.forEach(n=>n.classList.remove('ixsg'))},1500);
+    setTimeout(()=>{tx.forEach(n=>n.classList.remove('ixtg'));sv.forEach(n=>n.classList.remove('ixsg'))},1900);
   }catch(e){}
 }
 const _runSplash4=runSplash;runSplash=function(){if((db.settings.intro||'orbit')==='classic')return _runSplash4();ixRun(false)};
