@@ -418,6 +418,21 @@ async function route(request, env, url) {
       return logScreen(request, env);
     case 'GET /screen':
       return getScreen(env);
+    case 'POST /jarvis/voice': {
+      // the laptop's spoken reply (MP3, same voice as on the laptop) so the phone can play it
+      const id = (url.searchParams.get('id') || '').replace(/[^a-z0-9]/gi, '').slice(0, 40);
+      const buf = await request.arrayBuffer();
+      if (!id || !buf.byteLength) return err(400, 'id and audio required');
+      if (buf.byteLength > 1_500_000) return err(413, 'audio too large');
+      await env.LIFE.put(`jvoice:${id}`, buf, { expirationTtl: 3600 });
+      return json({ ok: true });
+    }
+    case 'GET /jarvis/voice': {
+      const id = (url.searchParams.get('id') || '').replace(/[^a-z0-9]/gi, '').slice(0, 40);
+      const a = id && await env.LIFE.get(`jvoice:${id}`, 'arrayBuffer');
+      if (!a) return err(404, 'no audio');
+      return new Response(a, { headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'private, max-age=3600' } });
+    }
     case 'POST /jarvis/cmd':
     case 'GET /jarvis/next':
     case 'POST /jarvis/reply':

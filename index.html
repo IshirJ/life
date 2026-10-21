@@ -5,7 +5,7 @@
 <meta name="color-scheme" content="dark">
 <style>html,body{background:#080A09}</style>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://raw.githubusercontent.com https://images.unsplash.com; media-src 'self' blob: mediastream:; connect-src 'self' https://*.workers.dev wss://*.workers.dev https://world.openfoodfacts.org https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://raw.githubusercontent.com https://images.unsplash.com; media-src 'self' blob: data: mediastream:; connect-src 'self' https://*.workers.dev wss://*.workers.dev https://world.openfoodfacts.org https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="theme-color" content="#131311">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1931,7 +1931,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='155';
+const APP_VER='157';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -3998,7 +3998,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=155';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=157';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -5929,7 +5929,7 @@ function jvReactor(){
 const SRC=window.SpeechRecognition||window.webkitSpeechRecognition;
 const JH={rec:null,listening:false,heard:'',seen:new Set(),voice:null,lastSub:''};
 function jvHudState(){const h=$('#jvHud');if(!h)return;const run=[...JV.log].some(x=>!x.reply&&(x.state==='running'||x.state==='queued')&&(x.at||0)>=JV.since&&Date.now()-(x.at||0)<6e5);
-  const speaking=typeof speechSynthesis!=='undefined'&&speechSynthesis.speaking;
+  const speaking=JH.playing||(typeof speechSynthesis!=='undefined'&&speechSynthesis.speaking);
   h.classList.toggle('listen',JH.listening);h.classList.toggle('think',!JH.listening&&run);h.classList.toggle('speak',!JH.listening&&!run&&speaking);
   const m=$('#jvhMode');if(m&&!h.classList.contains('boot'))m.textContent=JH.listening?'Listening':run?'Working':speaking?'Speaking':'Standing by'}
 function jvSay(text){try{if(typeof speechSynthesis==='undefined'||!text)return;if(speechSynthesis.speaking||speechSynthesis.pending)speechSynthesis.cancel();if(speechSynthesis.paused)speechSynthesis.resume();const u=new SpeechSynthesisUtterance(String(text).slice(0,400));
@@ -5938,7 +5938,7 @@ function jvSay(text){try{if(typeof speechSynthesis==='undefined'||!text)return;i
 function jvSub(t){const s=$('#jvhSub');if(s&&t!==JH.lastSub){JH.lastSub=t;s.textContent=t;try{s.animate([{opacity:0,transform:'translateY(6px)'},{opacity:.92,transform:'none'}],{duration:320,easing:'ease-out'})}catch(e){}}}
 const _jvPaintH=jvPaint;jvPaint=function(){_jvPaintH();if(!$('#jvHud'))return;
   /* speak + subtitle replies that arrive while the screen is open */
-  const all=[...JV.log,...JV.local];for(const x of all){const k=(x.id||x.at)+'|'+(x.reply?1:0);if(x.reply&&!JH.seen.has(k)){JH.seen.add(k);if(JH.armed){jvSub(x.reply);if(!JH.listening)setTimeout(()=>jvSay(x.reply),250)}}}
+  const all=[...JV.log,...JV.local];for(const x of all){const k=(x.id||x.at)+'|'+(x.reply?1:0);if(x.reply&&!JH.seen.has(k)){JH.seen.add(k);if(JH.armed){jvSub(x.reply);if(!JH.listening&&x.reply!=='Stopped.')setTimeout(()=>jvSpeak(x.reply,x.local?null:x.id),250)}}}
   JH.armed=true;jvHudState()};
 function jvListen(){
   if(JH.listening){jvFinish();return}
@@ -5983,7 +5983,7 @@ openJarvis=function(){
   jvLoad();clearInterval(JV.t);JV.t=setInterval(()=>{if(!$('#jvLog'))clearInterval(JV.t);else jvLoad()},4000);
   try{speechSynthesis&&speechSynthesis.getVoices()}catch(e){}
 };
-function closeJarvis(){const h=$('#jvHud');if(!h)return;document.documentElement.classList.remove('jv-open');JH.done=true;clearTimeout(JH.quiet);clearTimeout(JH.cap);try{JH.rec&&JH.rec.abort()}catch(e){}JH.listening=false;try{speechSynthesis.cancel()}catch(e){}clearInterval(JV.t);h.classList.remove('on');setTimeout(()=>h.remove(),380)}
+function closeJarvis(){const h=$('#jvHud');if(!h)return;try{typeof JA!=='undefined'&&JA.pause()}catch(e){}document.documentElement.classList.remove('jv-open');JH.done=true;clearTimeout(JH.quiet);clearTimeout(JH.cap);try{JH.rec&&JH.rec.abort()}catch(e){}JH.listening=false;try{speechSynthesis.cancel()}catch(e){}clearInterval(JV.t);h.classList.remove('on');setTimeout(()=>h.remove(),380)}
 document.addEventListener('click',e=>{const b=e.target.closest('#jvhX,#jvhMic');if(!b)return;e.preventDefault();e.stopImmediatePropagation();
   if(b.id==='jvhX')return closeJarvis();jvListen()},true);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#jvHud'))closeJarvis()});
@@ -6241,6 +6241,24 @@ const _jvSendP=jvSend;jvSend=async function(t){const r=$('#jvhR');if(r&&(t||'').
 @keyframes jvgl{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.18);opacity:1}}
 @keyframes jvkick{0%{transform:scale(1);opacity:1}35%{transform:scale(1.35);opacity:1;filter:brightness(1.6)}100%{transform:scale(1);opacity:.85}}
 </style>`);
+
+/* JARVIS's real voice on the phone: the laptop sends its spoken reply (same calm British neural voice) and the phone
+   plays it. Answers the phone makes itself, or if the audio isn't there, use the best built-in iPhone voice instead. */
+const JA=new Audio();JA.preload='auto';JA.setAttribute('playsinline','');
+const SILENT='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQAAAAA=';
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('#jvHud,[data-jarvis]')||JH.aUnlocked)return;try{JA.src=SILENT;const p=JA.play();if(p)p.then(()=>{JH.aUnlocked=true}).catch(()=>{})}catch(x){}},true);
+JA.onplay=()=>{JH.playing=true;jvHudState()};JA.onended=JA.onpause=()=>{JH.playing=false;jvHudState()};
+async function jvSpeak(text,id){
+  if(id&&syncOn()){try{const r=await fetch(SYNC.url.replace(/\/+$/,'')+'/jarvis/voice?id='+encodeURIComponent(id),{headers:{'X-Life-Key':SYNC.key}});
+    if(r.ok){const b=await r.blob();if(b.size>200){if(JA.dataset.u)URL.revokeObjectURL(JA.dataset.u);const u=URL.createObjectURL(b);JA.dataset.u=u;JA.src=u;await JA.play();return}}}catch(e){}}
+  jvSay(text)}
+/* built-in fallback: a natural-sounding voice at normal pitch and pace (no more deep, slow robot) */
+function jvPickVoice(){const vs=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang));if(!vs.length)return null;
+  const score=v=>(/premium/i.test(v.name)?40:/enhanced/i.test(v.name)?30:0)+(/en-GB/i.test(v.lang)?12:/en-US/i.test(v.lang)?6:0)+(/Daniel|Arthur|Oliver|Jamie|Malcolm|Evan|Nathan|Aaron/i.test(v.name)?10:0)-(/compact|eloquence|grandpa|grandma|bad news|bells|boing|bubbles|cellos|jester|organ|superstar|trinoids|whisper|wobble|zarvox|albert|fred|junior|ralph|kathy/i.test(v.name)?100:0);
+  return vs.sort((a,b)=>score(b)-score(a))[0]}
+jvSay=function(text){try{if(typeof speechSynthesis==='undefined'||!text)return;if(speechSynthesis.speaking||speechSynthesis.pending)speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(String(text).slice(0,400));const v=jvPickVoice();if(v){u.voice=v;u.lang=v.lang}else u.lang='en-GB';u.rate=1;u.pitch=1;
+  u.onstart=u.onend=()=>jvHudState();speechSynthesis.speak(u);setTimeout(jvHudState,60)}catch(e){}};
 
 /* ===================== boot ===================== */
 load();

@@ -10,7 +10,7 @@ export class MockKV {
     if (v == null) return null;
     return type === 'json' ? JSON.parse(v) : v;
   }
-  async put(key, value) { this.writes.push(key); this.map.set(key, String(value)); }
+  async put(key, value) { this.writes.push(key); this.map.set(key, value instanceof ArrayBuffer || ArrayBuffer.isView(value) ? value : String(value)); }
   async delete(key) { this.deletes.push(key); this.map.delete(key); }
   json(key) { const v = this.map.get(key); return v == null ? null : JSON.parse(v); }
 }

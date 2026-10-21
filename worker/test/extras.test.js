@@ -166,3 +166,11 @@ test('jarvis steps attach to the running command; stop marks it at once', async 
   log = await (await call(env, req('/jarvis/log', { key }))).json();
   assert.equal(log.log[0].state, 'error'); assert.equal(log.log[0].reply, 'Stopped.');
 });
+
+test('jarvis voice: laptop uploads mp3, phone downloads it', async () => {
+  const { env, key } = await paired();
+  const r = await call(env, new Request('https://x/jarvis/voice?id=abc123', { method: 'POST', headers: { 'X-Life-Key': key }, body: new Uint8Array([73, 68, 51, 1, 2, 3]) }));
+  assert.equal(r.status, 200);
+  const g = await call(env, req('/jarvis/voice?id=abc123', { key }));
+  assert.equal(g.headers.get('content-type'), 'audio/mpeg'); assert.equal((await g.arrayBuffer()).byteLength, 6);
+});
