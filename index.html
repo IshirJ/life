@@ -1931,7 +1931,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='167';
+const APP_VER='169';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -2833,7 +2833,8 @@ function widgetSummary(){
   const due=of('task').filter(e=>!e.done&&e.due&&dayDiff(e.due)<=0).length+of('reminder').filter(e=>!e.done&&e.due&&dayDiff(e.due)<=0).length;
   const ws=weights(),tr=trendSeries(ws),last=tr[tr.length-1];
   const nx=nextUp(),nowM=new Date().getHours()*60+new Date().getMinutes(),evs=dayItems(td).filter(e=>{const t=(e.type==='class'||e.type==='ext')?e.start:e.time;return t&&toMin(t)>=nowM}).slice(0,4).map(e=>({title:e.title,time:(e.type==='class'||e.type==='ext')?e.start:e.time}));
-  return{name:firstName(),kcal:Math.round(k),kcalGoal:g.kcal,kcalLeft:Math.round(g.kcal-k),protein:Math.round(sumProt(food)),proteinGoal:g.protein,proteinTarget:g.protein,due,next:nx,nextEvent:nx?{title:nx.title,time:nx.day==='Today'?(evs[0]?evs[0].time:nx.time):nx.day+' '+nx.time}:null,events:evs,steps:h&&h.steps?Math.round(num(h.steps)):null,sleepMin:h&&h.sleepMin?Math.round(num(h.sleepMin)):null,weightTrend:last?+last.t.toFixed(1):null,updated:Date.now()};
+  const urg=db.entries.filter(e=>(e.type==='task'||e.type==='reminder')&&!e.done&&+e.urg>=2).sort((a,b)=>(+b.urg-+a.urg)||String(a.due||'9').localeCompare(String(b.due||'9')))[0];
+  return{busCfg:typeof busCfg==='function'?busCfg():undefined,urgent:urg?{title:urg.title,level:+urg.urg,due:urg.due||''}:null,name:firstName(),kcal:Math.round(k),kcalGoal:g.kcal,kcalLeft:Math.round(g.kcal-k),protein:Math.round(sumProt(food)),proteinGoal:g.protein,proteinTarget:g.protein,due,next:nx,nextEvent:nx?{title:nx.title,time:nx.day==='Today'?(evs[0]?evs[0].time:nx.time):nx.day+' '+nx.time}:null,events:evs,steps:h&&h.steps?Math.round(num(h.steps)):null,sleepMin:h&&h.sleepMin?Math.round(num(h.sleepMin)):null,weightTrend:last?+last.t.toFixed(1):null,updated:Date.now()};
 }
 async function pushWidget(force){
   if(!syncOn()||!SYNC.widgetOn||LOCKED_BLOB&&!LOCK.key)return;
@@ -3998,7 +3999,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=167';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=169';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -5773,7 +5774,7 @@ function jvPaint(){const L=$('#jvLog');if(!L)return;const{on,lau}=jvState();
   const nt=$('#jvNote');if(nt)nt.innerHTML=!on&&!lau?'Your laptop isn’t answering. It’s asleep, offline, or hasn’t been logged into since the update. Wake it and tap Start.':'';
   const all=[...JV.log.map(x=>({...x})),...JV.local].sort((a,b)=>(a.at||0)-(b.at||0)).slice(-30);
   const run=all.some(x=>!x.reply&&(x.state==='running'||x.state==='queued')&&(x.at||0)>=JV.since&&Date.now()-(x.at||0)<6e5);
-  L.innerHTML=all.length?all.map(x=>`<div class="jv-me">${esc(x.text==='__voicetest'?'Voice test':x.text)}</div>${x.reply?`<div class="jv-ai${x.local?' loc':''}">${esc(x.reply)}${x.reply!=='Stopped.'?`<button class="jvplay" data-jvplay="${esc(x.local?'':(x.id||''))}" data-jvtext="${esc(x.reply)}" aria-label="Play">${ic('play')}</button>`:''}</div>`:`<div class="jv-ai wait">${x.state==='running'?`<details class="jvsteps"${JV.open.has(x.id)?' open':''} data-jvid="${esc(x.id||'')}"><summary><span class="jvdot"></span>Working on it…${(x.steps||[]).length?`<em>${x.steps.length} step${x.steps.length>1?'s':''}</em>`:''}<i class="chev">${ic('chev')}</i></summary><ol>${(x.steps||[]).length?x.steps.map(l=>`<li>${esc(l.replace(/[\[\]]/g,'').trim())}</li>`).join(''):'<li class="mu">Waiting for the first step…</li>'}</ol></details>`:on?'Sent…':'Waiting for your laptop…'}</div>`}`).join(''):'<p class="hint">Type anything you’d say to JARVIS. Calendar and due-date questions are answered here instantly; everything else runs on your laptop.</p>';
+  L.innerHTML=all.length?all.map(x=>`<div class="jv-me">${esc(x.text==='__voicetest'?'Voice test':/^__say:/.test(x.text)?'Briefing':x.text)}</div>${x.reply?`<div class="jv-ai${x.local?' loc':''}">${esc(x.reply)}${x.reply!=='Stopped.'?`<button class="jvplay" data-jvplay="${esc(x.local?'':(x.id||''))}" data-jvtext="${esc(x.reply)}" aria-label="Play">${ic('play')}</button>`:''}</div>`:`<div class="jv-ai wait">${x.state==='running'?`<details class="jvsteps"${JV.open.has(x.id)?' open':''} data-jvid="${esc(x.id||'')}"><summary><span class="jvdot"></span>Working on it…${(x.steps||[]).length?`<em>${x.steps.length} step${x.steps.length>1?'s':''}</em>`:''}<i class="chev">${ic('chev')}</i></summary><ol>${(x.steps||[]).length?x.steps.map(l=>`<li>${esc(l.replace(/[\[\]]/g,'').trim())}</li>`).join(''):'<li class="mu">Waiting for the first step…</li>'}</ol></details>`:on?'Sent…':'Waiting for your laptop…'}</div>`}`).join(''):'<p class="hint">Type anything you’d say to JARVIS. Calendar and due-date questions are answered here instantly; everything else runs on your laptop.</p>';
   const sb=$('#jvStop');if(sb)sb.hidden=!run;if(!JV.keepScroll)L.scrollTop=L.scrollHeight;JV.keepScroll=false}
 function openJarvis(){NAV_DIR=1;FORCE_MODE='m-bottom tall';openSheet(`${sheetHead('<em>JARVIS</em>')}${needSrv()}<div class="jv-st" id="jvSt"><i></i><span>Checking…</span></div><p class="small jv-note" id="jvNote"></p><div class="jv-log" id="jvLog"></div>
   <button class="jv-stop" id="jvStop" hidden>${ic('close')}Stop</button>
@@ -5978,7 +5979,7 @@ openJarvis=function(){
     <p class="jv-note" id="jvNote"></p><div class="jvh-log jv-log" id="jvLog"></div>
     <button class="jv-stop" id="jvStop" hidden>${ic('close')}Stop</button>
     <div class="jvh-in"><button class="jvh-mic" id="jvhMic" aria-label="Talk">${ic('mic')}</button><input id="jvIn" placeholder="Or type a command" enterkeyhint="send" autocomplete="off"><button id="jvSend" aria-label="Send">${ic('send')}</button></div>
-    <div class="jv-sugg">${['What’s on my calendar today?','What’s due this week?','Open Canvas in Opera','Open Outlook','Open Spotify','Lock my laptop'].map(s=>`<button data-jvs="${esc(s)}">${esc(s)}</button>`).join('')}</div>`;
+    <div class="jv-sugg">${['Brief me','Next bus','Start a 25 minute focus','What’s due this week?','Open Spotify','Lock my laptop'].map(s=>`<button data-jvs="${esc(s)}">${esc(s)}</button>`).join('')}</div>`;
   document.body.appendChild(h);if(!JV.booted){JV.booted=1;h.classList.add('boot');const m=h.querySelector('#jvhMode');if(m)m.textContent='Initializing';setTimeout(()=>{h.classList.remove('boot');jvHudState()},1500)}JH.armed=false;JH.seen.clear();requestAnimationFrame(()=>h.classList.add('on'));JSPIN.last=0;if(!JSPIN.raf)JSPIN.raf=requestAnimationFrame(jvSpin);setTimeout(()=>document.documentElement.classList.add('jv-open'),380);
   jvLoad();clearInterval(JV.t);JV.t=setInterval(()=>{if(!$('#jvLog'))clearInterval(JV.t);else jvLoad()},4000);
   try{speechSynthesis&&speechSynthesis.getVoices()}catch(e){}
@@ -6339,6 +6340,90 @@ document.addEventListener('click',async e=>{const b=e.target.closest('#jvhVoice,
 .jvh-vlist button.on{background:rgb(134 207 160 / .12)}
 .jvh-stage{position:relative}
 </style>`);
+
+/* ===================== JARVIS on the phone: Life actions by voice, morning briefing, and a brain for when the laptop is off ===================== */
+const jvNorm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+/* best match of a spoken name against a list (word overlap), or null */
+function jvMatch(q,list,get){q=jvNorm(q);if(!q)return null;const qw=q.split(' ').filter(w=>w.length>1&&!/^(the|my|a|an|to|as|for|and|of)$/.test(w));let best=null,bs=0;
+  for(const x of list){const n=jvNorm(get(x));if(!n)continue;if(n===q)return x;const nw=n.split(' ');let hit=0;for(const w of qw)if(nw.some(v=>v===w||(w.length>3&&v.startsWith(w))||(v.length>3&&w.startsWith(v))))hit++;
+    const sc=hit/Math.max(1,qw.length)+(n.includes(q)||q.includes(n)?.5:0);if(sc>bs){bs=sc;best=x}}return bs>=.5?best:null}
+const jvOpenItems=()=>db.entries.filter(e=>(e.type==='task'||e.type==='reminder')&&!e.done);
+function jvClock(t){if(!t)return'';const m=/^(\d{1,2}):(\d{2})$/.exec(t);if(!m)return t;return fmtT(`${m[1].padStart(2,'0')}:${m[2]}`)}
+function jvBusLine(route){const c=busCfg().find(x=>x.route===route);const nx=busNext(route);if(!c)return`No ${route} stop is set.`;
+  if(!nx)return`No ${route} buses listed right now at ${c.name||'your stop'}.`;const m=Math.max(0,Math.round((nx-Date.now())/6e4));
+  return`Next ${route} at ${c.name||'your stop'} in ${m} minute${m===1?'':'s'}, at ${new Date(nx).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}.`}
+function jvStartFocus(min,label){const p=PS();db.focusNow={id:uid(),started:Date.now(),label:label||'Focus',ref:'',mode:'single',cfg:{...p,mode:'single',single:min},phase:'focus',round:1,pStart:Date.now(),paused:null,focusMs:0,done:0};
+  save();pushSchedule(true);render(false)}
+function jvComplete(title){const e=jvMatch(title,jvOpenItems(),x=>x.title);if(e){setDone(e.id,true,null);return`Done. Marked “${e.title}” complete.`}
+  const h=jvMatch(title,habits(),x=>x.name);if(h){const td=today(),L=hlog();L[td]=L[td]||{};L[td][h.id]=Math.min(h.target||1,hCount(h,td)+1);save();render(false);return`Ticked ${h.name}${(h.target||1)>1?` (${L[td][h.id]} of ${h.target})`:''}.`}
+  return`I couldn’t find “${title}” in your open tasks or habits.`}
+async function jvSetStop(route,name){route=route.toUpperCase();try{const r=await api('/bus/stops?route='+encodeURIComponent(route));const s=jvMatch(name,r.stops||[],x=>x.name);
+    if(!s)return`I couldn’t find a ${route} stop called “${name}”.`;db.settings.bus=busCfg().map(c=>c.route===route?{route,stop:s.code,name:s.name}:c);if(!db.settings.bus.some(c=>c.route===route))db.settings.bus.push({route,stop:s.code,name:s.name});
+    save();delete BUS[route];busTick(true);return`${route} stop set to ${s.name}.`}catch(e){return'Couldn’t reach the bus service: '+e.message}}
+/* morning briefing, written to be spoken */
+function jvBriefing(){const td=today(),h=new Date().getHours(),g=db.settings,parts=[];
+  parts.push(`${h<12?'Good morning':h<17?'Good afternoon':'Good evening'}, ${firstName()}.`);
+  const R=readiness&&readiness();if(R)parts.push(`Readiness is ${R.score}: ${R.label.toLowerCase()}.`);
+  const nm=new Date().getHours()*60+new Date().getMinutes();
+  const it=dayItems(td).filter(e=>!e.allDay).map(e=>{const t=e.type==='meeting'?e.time:e.start;return{e,m:toMin(t),t}}).filter(x=>x.m!=null&&x.m>=nm-5).sort((a,b)=>a.m-b.m);
+  if(it.length)parts.push(`You have ${it.length} thing${it.length>1?'s':''} left today. Next is ${it[0].e.title||'an event'} at ${fmtT(it[0].t)}${it.length>1?`, then ${it[1].e.title||'another'} at ${fmtT(it[1].t)}`:''}.`);else parts.push('Your calendar is clear for the rest of today.');
+  const due=jvOpenItems().filter(e=>e.due&&e.due<=td),urg=jvOpenItems().filter(e=>+e.urg===3);
+  if(due.length)parts.push(`${due.length} item${due.length>1?'s are':' is'} due${due.some(e=>e.due<td)?' or overdue':''}: ${due.slice(0,3).map(e=>e.title).join(', ')}.`);
+  if(urg.length)parts.push(`High priority: ${urg.slice(0,2).map(e=>e.title).join(' and ')}.`);
+  const food=of('food').filter(e=>e.date===td),k=Math.round(sumKcal(food)),p=Math.round(sumProt(food));
+  parts.push(k?`You've had ${k} calories and ${p} grams of protein, ${Math.max(0,g.kcal-k)} calories left.`:`Nothing logged yet today; your target is ${g.kcal} calories and ${g.protein} grams of protein.`);
+  const nx=busNext('NMG');if(nx){const m=Math.max(0,Math.round((nx-Date.now())/6e4));parts.push(`The next NMG bus is in ${m} minute${m===1?'':'s'}.`)}
+  const hs=habits().filter(x=>hCount(x,td)<(x.target||1));if(hs.length)parts.push(`Still to do: ${hs.slice(0,3).map(x=>x.name.toLowerCase()).join(', ')}.`);
+  return parts.join(' ')}
+/* free, instant commands the app understands itself */
+async function jvLife(t){const q=t.toLowerCase().trim().replace(/[.!?]+$/,'');let m;
+  if(/^(brief me|morning briefing|briefing|good morning|what'?s my day( look like)?|give me (a|my) (rundown|briefing))\b/.test(q))return{text:jvBriefing(),brief:true};
+  if((m=/^(?:mark|tick( off)?|check( off)?|complete|finish(ed)?|i (?:finished|did|took|drank|had))\s+(.+?)(?:\s+(?:as\s+)?(?:done|complete|completed|finished))?$/.exec(q))&&!/\b\d+\s*(g|grams|cal|kcal)\b/.test(q))return{text:jvComplete(m[m.length-1])};
+  if((m=/^(.+?)\s+(?:is\s+)?(?:done|finished|complete)$/.exec(q)))return{text:jvComplete(m[1])};
+  if((m=/^(?:set|change|switch)\s+(?:the\s+|my\s+)?(nmg|cas)\s+(?:bus\s+)?stop\s+to\s+(.+)$/.exec(q)))return{text:await jvSetStop(m[1],m[2])};
+  if((m=/(?:start|begin)\s+(?:a\s+)?(\d{1,3})[\s-]*(?:min(?:ute)?s?)\s+(?:focus|pomodoro|timer|session)(?:\s+(?:on|for)\s+(.+))?/.exec(q))||(m=/(?:focus|pomodoro)\s+(?:for\s+)?(\d{1,3})\s*(?:min(?:ute)?s?)(?:\s+(?:on|for)\s+(.+))?/.exec(q))){
+    const n=Math.max(5,Math.min(240,+m[1]));jvStartFocus(n,m[2]?m[2].replace(/^\w/,c=>c.toUpperCase()):'');return{text:`Started a ${n}-minute focus${m[2]?' on '+m[2]:''}.`}}
+  if(/\b(next|when).{0,20}\bbus\b|\bbus\b.{0,12}\b(times?|when|next)\b/.test(q)){if(!Object.keys(BUS).length)await busTick(true);const r=/\bcas\b/.test(q)?['CAS']:/\bnmg\b/.test(q)?['NMG']:busCfg().map(c=>c.route);return{text:r.map(jvBusLine).join(' ')}}
+  return null}
+/* the phone's own brain (Gemini via your server) - used for Life requests always, and for anything else only while the laptop is offline */
+function jvContext(){const td=today(),g=db.settings,food=of('food').filter(e=>e.date===td);
+  return{now:new Date().toString().slice(0,24),today:td,weekday:wdOf(td),name:firstName(),
+    calendar:dayItems(td).slice(0,12).map(e=>({title:e.title,time:e.allDay?'all day':(e.type==='meeting'?e.time:e.start)})),
+    tomorrow:dayItems(addDays(1)).slice(0,8).map(e=>({title:e.title,time:e.allDay?'all day':(e.type==='meeting'?e.time:e.start)})),
+    open:jvOpenItems().slice(0,30).map(e=>({type:e.type,title:e.title,due:e.due||'',time:e.time||'',urgency:+e.urg||0})),
+    food:{kcal:Math.round(sumKcal(food)),protein:Math.round(sumProt(food)),goals:{kcal:g.kcal,protein:g.protein,fat:g.fat,carbs:g.carbs},items:food.slice(-8).map(e=>e.title)},
+    habits:habits().map(h=>({name:h.name,done:hCount(h,td),target:h.target||1})),
+    bus:busCfg().map(c=>({route:c.route,stop:c.name,next:busNext(c.route)?new Date(busNext(c.route)).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):null})),
+    readiness:(()=>{try{const R=readiness();return R?{score:R.score,label:R.label}:null}catch(e){return null}})()}}
+async function jvActions(acts){const done=[];let needLaptop=false;
+  for(const a of acts||[]){try{
+    if(a.type==='add_task'||a.type==='add_reminder'){const o={id:uid(),type:a.type==='add_task'?'task':'reminder',title:String(a.title||'').slice(0,200)||'Untitled',due:/^\d{4}-\d{2}-\d{2}$/.test(a.due||'')?a.due:(a.type==='add_reminder'?today():''),created:Date.now()};
+      if(/^\d{1,2}:\d{2}$/.test(a.time||''))o.time=a.time.padStart(5,'0');if(+a.urgency>0)o.urg=Math.min(3,Math.round(+a.urgency));if(o.type==='task')o.priority='Normal';db.entries.push(o);done.push(o.type)}
+    else if(a.type==='log_food'){db.entries.push({id:uid(),type:'food',created:Date.now(),title:String(a.title||'Food').slice(0,120),meal:['Breakfast','Lunch','Dinner','Snack'].includes(a.meal)?a.meal:mealNow(),grams:Math.round(+a.grams||0)||undefined,kcal:Math.round(+a.kcal||0),protein:+(+a.protein||0).toFixed(1),fat:+(+a.fat||0).toFixed(1),carbs:+(+a.carbs||0).toFixed(1),date:today(),time:new Date().toTimeString().slice(0,5),src:'jarvis'});done.push('food')}
+    else if(a.type==='tick_habit'||a.type==='complete')jvComplete(a.title||'');
+    else if(a.type==='start_focus')jvStartFocus(Math.max(5,Math.min(240,+a.minutes||25)),a.title||'');
+    else if(a.type==='set_bus_stop'&&a.route&&a.stop)await jvSetStop(a.route,a.stop);
+    else if(a.type==='needs_laptop')needLaptop=true}catch(e){}}
+  if(done.length){save();render(false)}return{needLaptop}}
+async function jvAsk(t){const r=await api('/jarvis/ask',{method:'POST',body:JSON.stringify({text:t,context:jvContext()})});const x=await jvActions(r.actions);return{text:r.reply||'Done.',needLaptop:x.needLaptop}}
+const JV_LIFE=/\b(remind me|reminder|add (?:a |an )?(?:task|todo|reminder)|todo|log(?:ged)?|i (?:ate|had|drank)|calories|kcal|protein|carbs|macros|habit|water|creatine|vitamins?|urgent|urgency)\b/i;
+function jvLocalPush(t,reply){JV.local.push({text:t,reply,at:Date.now(),local:true});jvPaint()}
+jvSend=async function(t){t=(t||'').trim();if(!t)return;const i=$('#jvIn');if(i)i.value='';
+  const r=$('#jvhR');if(r){r.classList.remove('kick');void r.offsetWidth;r.classList.add('kick')}
+  const loc=jvLocal(t);if(loc)return jvLocalPush(t,loc);
+  try{const l=await jvLife(t);if(l){
+      if(l.brief&&jvState().on){/* laptop online: it speaks the briefing in the JARVIS voice */
+        JV.log.push({text:'Briefing',state:'queued',at:Date.now()});jvPaint();await api('/jarvis/cmd',{method:'POST',body:JSON.stringify({text:'__say:'+l.text})});return jvLoad()}
+      return jvLocalPush(t,l.text)}}catch(e){}
+  const online=jvState().on;
+  if(JV_LIFE.test(t)||!online){const tmp={text:t,state:'running',at:Date.now(),local:true,steps:[online?'Life request · handled on your phone':'Laptop offline · answering on your phone']};JV.local.push(tmp);jvPaint();
+    try{const a=await jvAsk(t);tmp.reply=a.text;tmp.state='done';
+      if(a.needLaptop){tmp.reply+=' I’ve queued it and asked your laptop to start.';await api('/jarvis/cmd',{method:'POST',body:JSON.stringify({text:t})});if(!JV.waking)await jvWake('start',true)}}
+    catch(e){tmp.reply='I couldn’t answer that: '+e.message;tmp.state='error'}jvPaint();return}
+  JV.log.push({text:t,state:'queued',at:Date.now()});jvPaint();
+  try{await api('/jarvis/cmd',{method:'POST',body:JSON.stringify({text:t})});jvLoad()}catch(e){toast('Couldn’t send: '+e.message)}};
+/* first JARVIS open of the day (after 5 AM): it briefs you */
+const _openJarvisB=openJarvis;openJarvis=function(){_openJarvisB();const d=today(),h=new Date().getHours();if(h>=5&&lsGet('ishiros.brief')!==d){lsSet('ishiros.brief',d);setTimeout(()=>jvSend('brief me'),1700)}};
 
 /* ===================== boot ===================== */
 load();

@@ -11,7 +11,7 @@ import {
 import { isValidTz, parseYmd } from './tz.js';
 import { searchFood } from './food.js';
 import { SyncHub } from './hub.js';
-import { getImages, imageUsed, getBus, getBusStops, aiFood, aiTest, aiStt, postReel, listReels, deleteReels, ingestJobs, listJobs, logScreen, getScreen } from './extras.js';
+import { getImages, imageUsed, getBus, getBusStops, aiFood, aiTest, aiStt, jarvisAsk, postReel, listReels, deleteReels, ingestJobs, listJobs, logScreen, getScreen } from './extras.js';
 
 const MIN = 60 * 1000;
 const DUE_WINDOW = 30 * MIN;
@@ -385,7 +385,17 @@ async function route(request, env, url) {
     case 'GET /widget': {
       const w = await kvGet(env, 'widget');
       if (!w) return err(404, 'no widget data yet');
-      return json({ ...w.summary, _updated: w.ts });
+      // live bus times for the widget (cached 20 s server-side)
+      let bus = null;
+      const bc = Array.isArray(w.summary?.busCfg) ? w.summary.busCfg[0] : null;
+      if (bc && bc.route && bc.stop) {
+        try {
+          const r = await getBus(new URL(`https://x/bus?route=${encodeURIComponent(bc.route)}&stop=${encodeURIComponent(bc.stop)}`));
+          const b = await r.json();
+          bus = { route: b.route, stop: b.stop, name: bc.name || b.stopName || '', deps: (b.deps || []).filter((t) => Date.parse(t) > Date.now() - 30000).slice(0, 3) };
+        } catch { /* bus is optional */ }
+      }
+      return json({ ...w.summary, bus, _updated: w.ts });
     }
     case 'POST /inbox':
       return postInbox(request, env);
@@ -401,6 +411,8 @@ async function route(request, env, url) {
       return getBus(url);
     case 'GET /bus/stops':
       return getBusStops(url);
+    case 'POST /jarvis/ask':
+      return jarvisAsk(request, await config(), env);
     case 'POST /ai/stt':
       return aiStt(request, await config(), env);
     case 'POST /ai/test':

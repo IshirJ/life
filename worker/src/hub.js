@@ -132,7 +132,7 @@ export class SyncHub {
     // JARVIS relay: the app queues a typed command, the laptop picks it up and posts the reply.
     if (path === '/jarvis/cmd' && method === 'POST') {
       const { text } = await request.json().catch(() => ({}));
-      const t = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 500);
+      const t0 = String(text || '').replace(/\s+/g, ' ').trim(), t = t0.slice(0, t0.startsWith('__say:') ? 1500 : 500);
       if (!t) return Response.json({ error: 'text required' }, { status: 400 });
       const j = (await this.ctx.storage.get('jarvis')) || { q: [], log: [], seen: 0 };
       const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);

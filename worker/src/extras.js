@@ -274,3 +274,34 @@ export async function aiStt(request, config, env) {
     { type: 'OBJECT', properties: { text: { type: 'STRING' } }, required: ['text'] });
   return json({ text: clip(out.text, 500).trim() });
 }
+
+// JARVIS on the phone when the laptop is off: answers questions and turns Life requests into actions the
+// phone carries out (the phone owns the data; the server never stores it). Gemini first, Workers AI as backup.
+const ASK_SCHEMA = { type: 'OBJECT', properties: {
+  reply: { type: 'STRING' },
+  actions: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
+    type: { type: 'STRING', enum: ['add_task', 'add_reminder', 'log_food', 'tick_habit', 'complete', 'start_focus', 'set_bus_stop', 'needs_laptop'] },
+    title: { type: 'STRING' }, due: { type: 'STRING' }, time: { type: 'STRING' }, urgency: { type: 'NUMBER' },
+    kcal: { type: 'NUMBER' }, protein: { type: 'NUMBER' }, fat: { type: 'NUMBER' }, carbs: { type: 'NUMBER' }, grams: { type: 'NUMBER' }, meal: { type: 'STRING' },
+    minutes: { type: 'NUMBER' }, route: { type: 'STRING' }, stop: { type: 'STRING' } }, required: ['type'] } } },
+  required: ['reply'] };
+export async function jarvisAsk(request, config, env) {
+  const b = await readJson(request, 60_000);
+  const text = clip(b.text, 600).trim();
+  if (!text) return err(400, 'text required');
+  const ctx = clip(typeof b.context === 'string' ? b.context : JSON.stringify(b.context || {}), 12000);
+  const sys = `You are JARVIS, Ishir's personal assistant inside his Life app, answering on his phone (his laptop is offline).
+Be brief and natural (1-3 short sentences, spoken aloud). Today and his data: ${ctx}
+If he asks to add a task/reminder, log food, tick a habit, mark something done, start a focus timer or change a bus stop, return the matching action(s) with fields filled (dates as YYYY-MM-DD, times as HH:MM 24h, urgency 0-3, food macros estimated for the stated portion) and confirm in the reply.
+For "complete", put the item's title (as in his data) in title. If the request needs his laptop (open/close apps, Spotify, files, browsing, typing on the computer), return a needs_laptop action and say the laptop is offline.
+Never invent data he didn't give you; answer questions about his day only from the data above.`;
+  try {
+    const out = await gemini(config, [{ text: sys + '\n\nIshir: ' + text }], ASK_SCHEMA);
+    return json({ reply: clip(out.reply, 800), actions: (out.actions || []).slice(0, 6), via: 'gemini' });
+  } catch (e) {
+    if (!env?.AI) throw e;
+    const r = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', { messages: [{ role: 'system', content: sys + ' Reply as JSON: {"reply": "...", "actions": [...]}.' }, { role: 'user', content: text }], max_tokens: 400 });
+    let o = {}; try { o = JSON.parse(String(r?.response || '').replace(/^[^{]*/, '').replace(/[^}]*$/, '')); } catch { o = { reply: String(r?.response || '').slice(0, 600) }; }
+    return json({ reply: clip(o.reply || '', 800), actions: Array.isArray(o.actions) ? o.actions.slice(0, 6) : [], via: 'workers-ai' });
+  }
+}

@@ -156,7 +156,68 @@ function statsRow(parent, data) {
   return r;
 }
 
+
+// next bus: minutes from now (worked out when the widget draws, so it stays right between refreshes)
+function busInfo(data) {
+  const b = data.bus;
+  if (!b || !Array.isArray(b.deps)) return null;
+  const now = Date.now();
+  const deps = b.deps.map((t) => Date.parse(t)).filter((t) => t > now - 30000);
+  if (!deps.length) return { route: b.route, name: b.name, none: true };
+  return { route: b.route, name: b.name, at: deps[0], min: Math.max(0, Math.round((deps[0] - now) / 60000)), then: deps[1] };
+}
+function busText(bi, short) {
+  if (!bi) return '';
+  if (bi.none) return bi.route + ' · none listed';
+  return bi.route + ' ' + (bi.min === 0 ? 'now' : bi.min + 'm') + (short ? '' : ' · ' + fmtTime(new Date(bi.at).toISOString()));
+}
+function urgentLine(parent, data, size) {
+  const u = data.urgent;
+  if (!u || !u.title) return;
+  const r = parent.addStack();
+  r.centerAlignContent();
+  txt(r, '!'.repeat(Math.max(1, Math.min(3, u.level || 1))) + ' ', size, u.level >= 3 ? new Color('#FF3B30') : C.accent, 'bold');
+  txt(r, u.title, size, C.ink, 'bold');
+}
+function busLine(parent, data, size) {
+  const bi = busInfo(data);
+  if (!bi) return;
+  const r = parent.addStack();
+  r.centerAlignContent();
+  txt(r, '🚌 ', size, C.ink);
+  txt(r, busText(bi), size, bi.min != null && bi.min <= 5 ? C.accent : C.sage, 'bold');
+  if (bi.name) { r.addSpacer(6); txt(r, bi.name, size - 1, C.muted); }
+}
+
+// lock-screen widgets (iOS 16+): rectangular, inline, circular
+function lockWidget(data, family) {
+  const w = new ListWidget();
+  w.url = APP_URL;
+  w.refreshAfterDate = new Date(Date.now() + 5 * 60 * 1000);
+  const bi = busInfo(data), u = data.urgent;
+  if (family === 'accessoryInline') {
+    const parts = [];
+    if (bi) parts.push(busText(bi, true));
+    if (u && u.title) parts.push('!'.repeat(u.level || 1) + ' ' + u.title);
+    else if (num(data.kcalLeft) != null) parts.push(fmtNum(data.kcalLeft) + ' kcal left');
+    w.addText(parts.join(' · ') || 'Life');
+    return w;
+  }
+  if (family === 'accessoryCircular') {
+    const s = w.addStack(); s.layoutVertically(); s.centerAlignContent();
+    const t1 = s.addText(bi && !bi.none ? (bi.min === 0 ? 'now' : String(bi.min)) : '–'); t1.font = Font.boldRoundedSystemFont(20); t1.centerAlignText();
+    const t2 = s.addText(bi ? bi.route : 'bus'); t2.font = Font.semiboldSystemFont(10); t2.centerAlignText();
+    return w;
+  }
+  // rectangular
+  const a = w.addText(bi ? '🚌 ' + busText(bi) : 'No bus stop set'); a.font = Font.semiboldSystemFont(13); a.lineLimit = 1;
+  if (u && u.title) { const b = w.addText('!'.repeat(u.level || 1) + ' ' + u.title); b.font = Font.boldSystemFont(13); b.lineLimit = 1; }
+  const c = w.addText((num(data.kcalLeft) != null ? fmtNum(data.kcalLeft) + ' kcal left' : '') + (data.due ? ' · ' + data.due + ' due' : '')); c.font = Font.systemFont(11); c.lineLimit = 1;
+  return w;
+}
+
 function build(data, family) {
+  if (String(family).indexOf('accessory') === 0) return lockWidget(data, family);
   const w = new ListWidget();
   const g = new LinearGradient();
   g.colors = [C.bg2, C.bg];
@@ -171,13 +232,18 @@ function build(data, family) {
     w.addSpacer(6);
     foodBlock(w, data, 127, 30, true);
     w.addSpacer();
-    const ev = data.nextEvent;
-    if (ev && ev.title) {
-      txt(w, ev.title, 11, C.ink, 'bold');
-      txt(w, fmtTime(ev.time), 10, C.accent, 'bold');
-    } else if (data.due != null) {
-      txt(w, fmtNum(data.due) + ' due today', 11, data.due ? C.accent : C.muted, 'bold');
+    if (data.urgent && data.urgent.title) urgentLine(w, data, 11);
+    else {
+      const ev = data.nextEvent;
+      if (ev && ev.title) {
+        txt(w, ev.title, 11, C.ink, 'bold');
+        txt(w, fmtTime(ev.time), 10, C.accent, 'bold');
+      } else if (data.due != null) {
+        txt(w, fmtNum(data.due) + ' due today', 11, data.due ? C.accent : C.muted, 'bold');
+      }
     }
+    busLine(w, data, 10);
+    w.refreshAfterDate = new Date(Date.now() + 5 * 60 * 1000);
     return w;
   }
 
@@ -195,6 +261,10 @@ function build(data, family) {
   right.addSpacer();
   w.addSpacer();
   statsRow(w, data);
+  w.addSpacer(4);
+  busLine(w, data, 11);
+  urgentLine(w, data, 11);
+  w.refreshAfterDate = new Date(Date.now() + 5 * 60 * 1000);
 
   if (family === 'large') {
     w.addSpacer(12);

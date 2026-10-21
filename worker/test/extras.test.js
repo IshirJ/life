@@ -194,3 +194,20 @@ test('ai stt prefers Workers AI whisper when bound', async () => {
   const r = await (await call(env, req('/ai/stt', { method: 'POST', key, body: { audio: 'data:audio/wav;base64,UklGRg==' } }))).json();
   assert.equal(r.text, 'close whatsapp');
 });
+
+test('jarvis ask returns reply + actions; widget carries live bus', async () => {
+  const { env, key } = await paired();
+  await call(env, req('/config', { method: 'PUT', key, body: { geminiKey: 'G' } }));
+  let f = mockFetch(() => Response.json({ candidates: [{ content: { parts: [{ text: '{"reply":"Added.","actions":[{"type":"add_reminder","title":"Call AMR","time":"17:00","urgency":3}]}' }] } }] }));
+  try {
+    const r = await (await call(env, req('/jarvis/ask', { method: 'POST', key, body: { text: 'remind me to call AMR at 5, high urgency', context: { today: '2026-10-21' } } }))).json();
+    assert.equal(r.reply, 'Added.'); assert.equal(r.actions[0].type, 'add_reminder'); assert.equal(r.actions[0].urgency, 3);
+  } finally { f.restore(); }
+  await call(env, req('/widget', { method: 'PUT', key, body: { summary: { kcal: 1, busCfg: [{ route: 'NMG', stop: '9911', name: 'Red Maple' }] } } }));
+  const soon = new Date(Date.now() + 9 * 60000).toISOString();
+  f = mockFetch(() => new Response(`<x><AdjustedDepartureTime>${soon}</AdjustedDepartureTime><StopName>Red Maple</StopName></x>`));
+  try {
+    const w = await (await call(env, req('/widget', { key }))).json();
+    assert.equal(w.bus.route, 'NMG'); assert.equal(w.bus.deps.length, 1);
+  } finally { f.restore(); }
+});
