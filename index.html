@@ -1056,6 +1056,7 @@ svg.i.chev.d{transform:none}
 details.sec>summary{list-style:none;cursor:pointer}details.sec>summary::-webkit-details-marker{display:none}
  /* startup */
 #splashBg{position:fixed;inset:0 0 calc(-1 * var(--gap)) 0;z-index:79;background:var(--bg);transition:opacity .6s ease}
+#splashBg{background:#080A09}html.ix-classic #splashBg{background:var(--bg)}html.ix-boot #splash .mark,html.ix-boot #splash .hi{display:none}
 #splashCv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 #splash .hi span{display:block}#splash .hi .sl2{margin-top:2px}
 #bgGlow{position:absolute;inset:0;opacity:0;pointer-events:none;background:radial-gradient(60% 40% at 55% 45%,color-mix(in srgb,var(--accent) 22%,transparent),transparent 70%);will-change:opacity}
@@ -1967,7 +1968,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='182';
+const APP_VER='184';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -4142,7 +4143,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=182';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=184';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -7299,12 +7300,14 @@ document.addEventListener('keydown',ev=>{if(ev.key!=='Enter')return;
 /* ===================== boot ===================== */
 load();
 const splash=document.getElementById('splash'),splashBg=document.getElementById('splashBg');
-SPLASHING=!(noMotion()||LOCKED_BLOB);
+if(!LOCKED_BLOB&&(db.settings.intro||'orbit')!=='classic')document.documentElement.classList.add('ix-boot');else document.documentElement.classList.add('ix-classic');
+let NOINTRO=false;try{NOINTRO=sessionStorage.getItem('lifeNoIntro')==='1';sessionStorage.removeItem('lifeNoIntro')}catch(e){}
+SPLASHING=!(noMotion()||LOCKED_BLOB||NOINTRO);
 if(!LOCKED_BLOB&&db.settings.startTab&&TABS[db.settings.startTab])state.tab=db.settings.startTab;
 if(LOCKED_BLOB){db.settings={...DEF,lockMin:LOCKED_BLOB.lockMin||5};showLock('unlock')}
 else{applyLay(false);applyLook();render(false)}
-function endSplash(){document.documentElement.classList.add('rings-on');if(!splash.isConnected&&!SPLASHING)return;splash.remove();splashBg.remove();const h=$('#hi');if(h)h.style.visibility='';flushAfterSplash()}
-if(noMotion()||LOCKED_BLOB){endSplash()}
+function endSplash(){document.documentElement.classList.add('rings-on');document.documentElement.classList.remove('ix-boot');if(!splash.isConnected&&!SPLASHING)return;splash.remove();splashBg.remove();const h=$('#hi');if(h)h.style.visibility='';flushAfterSplash()}
+if(noMotion()||LOCKED_BLOB||NOINTRO){endSplash()}
 else runSplash();
 handleHash();
 /* notification taps while Life is already open only change the #fragment */
@@ -7321,9 +7324,11 @@ if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWo
 }).catch(()=>{}));
   /* a new version took over: reload straight away if nothing is open, otherwise the next time the app is brought back */
   let had=!!navigator.serviceWorker.controller,pend=false;
-  const go=()=>{const a=document.activeElement;if(document.querySelector('#wrap:not([hidden])')||document.getElementById('jvHud')||(a&&/INPUT|TEXTAREA/.test(a.tagName)))pend=true;else location.reload()};
+  /* an update reload never replays the intro, and never interrupts the first seconds after opening (that is what made it play twice) */
+  const rl=()=>{try{sessionStorage.setItem('lifeNoIntro','1')}catch(e){}location.reload()};
+  const go=()=>{const a=document.activeElement;if(performance.now()<20000||document.getElementById('ix3')||document.querySelector('#wrap:not([hidden])')||document.getElementById('jvHud')||(a&&/INPUT|TEXTAREA/.test(a.tagName)))pend=true;else rl()};
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had)go();had=true});
-  document.addEventListener('visibilitychange',()=>{if(pend&&document.visibilityState==='visible'){pend=false;location.reload()}});
+  document.addEventListener('visibilitychange',()=>{if(pend&&document.visibilityState==='visible'){pend=false;rl()}});
 }
 </script>
 </body>

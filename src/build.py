@@ -46,9 +46,11 @@ if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWo
 }).catch(()=>{}));
   /* a new version took over: reload straight away if nothing is open, otherwise the next time the app is brought back */
   let had=!!navigator.serviceWorker.controller,pend=false;
-  const go=()=>{const a=document.activeElement;if(document.querySelector('#wrap:not([hidden])')||document.getElementById('jvHud')||(a&&/INPUT|TEXTAREA/.test(a.tagName)))pend=true;else location.reload()};
+  /* an update reload never replays the intro, and never interrupts the first seconds after opening (that is what made it play twice) */
+  const rl=()=>{try{sessionStorage.setItem('lifeNoIntro','1')}catch(e){}location.reload()};
+  const go=()=>{const a=document.activeElement;if(performance.now()<20000||document.getElementById('ix3')||document.querySelector('#wrap:not([hidden])')||document.getElementById('jvHud')||(a&&/INPUT|TEXTAREA/.test(a.tagName)))pend=true;else rl()};
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had)go();had=true});
-  document.addEventListener('visibilitychange',()=>{if(pend&&document.visibilityState==='visible'){pend=false;location.reload()}});
+  document.addEventListener('visibilitychange',()=>{if(pend&&document.visibilityState==='visible'){pend=false;rl()}});
 }
 </script>
 </body>
