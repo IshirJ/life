@@ -1966,7 +1966,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='176';
+const APP_VER='177';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -4140,7 +4140,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=176';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=177';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -6450,23 +6450,27 @@ function ixRun(preview){
     {opacity:1,transform:`rotate(${-10-i*6}deg) scale(1)`,offset:.48,easing:'cubic-bezier(.5,0,.35,1)'},
     {opacity:0,transform:`translate(${x-cx}px,${y-cy}px) rotate(${150+i*40}deg) scale(.03)`}],{duration:D+i*60,fill:'forwards'}));
   A(el.querySelector('.sh'),[{opacity:0},{opacity:1,offset:.25},{opacity:1,offset:.6},{opacity:0}],{duration:D,fill:'forwards'});
-  A(el.querySelector('.wl'),[{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none',offset:.3},{opacity:1,transform:'none',offset:.62},{opacity:0,transform:'scale(.94)'}],{duration:D,easing:'ease-out',fill:'forwards'});
+  /* greeting: appears in the centre, then flies into the header and becomes the Home greeting */
+  const wl=el.querySelector('.wl'),hi=document.getElementById('hi');
+  const wr=wl.getBoundingClientRect(),hr=hi&&hi.getBoundingClientRect();
+  if(hr&&hr.width){const sc=Math.max(.35,Math.min(1.2,hr.height/Math.max(1,wr.height))),dx=hr.left-wr.left,dy=(hr.top+hr.height/2)-(wr.top+wr.height/2);
+    wl.style.transformOrigin='0 50%';
+    A(wl,[{opacity:0,transform:'translateY(12px) scale(.96)'},{opacity:1,transform:'none',offset:.28},{opacity:1,transform:'none',offset:.5,easing:'cubic-bezier(.65,0,.25,1)'},
+      {opacity:1,transform:`translate(${dx}px,${dy}px) scale(${sc})`,offset:.9},{opacity:0,transform:`translate(${dx}px,${dy}px) scale(${sc})`}],{duration:D+150,fill:'forwards'});
+    A(hi,[{opacity:0},{opacity:0,offset:.8},{opacity:1}],{duration:D+150,fill:'backwards'});
+  }else A(wl,[{opacity:0},{opacity:1,offset:.3},{opacity:1,offset:.62},{opacity:0}],{duration:D,fill:'forwards'});
   A(rg,[{opacity:0,transform:'scale(2.4)'},{opacity:1,transform:'scale(1)',offset:.7},{opacity:0,transform:'scale(1.12)'}],{duration:1100,delay:D*.62,easing:'cubic-bezier(.22,1,.36,1)',fill:'forwards'});
-  /* light lines: shoot from the centre to the four corners, then slide along the edges to the middle of each side */
-  const NS='http://www.w3.org/2000/svg',sv=document.createElementNS(NS,'svg');sv.setAttribute('class','ixl');sv.setAttribute('width',W);sv.setAttribute('height',innerHeight);
-  sv.style.cssText='position:absolute;left:0;top:0;pointer-events:none;overflow:visible;mix-blend-mode:screen';
-  const Hh=innerHeight,cor=[[0,0],[W,0],[W,Hh],[0,Hh]],mid=[[W/2,0],[W,Hh/2],[W/2,Hh],[0,Hh/2]],cols=['#F06D44','#9CD67E','#F2A65A','#86CFA0'];
-  const ln=cor.map((_,i)=>{const l=document.createElementNS(NS,'line');l.setAttribute('x1',cx);l.setAttribute('y1',cy);l.setAttribute('x2',cx);l.setAttribute('y2',cy);
-    l.setAttribute('stroke',cols[i]);l.setAttribute('stroke-width','1.6');l.setAttribute('stroke-linecap','round');l.style.filter=`drop-shadow(0 0 6px ${cols[i]})`;sv.appendChild(l);return l});
-  el.insertBefore(sv,el.querySelector('.sh'));
-  const t0=performance.now(),eo=t=>1-Math.pow(1-t,3),eio=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
-  const step=now=>{if(!sv.isConnected)return;const t=now-t0;
-    const a=Math.min(1,Math.max(0,(t-80)/520)),m=Math.min(1,Math.max(0,(t-600)/600)),o=t<1100?1:Math.max(0,1-(t-1100)/450);
-    ln.forEach((l,i)=>{const e=eo(a),k=eio(m),ex=cx+(cor[i][0]-cx)*e,ey=cy+(cor[i][1]-cy)*e;
-      const px=ex+(mid[i][0]-cor[i][0])*k,py=ey+(mid[i][1]-cor[i][1])*k,sx=cx+(px-cx)*k*.55,sy=cy+(py-cy)*k*.55;
-      l.setAttribute('x1',sx);l.setAttribute('y1',sy);l.setAttribute('x2',px);l.setAttribute('y2',py);l.style.opacity=o});
-    if(t<1600)requestAnimationFrame(step)};
-  requestAnimationFrame(step);
+  /* glowing outlines peel off the swirl, spin out and settle exactly onto Home's cards and buttons, then hand over to them */
+  const tg=[...document.querySelectorAll('#view .hero,#view .card-s,#view .chip,.top .ib,.dock')].filter(n=>{const r=n.getBoundingClientRect();return r.width>30&&r.bottom>0&&r.top<innerHeight}).slice(0,9);
+  const cols=['#F06D44','#9CD67E','#F2A65A','#86CFA0'];
+  tg.forEach((n,i)=>{const r=n.getBoundingClientRect(),cs=getComputedStyle(n),b=document.createElement('i');b.className='ixb';
+    b.style.cssText=`position:absolute;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;border-radius:${cs.borderRadius||'24px'};border:1.5px solid ${cols[i%4]};box-shadow:0 0 18px ${cols[i%4]}88,inset 0 0 14px ${cols[i%4]}44;pointer-events:none;opacity:0;will-change:transform,opacity`;
+    el.insertBefore(b,el.querySelector('.sh'));
+    const ox=cx-(r.left+r.width/2),oy=cy-(r.top+r.height/2),rot=(i%2?1:-1)*(160+i*25),d0=300+i*55;
+    A(b,[{opacity:0,transform:`translate(${ox}px,${oy}px) rotate(${rot}deg) scale(.08)`},
+      {opacity:1,transform:`translate(${ox*.35}px,${oy*.35}px) rotate(${rot*.25}deg) scale(.7)`,offset:.45,easing:'cubic-bezier(.2,.8,.25,1)'},
+      {opacity:1,transform:'none',offset:.78},{opacity:0,transform:'scale(1.015)'}],{duration:1150,delay:d0,easing:'cubic-bezier(.45,0,.25,1)',fill:'both'});
+  });
   /* Home fades in early and fast, under the moving vines */
   let f=null;
   setTimeout(()=>{document.documentElement.classList.remove('ix-on');f=A(el.querySelector('.bg'),[{opacity:1},{opacity:0}],{duration:480,easing:'ease-out',fill:'forwards'});
