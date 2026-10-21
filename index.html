@@ -1967,7 +1967,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='181';
+const APP_VER='182';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -4142,7 +4142,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=181';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=182';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -6428,96 +6428,82 @@ function ixPaint(cv,W,H,L,cx,cy){
 }
 function ixRun(preview){
   if($('#ix3'))return;
-  const W=innerWidth,H=innerHeight+140;
-  const av=document.getElementById('avBtn'),ar=av&&av.getBoundingClientRect();
-  const ok=ar&&ar.width>0,tx=ok?ar.left+ar.width/2:44,ty=ok?ar.top+ar.height/2:70,tr=ok?ar.width/2+7:30;
-  const cx=W/2,cy=innerHeight*.5;
+  const W=innerWidth,H=innerHeight+140,cx=W/2,cy=innerHeight*.5;
+  /* ONE clock for everything: a short spin-in (0..TA), then vines, greeting, outlines and Home all move together
+     with the same easing and land on the same frame (T). Every target is measured live, never from frame 0. */
+  const TA=480,T=1450,MOVE=T-TA,EZ='cubic-bezier(.65,0,.35,1)';
+  const ez=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
   const el=document.createElement('div');el.id='ix3';el.setAttribute('aria-hidden','true');
-  el.innerHTML=`<div class="bg"></div><canvas></canvas><canvas></canvas><canvas></canvas><div class="sh"></div><div class="wl">Welcome, <em>${esc(firstName())}</em></div><i class="rg" style="left:${tx-tr}px;top:${ty-tr}px;width:${tr*2}px;height:${tr*2}px"></i>`;
+  el.innerHTML=`<div class="bg"></div><canvas></canvas><canvas></canvas><canvas></canvas><div class="sh"></div><div class="wl">Welcome, <em>${esc(firstName())}</em></div><i class="rg"></i>`;
   el.style.setProperty('--ixh',(innerHeight/2)+'px');document.body.appendChild(el);
-  let gl=document.getElementById('ixGlow');if(!gl){gl=document.createElement('div');gl.id='ixGlow';document.body.appendChild(gl)}
   document.documentElement.classList.add('ix-on');
   try{splashBg.style.display='none';splash.style.display='none'}catch(e){}
   if(!preview){SC.style.opacity='1';SC.style.transition='none'}
+  const A=(n,k,o)=>{try{return n&&n.animate(k,o)}catch(e){return null}};
+  const box=n=>{const r=n&&n.getBoundingClientRect();return r&&r.width>0&&r.bottom>0&&r.top<innerHeight?r:null};
   const cvs=[...el.querySelectorAll('canvas')];cvs.forEach((c,i)=>{ixPaint(c,W,H,i,cx,cy);c.style.transformOrigin=`${cx}px ${cy}px`});
-  const A=(n,k,o)=>{try{return n.animate(k,o)}catch(e){return null}};
-  /* one continuous move, never a pause: spiral in, keep turning, and fly into the ring around your avatar.
-     Home fades in underneath while the vines are still travelling. */
-  const ring=document.querySelector('#avBtn .avr')||av,q=ring&&ring.getBoundingClientRect();
-  const has=q&&q.width>0,x=has?q.left+q.width/2:tx,y=has?q.top+q.height/2:ty,rr=has?Math.max(q.width,q.height)/2:tr;
-  const rg=el.querySelector('.rg');rg.style.left=(x-rr)+'px';rg.style.top=(y-rr)+'px';rg.style.width=rg.style.height=(rr*2)+'px';
-  const D=1500;
-  cvs.forEach((c,i)=>A(c,[
-    {opacity:0,transform:`rotate(${-110-i*30}deg) scale(${1.6+i*.2})`,easing:'cubic-bezier(.2,.7,.4,1)'},
-    {opacity:1,transform:`rotate(${-10-i*6}deg) scale(1)`,offset:.48,easing:'cubic-bezier(.5,0,.35,1)'},
-    {opacity:0,transform:`translate(${x-cx}px,${y-cy}px) rotate(${150+i*40}deg) scale(.03)`}],{duration:D+i*60,fill:'forwards'}));
-  A(el.querySelector('.sh'),[{opacity:0},{opacity:1,offset:.25},{opacity:1,offset:.6},{opacity:0}],{duration:D,fill:'forwards'});
-  /* greeting: shown big in the centre, then flies onto Home's own greeting (#hi) and becomes it.
-     It uses #hi's exact font at #hi's size (scaled up in the centre), and re-aims at #hi's LIVE text box every frame,
-     so header font swaps, fitHello and the float/compact switch can't make it land in the wrong place. */
+  /* --- phase A: vines spin in, greeting fades in at the centre --- */
+  cvs.forEach((c,i)=>A(c,[{opacity:0,transform:`rotate(${-110-i*30}deg) scale(${1.6+i*.2})`},{opacity:1,transform:`rotate(${-20-i*8}deg) scale(1)`}],{duration:TA,easing:'cubic-bezier(.2,.7,.4,1)',fill:'forwards'}));
+  A(el.querySelector('.sh'),[{opacity:0},{opacity:1}],{duration:TA,fill:'forwards'});
+  /* greeting: exact copy of #hi (same font, size, colours), scaled up in the centre */
   const wl=el.querySelector('.wl'),HI=()=>document.getElementById('hi'),hi0=HI();
   const rng=n=>{const r=document.createRange();r.selectNodeContents(n);return r.getBoundingClientRect()};
-  const vis=n=>{if(!n||!n.textContent.trim())return null;const r=rng(n);return r.width>0&&r.bottom>0&&r.top<innerHeight?r:null};
-  if(vis(hi0)){
+  const tvis=n=>{if(!n||!n.textContent.trim())return null;const r=rng(n);return r.width>0&&r.bottom>0&&r.top<innerHeight?r:null};
+  let ox=0,oy=0,w0=1,h0=1,gOK=!!tvis(hi0);
+  if(gOK){
     const cs=getComputedStyle(hi0),em0=hi0.querySelector('em');
     wl.innerHTML=hi0.innerHTML;
-    Object.assign(wl.style,{left:'0',top:'0',right:'auto',width:'max-content',whiteSpace:'nowrap',transformOrigin:'0 0',
+    Object.assign(wl.style,{left:'0',top:'0',right:'auto',width:'max-content',whiteSpace:'nowrap',transformOrigin:'0 0',opacity:'0',
       fontFamily:cs.fontFamily,fontWeight:cs.fontWeight,fontStyle:cs.fontStyle,fontSize:cs.fontSize,lineHeight:cs.lineHeight,letterSpacing:cs.letterSpacing,color:cs.color});
-    wl.querySelectorAll('br').forEach(n=>n.remove());
-    wl.querySelectorAll('.gl').forEach(n=>n.style.display='inline-block');
+    wl.querySelectorAll('br').forEach(n=>n.remove());wl.querySelectorAll('.gl').forEach(n=>n.style.display='inline-block');
     const em=wl.querySelector('em');if(em&&em0){const ec=getComputedStyle(em0);em.style.marginLeft=ec.marginLeft;em.style.color=ec.color;em.style.fontStyle=ec.fontStyle}
-    /* untransformed text box of the flying copy (re-measured once web fonts finish loading) */
-    let ox=0,oy=0,w0=1,h0=1;
-    const meas=()=>{const tf=wl.style.transform;wl.style.transform='none';const b=wl.getBoundingClientRect(),r=rng(wl);ox=r.left-b.left;oy=r.top-b.top;w0=Math.max(1,r.width);h0=Math.max(1,r.height);wl.style.transform=tf};
-    meas();try{document.fonts&&document.fonts.ready.then(meas)}catch(e){}
-    const T=D+150,t0=performance.now(),big=Math.min(40,Math.max(28,innerWidth*.085));
-    const ez=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
-    let lastT=null;
-    const step=now=>{
-      if(!el.isConnected){const h=HI();if(h)h.style.opacity='';return}
-      const p=Math.min(1,(now-t0)/T),h=HI(),fs=parseFloat(wl.style.fontSize)||16;
-      const S=Math.min((innerWidth-32)/w0,Math.max(1.15,big/fs));
-      /* centre pose: text box centred on screen at scale S */
-      const cxT=(innerWidth-w0*S)/2,cyT=innerHeight/2-h0*S/2;
-      let X=cxT-ox*S,Y=cyT-oy*S,s=S,o=1;
-      if(p<.28){const k=p/.28;o=k;s=S*(.96+.04*k);X=(innerWidth-w0*s)/2-ox*s;Y=innerHeight/2-h0*s/2-oy*s+12*(1-k)}
-      else if(p>.5){
-        const t=vis(h)||lastT;if(t)lastT=t;
-        if(t){const st=t.width/w0,tx=t.left-ox*st,ty=t.top-oy*st,e=ez(Math.min(1,(p-.5)/.4));
-          X+= (tx-X)*e;Y+=(ty-Y)*e;s+=(st-s)*e}
-      }
-      if(p>.9){const k=(p-.9)/.1;o=1-k;if(h)h.style.opacity=String(k)}else if(h)h.style.opacity='0';
-      wl.style.opacity=String(o);wl.style.transform=`translate(${X}px,${Y}px) scale(${s})`;
-      if(p<1)requestAnimationFrame(step);else if(h)h.style.opacity='';
-    };
-    requestAnimationFrame(step);
-    setTimeout(()=>{const h=HI();if(h)h.style.opacity=''},T+600);
-  }else A(wl,[{opacity:0},{opacity:1,offset:.3},{opacity:1,offset:.62},{opacity:0}],{duration:D,fill:'forwards'});
-  A(rg,[{opacity:0,transform:'scale(2.4)'},{opacity:1,transform:'scale(1)',offset:.7},{opacity:0,transform:'scale(1.12)'}],{duration:1100,delay:D*.62,easing:'cubic-bezier(.22,1,.36,1)',fill:'forwards'});
-  /* glowing outlines peel off the swirl, spin out and settle exactly onto Home's cards and buttons, then hand over to them */
-  const tg=[...document.querySelectorAll('#view .hero,#view .card-s,#view .chip,.top .ib,.dock')].filter(n=>{const r=n.getBoundingClientRect();return r.width>30&&r.bottom>0&&r.top<innerHeight}).slice(0,9);
-  const cols=['#F06D44','#9CD67E','#F2A65A','#86CFA0'];
-  tg.forEach((n,i)=>{const r=n.getBoundingClientRect(),cs=getComputedStyle(n),b=document.createElement('i');b.className='ixb';
-    b.style.cssText=`position:absolute;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;border-radius:${cs.borderRadius||'24px'};border:1.5px solid ${cols[i%4]};box-shadow:0 0 18px ${cols[i%4]}88,inset 0 0 14px ${cols[i%4]}44;pointer-events:none;opacity:0;will-change:transform,opacity`;
-    el.insertBefore(b,el.querySelector('.sh'));
-    const ox=cx-(r.left+r.width/2),oy=cy-(r.top+r.height/2),rot=(i%2?1:-1)*(160+i*25),d0=300+i*55;
-    A(b,[{opacity:0,transform:`translate(${ox}px,${oy}px) rotate(${rot}deg) scale(.08)`},
-      {opacity:1,transform:`translate(${ox*.35}px,${oy*.35}px) rotate(${rot*.25}deg) scale(.7)`,offset:.45,easing:'cubic-bezier(.2,.8,.25,1)'},
-      {opacity:1,transform:'none',offset:.78},{opacity:0,transform:'scale(1.015)'}],{duration:1150,delay:d0,easing:'cubic-bezier(.45,0,.25,1)',fill:'both'});
-  });
-  /* Home fades in early and fast, under the moving vines */
-  let f=null;
-  setTimeout(()=>{document.documentElement.classList.remove('ix-on');f=A(el.querySelector('.bg'),[{opacity:1},{opacity:0}],{duration:480,easing:'ease-out',fill:'forwards'});
-    setTimeout(()=>{
-      A(gl,[{opacity:0},{opacity:1,offset:.3},{opacity:0}],{duration:1800,easing:'ease-in-out',fill:'both'});
-      const pick=[...document.querySelectorAll('#avBtn,.top .ib,#view .hero,#view .card-s,#view .chip,#view .tile,#view .ts-tile,#view .pill,#view .ico,#view button.primary,.dock .tab,.dock .fab,.dock')].filter(n=>{const r=n.getBoundingClientRect();return r.width&&r.bottom>0&&r.top<innerHeight}).slice(0,28);
-      pick.sort((a,b)=>a.getBoundingClientRect().top-b.getBoundingClientRect().top);
-      pick.forEach((n,i)=>{n.style.animationDelay=(i*40)+'ms';n.classList.add('ixg');setTimeout(()=>{n.classList.remove('ixg');n.style.animationDelay=''},1600+i*40)});
-      document.querySelectorAll('#hi em,#hi,.hero .big').forEach(n=>{n.classList.add('ixt');setTimeout(()=>n.classList.remove('ixt'),1500)});
-    },500);
-  },D*.55);
-  const done=()=>{if(!el.isConnected||window.__ixHold)return;el.remove();if(!preview){SC.style.transition='';endSplash()}};
-  setTimeout(done,D+1000);
+  }
+  const meas=()=>{const tf=wl.style.transform;wl.style.transform='none';const b=wl.getBoundingClientRect(),r=rng(wl);ox=r.left-b.left;oy=r.top-b.top;w0=Math.max(1,r.width);h0=Math.max(1,r.height);wl.style.transform=tf};
+  if(gOK){meas();try{document.fonts&&document.fonts.ready.then(()=>{if(el.isConnected)meas()})}catch(e){}}
+  const fs=parseFloat(wl.style.fontSize)||parseFloat(getComputedStyle(wl).fontSize)||28,big=Math.min(40,Math.max(28,W*.085));
+  const centre=s=>({X:(innerWidth-w0*s)/2-ox*s,Y:innerHeight/2-h0*s/2-oy*s});
+  const t0=performance.now();let lastT=null,goB=false;
+  const greet=now=>{
+    if(!el.isConnected){const h=HI();if(h)h.style.opacity='';return}
+    const t=now-t0;if(t>=TA&&!goB){goB=true;phaseB()}
+    const h=HI(),S=gOK?Math.min((innerWidth-32)/w0,Math.max(1.15,big/fs)):1;
+    let {X,Y}=centre(S),s=S,o=1;
+    if(t<TA){const k=t/TA;o=k;s=S*(.94+.06*k);({X,Y}=centre(s));Y+=10*(1-k)}
+    else if(gOK){const r=tvis(h)||lastT;if(r){lastT=r;const st=r.width/w0,e=ez(Math.min(1,(t-TA)/MOVE));
+      X+=(r.left-ox*st-X)*e;Y+=(r.top-oy*st-Y)*e;s+=(st-s)*e}}
+    if(gOK){if(t>T-140){const k=Math.min(1,(t-(T-140))/140);o=1-k;if(h)h.style.opacity=String(k)}else if(h)h.style.opacity='0'}
+    else{o=t<TA?t/TA:Math.max(0,1-(t-TA)/MOVE)}
+    wl.style.opacity=String(o);wl.style.transform=`translate(${X}px,${Y}px) scale(${s})`;
+    if(t<T)requestAnimationFrame(greet);else{wl.style.opacity='0';if(h){h.style.opacity='';h.classList.add('ixt');setTimeout(()=>h.classList.remove('ixt'),900)}window.__ixEnd=t;setTimeout(done,150)}
+  };
+  /* --- phase B (started by the same frame clock at TA): everything moves together --- */
+  function phaseB(){
+    if(!el.isConnected)return;window.__ixB=performance.now()-t0;
+    document.documentElement.classList.remove('ix-on');
+    /* Home fades in for the whole move, under the flying pieces */
+    [...document.querySelectorAll('#scroller,.dock,#flora,#mesh,#bgcurve')].forEach(n=>A(n,[{opacity:0},{opacity:1}],{duration:MOVE,easing:'ease-out'}));
+    A(el.querySelector('.bg'),[{opacity:1},{opacity:0}],{duration:MOVE,easing:EZ,fill:'forwards'});
+    A(el.querySelector('.sh'),[{opacity:1},{opacity:0}],{duration:MOVE*.7,easing:EZ,fill:'forwards'});
+    /* vines fly into the avatar ring, measured now */
+    const av=document.getElementById('avBtn'),ring=(av&&av.querySelector('.avr'))||av,q=box(ring);
+    const x=q?q.left+q.width/2:44,y=q?q.top+q.height/2:70,rr=q?Math.max(q.width,q.height)/2:30;
+    cvs.forEach((c,i)=>A(c,[{opacity:1,transform:`rotate(${-20-i*8}deg) scale(1)`},{opacity:.9,offset:.7},
+      {opacity:0,transform:`translate(${x-cx}px,${y-cy}px) rotate(${150+i*40}deg) scale(.03)`}],{duration:MOVE,easing:EZ,fill:'forwards'}));
+    const rg=el.querySelector('.rg');Object.assign(rg.style,{left:(x-rr)+'px',top:(y-rr)+'px',width:rr*2+'px',height:rr*2+'px',boxSizing:'border-box'});
+    A(rg,[{opacity:0,transform:'scale(2.2)'},{opacity:1,transform:'scale(1)',offset:.85},{opacity:0,transform:'scale(1.06)'}],{duration:MOVE+160,easing:EZ,fill:'forwards'});
+    /* glowing outlines fly from the centre and land exactly on Home's cards/buttons, same clock */
+    const cols=['#F06D44','#9CD67E','#F2A65A','#86CFA0'];
+    [...document.querySelectorAll('#view .hero,#view .card-s,#view .chip,.top .ib,.dock')].map(n=>[n,box(n)]).filter(([n,r])=>r&&r.width>30).slice(0,9).forEach(([n,r],i)=>{
+      const b=document.createElement('i'),c=cols[i%4];
+      b.style.cssText=`position:absolute;box-sizing:border-box;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;border-radius:${getComputedStyle(n).borderRadius||'24px'};border:1.5px solid ${c};box-shadow:0 0 18px ${c}88,inset 0 0 14px ${c}44;pointer-events:none;opacity:0;will-change:transform,opacity`;
+      el.insertBefore(b,el.querySelector('.sh'));
+      const dx=cx-(r.left+r.width/2),dy=cy-(r.top+r.height/2),rot=(i%2?1:-1)*(120+i*20);
+      A(b,[{opacity:0,transform:`translate(${dx}px,${dy}px) rotate(${rot}deg) scale(.1)`},{opacity:1,offset:.3},{opacity:1,transform:'none',offset:.92},{opacity:0,transform:'none'}],{duration:MOVE+120,easing:EZ,fill:'forwards'});
+    });
+  }
+  requestAnimationFrame(greet);
+  const done=()=>{if(!el.isConnected||window.__ixHold)return;el.remove();const h=HI();if(h)h.style.opacity='';if(!preview){SC.style.transition='';endSplash()}};
+  setTimeout(done,T+2500);
 }
 const _runSplash4=runSplash;runSplash=function(){if((db.settings.intro||'orbit')==='classic')return _runSplash4();ixRun(false)};
 document.addEventListener('click',e=>{if(e.target.closest('[data-introplay]')){e.preventDefault();e.stopImmediatePropagation();closeSheet();setTimeout(()=>ixRun(true),350)}},true);
