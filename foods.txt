@@ -74999,3 +74999,135 @@ Herr's, Old Bay Seasoned Popcorn by Herr's	500	7.1	57.1	25.0	ONB		28|
 Breakfast Sandwiches by Signature	300	9.2	25.8	18.3	ONB		120|
 Freshly Frozen Fruit & Vegetable Blend Mango Chunks by Stater Bros.	42	1.7	10.2	0.0	ONB		118|
 Soft Taco Size Tortillas by Reser's Fine Foods	311	6.7	48.9	6.7	ONB		45|1 tortilla
+Cilantro-Lime Brown Rice by Chipotle	186	3.5	31.9	5.3	RC	component ingredient build your own rice Chipotle	113|1 serving (4 oz)
+Cilantro-Lime White Rice by Chipotle	186	3.5	35.4	3.5	RC	component ingredient build your own rice Chipotle	113|1 serving (4 oz)
+Black Beans by Chipotle	115	7.1	19.5	1.3	RC	component ingredient build your own beans Chipotle	113|1 serving (4 oz)
+Pinto Beans by Chipotle	115	7.1	18.6	1.3	RC	component ingredient build your own beans Chipotle	113|1 serving (4 oz)
+Fajita Vegetables by Chipotle	35	1.8	8.8	0.0	RC	component ingredient build your own topping veggies Chipotle	57|1 serving (2 oz)
+Barbacoa by Chipotle	150	21.2	1.8	6.2	RC	component ingredient build your own protein beef Chipotle	113|1 serving (4 oz)
+Chicken by Chipotle	159	28.3	0.0	6.2	RC	component ingredient build your own protein Chipotle	113|1 serving (4 oz)
+Carnitas by Chipotle	186	20.4	0.0	10.6	RC	component ingredient build your own protein pork Chipotle	113|1 serving (4 oz)
+Steak by Chipotle	133	18.6	0.9	5.3	RC	component ingredient build your own protein beef Chipotle	113|1 serving (4 oz)
+Sofritas by Chipotle	133	7.1	8.0	8.8	RC	component ingredient build your own protein tofu vegan Chipotle	113|1 serving (4 oz)
+Fresh Tomato Salsa by Chipotle	22	0.0	3.5	0.0	RC	component ingredient build your own salsa pico Chipotle	113|1 serving (4 oz)
+Roasted Chili-Corn Salsa by Chipotle	71	2.7	14.2	1.3	RC	component ingredient build your own salsa corn Chipotle	113|1 serving (4 oz)
+Tomatillo-Green Chili Salsa by Chipotle	25	0.0	6.8	0.0	RC	component ingredient build your own salsa Chipotle	59|1 serving (2 fl oz)
+Tomatillo-Red Chili Salsa by Chipotle	51	0.0	6.8	0.0	RC	component ingredient build your own salsa hot Chipotle	59|1 serving (2 fl oz)
+Cheese by Chipotle	393	21.4	3.6	28.6	RC	component ingredient build your own cheese Chipotle	28|1 serving (1 oz)
+Sour Cream by Chipotle	193	3.5	3.5	15.8	RC	component ingredient build your own topping Chipotle	57|1 serving (2 oz)
+Guacamole by Chipotle	204	1.8	7.1	19.5	RC	component ingredient build your own topping guac Chipotle	113|1 serving (4 oz)
+Queso Blanco by Chipotle	211	8.8	7.0	15.8	RC	component ingredient build your own cheese sauce queso Chipotle	57|1 serving (2 oz)
+Supergreens Salad Mix by Chipotle	18	1.2	3.5	0.0	RC	component ingredient build your own salad base lettuce Chipotle	85|1 serving (3 oz)
+Romaine Lettuce by Chipotle	18	0.0	3.6	0.0	RC	component ingredient build your own topping lettuce Chipotle	28|1 serving (1 oz)
+Tortilla Chips by Chipotle	478	6.2	64.6	22.1	RC	component ingredient build your own side chips Chipotle	113|1 bag (4 oz)
+Chipotle-Honey Vinaigrette by Chipotle	373	1.7	30.5	27.1	RC	component ingredient build your own dressing Chipotle	59|1 serving (2 fl oz)
+Grilled Adobo Chicken by Qdoba	192	19.2	2.0	12.1	RC	component ingredient build your own protein chicken Qdoba	99|1 serving (3.5 oz)
+Grilled Steak by Qdoba	364	20.2	5.1	28.3	RC	component ingredient build your own protein beef Qdoba	99|1 serving (3.5 oz)
+Ground Beef by Qdoba	182	16.2	4.0	11.1	RC	component ingredient build your own protein beef Qdoba	99|1 serving (3.5 oz)
+Pork Carnitas by Qdoba	111	14.1	0.0	4.5	RC	component ingredient build your own protein pork Qdoba	99|1 serving (3.5 oz)
+Brisket Birria by Qdoba	141	15.2	3.0	7.1	RC	component ingredient build your own protein beef Qdoba	99|1 serving (3.5 oz)
+Cholula Hot & Sweet Chicken by Qdoba	192	16.2	10.1	10.1	RC	component ingredient build your own protein chicken Qdoba	99|1 serving (3.5 oz)
+Chorizo by Qdoba	306	16.5	5.9	23.5	RC	component ingredient build your own protein pork Qdoba	85|1 serving (3 oz)
+Plant-Based Impossible by Qdoba	193	14.8	9.1	10.2	RC	component ingredient build your own protein vegan Qdoba	88|1 serving (3.1 oz)
+Bacon by Qdoba	429	32.1	3.6	28.6	RC	component ingredient build your own protein topping Qdoba	28|1 serving (1 oz)
+Eggs by Qdoba	135	11.2	1.2	9.4	RC	component ingredient build your own protein breakfast Qdoba	170|1 serving (6 oz)
+Cilantro Lime Rice by Qdoba	168	2.7	33.6	2.2	RC	component ingredient build your own rice Qdoba	113|1 serving (4 oz)
+Seasoned Brown Rice by Qdoba	150	3.5	31.9	1.3	RC	component ingredient build your own rice Qdoba	113|1 serving (4 oz)
+Black Beans by Qdoba	124	8.0	21.2	0.9	RC	component ingredient build your own beans Qdoba	113|1 serving (4 oz)
+Pinto Beans by Qdoba	115	7.1	20.4	0.9	RC	component ingredient build your own beans Qdoba	113|1 serving (4 oz)
+Fajita Veggies by Qdoba	70	1.8	5.3	5.3	RC	component ingredient build your own topping veggies Qdoba	57|1 serving (2 oz)
+Shredded Cheese by Qdoba	393	25.0	3.6	32.1	RC	component ingredient build your own cheese Qdoba	28|1 serving (1 oz)
+Cotija Cheese by Qdoba	357	14.3	0.0	28.6	RC	component ingredient build your own cheese Qdoba	7|1 serving (0.25 oz)
+Sour Cream by Qdoba	179	3.6	10.7	17.9	RC	component ingredient build your own topping Qdoba	28|1 serving (1 oz)
+Chile Crema by Qdoba	464	0.0	3.6	50.0	RC	component ingredient build your own sauce Qdoba	28|1 serving (1 oz)
+Pico de Gallo by Qdoba	18	0.0	3.6	0.0	RC	component ingredient build your own salsa pico Qdoba	28|1 serving (1 oz)
+Roasted Tomato Salsa by Qdoba	18	0.0	3.6	0.0	RC	component ingredient build your own salsa Qdoba	28|1 serving (1 oz)
+Salsa Roja by Qdoba	18	0.0	7.1	0.0	RC	component ingredient build your own salsa Qdoba	28|1 serving (1 oz)
+Salsa Verde by Qdoba	36	0.0	0.0	0.0	RC	component ingredient build your own salsa Qdoba	28|1 serving (1 oz)
+Habanero Salsa by Qdoba	36	0.0	7.1	0.0	RC	component ingredient build your own salsa hot Qdoba	28|1 serving (1 oz)
+Chile Corn Salsa by Qdoba	89	3.6	17.9	0.0	RC	component ingredient build your own salsa corn Qdoba	28|1 serving (1 oz)
+Pickled Jalapenos by Qdoba	54	0.0	10.7	0.0	RC	component ingredient build your own topping Qdoba	28|1 serving (1 oz)
+Pickled Red Onion by Qdoba	43	0.0	13.0	0.0	RC	component ingredient build your own topping Qdoba	23|1 serving (0.8 oz)
+Romaine Lettuce for Salad by Qdoba	15	1.0	3.0	0.0	RC	component ingredient build your own salad base lettuce Qdoba	99|1 serving (3.5 oz)
+Picante Ranch Dressing by Qdoba	186	2.3	7.0	18.6	RC	component ingredient build your own dressing Qdoba	43|1 serving (1.5 oz)
+Citrus Vinaigrette by Qdoba	233	0.0	16.3	18.6	RC	component ingredient build your own dressing Qdoba	43|1 serving (1.5 oz)
+Tortilla Strips by Qdoba	500	7.1	57.1	32.1	RC	component ingredient build your own topping Qdoba	14|1 serving (0.5 oz)
+Crispy Taco Shell by Qdoba	462	7.7	61.5	19.2	RC	component ingredient build your own bread tortilla Qdoba	13|1 shell
+Crunchy Tortilla Shell by Qdoba	534	9.6	56.2	30.1	RC	component ingredient build your own bread tortilla bowl Qdoba	73|1 shell
+Flour Tortilla (5.5 in) by Qdoba	292	8.3	50.0	6.2	RC	component ingredient build your own bread tortilla Qdoba	24|1 tortilla
+Flour Tortilla (10 in) by Qdoba	296	8.5	50.7	7.0	RC	component ingredient build your own bread tortilla Qdoba	71|1 tortilla
+Flour Tortilla (12.5 in) by Qdoba	294	7.8	51.0	6.9	RC	component ingredient build your own bread tortilla burrito Qdoba	102|1 tortilla
+Italian Style Roll by Panera Bread	263	8.8	49.1	3.5	RC	component ingredient build your own bread Panera Bread	57|1 slice (2 oz)
+Classic White Loaf by Panera Bread	306	9.7	51.6	5.6	RC	component ingredient build your own bread Panera Bread	62|1 slice (2.2 oz)
+Tomato Basil Miche by Panera Bread	263	8.8	52.6	0.9	RC	component ingredient build your own bread Panera Bread	57|1 slice (2 oz)
+Honey Walnut Cream Cheese Spread by Panera Bread	302	9.3	20.9	23.3	RC	component ingredient build your own spread cheese Panera Bread	43|1 container (1.5 oz)
+Half & Half by Panera Bread	133	3.3	3.3	11.7	RC	component ingredient build your own coffee add-in dairy Panera Bread	30|1 fl oz (30 ml)
+Quinoa Fried Rice by Panda Express	176	4.4	26.8	5.6	RC	component ingredient build your own side rice Panda Express	340|1 side (12 oz)
+Black Pepper Chicken by Panda Express	112	8.4	5.0	6.7	RC	component ingredient build your own entree protein chicken Panda Express	179|1 entree (6.3 oz)
+Grilled Teriyaki Chicken by Panda Express	162	22.0	7.5	5.2	RC	component ingredient build your own entree protein chicken Panda Express	173|1 entree (6.1 oz)
+Black Pepper Sirloin Steak by Panda Express	120	10.2	9.0	4.8	RC	component ingredient build your own entree protein beef Panda Express	167|1 entree (5.9 oz)
+Asiago Parmesan Bagel by Bruegger's	262	11.5	48.4	2.5	RC	component ingredient build your own bread bagel Bruegger's VT Dining Turner Place campus	122|1 bagel
+Blueberry Bagel by Bruegger's	270	8.7	56.5	0.9	RC	component ingredient build your own bread bagel Bruegger's VT Dining Turner Place campus	115|1 bagel
+Cheesy Hash Brown Bagel by Bruegger's	307	10.2	46.5	8.7	RC	component ingredient build your own bread bagel Bruegger's VT Dining Turner Place campus	127|1 bagel
+Cinnamon Raisin Bagel by Bruegger's	270	9.6	56.5	0.9	RC	component ingredient build your own bread bagel Bruegger's VT Dining Turner Place campus	115|1 bagel
+Cinnamon Sugar Bagel by Bruegger's	271	7.9	59.3	1.1	RC	component ingredient build your own bread bagel Bruegger's VT Dining Turner Place campus	140|1 bagel
+Egg Bagel by Bruegger's	261	9.6	53.0	1.3	RC	component ingredient build your own bread bagel Bruegger's VT Dining Turner Place campus	115|1 bagel
+Everything Bagel by Bruegger's	266	9.7	51.6	2.4	RC	component ingredient build your own bread bagel Bruegger's VT Dining Turner Place campus	124|1 bagel
+Everything Whole Wheat Bagel by Bruegger's	266	10.5	51.6	2.4	RC	component ingredient build your own bread bagel Bruegger's VT Dining Turner Place campus	124|1 bagel
+Five Cheese Bagel by Bruegger's	286	12.7	40.5	7.9	RC	component ingredient build your own bread bagel Bruegger's VT Dining Turner Place campus	126|1 bagel
+Garlic Bagel by Bruegger's	254	9.8	52.5	0.8	RC	component ingredient build your own bread bagel Bruegger's VT Dining Turner Place campus	122|1 bagel
+Jalapeno Bagel by Bruegger's	287	11.3	58.3	2.6	RC	component ingredient build your own bread bagel Bruegger's VT Dining Turner Place campus	115|1 bagel
+Jalapeno Cheddar Bagel by Bruegger's	254	10.1	43.5	4.3	RC	component ingredient build your own bread bagel Bruegger's VT Dining Turner Place campus	138|1 bagel
+Onion Bagel by Bruegger's	258	9.2	52.5	0.8	RC	component ingredient build your own bread bagel Bruegger's VT Dining Turner Place campus	120|1 bagel
+Plain Bagel by Bruegger's	252	9.6	51.3	0.9	RC	component ingredient build your own bread bagel Bruegger's VT Dining Turner Place campus	115|1 bagel
+Poppy Seed Bagel by Bruegger's	270	9.8	50.0	3.3	RC	component ingredient build your own bread bagel Bruegger's VT Dining Turner Place campus	122|1 bagel
+Pumpernickel Bagel by Bruegger's	261	9.6	53.9	0.9	RC	component ingredient build your own bread bagel Bruegger's VT Dining Turner Place campus	115|1 bagel
+Rosemary Olive Oil Bagel by Bruegger's	296	9.6	54.8	4.3	RC	component ingredient build your own bread bagel Bruegger's VT Dining Turner Place campus	115|1 bagel
+Salt Bagel by Bruegger's	242	9.2	49.2	0.8	RC	component ingredient build your own bread bagel Bruegger's VT Dining Turner Place campus	120|1 bagel
+Sesame Bagel by Bruegger's	295	10.9	47.3	7.0	RC	component ingredient build your own bread bagel Bruegger's VT Dining Turner Place campus	129|1 bagel
+Whole Wheat Bagel by Bruegger's	252	10.4	51.3	0.9	RC	component ingredient build your own bread bagel Bruegger's VT Dining Turner Place campus	115|1 bagel
+Ciabatta Roll by Bruegger's	256	8.9	48.9	2.8	RC	component ingredient build your own bread Bruegger's VT Dining Turner Place campus	90|1 roll
+Bacon Scallion Cream Cheese by Bruegger's	326	7.0	14.0	25.6	RC	component ingredient build your own spread cheese Bruegger's VT Dining Turner Place campus	43|1 serving (1.5 oz)
+Garden Veggie Cream Cheese by Bruegger's	302	7.0	9.3	25.6	RC	component ingredient build your own spread cheese Bruegger's VT Dining Turner Place campus	43|1 serving (1.5 oz)
+Honey Walnut Cream Cheese by Bruegger's	372	9.3	14.0	30.2	RC	component ingredient build your own spread cheese Bruegger's VT Dining Turner Place campus	43|1 serving (1.5 oz)
+Jalapeno Cream Cheese by Bruegger's	326	7.0	9.3	30.2	RC	component ingredient build your own spread cheese Bruegger's VT Dining Turner Place campus	43|1 serving (1.5 oz)
+Light Garden Veggie Cream Cheese by Bruegger's	209	14.0	7.0	14.0	RC	component ingredient build your own spread cheese Bruegger's VT Dining Turner Place campus	43|1 serving (1.5 oz)
+Light Herb Garlic Cream Cheese by Bruegger's	233	14.0	9.3	14.0	RC	component ingredient build your own spread cheese Bruegger's VT Dining Turner Place campus	43|1 serving (1.5 oz)
+Light Plain Cream Cheese by Bruegger's	233	9.3	16.3	14.0	RC	component ingredient build your own spread cheese Bruegger's VT Dining Turner Place campus	43|1 serving (1.5 oz)
+Onion and Chive Cream Cheese by Bruegger's	326	7.0	7.0	30.2	RC	component ingredient build your own spread cheese Bruegger's VT Dining Turner Place campus	43|1 serving (1.5 oz)
+Plain Cream Cheese by Bruegger's	326	7.0	14.0	30.2	RC	component ingredient build your own spread cheese Bruegger's VT Dining Turner Place campus	43|1 serving (1.5 oz)
+Smoked Salmon Cream Cheese by Bruegger's	302	7.0	9.3	23.3	RC	component ingredient build your own spread cheese Bruegger's VT Dining Turner Place campus	43|1 serving (1.5 oz)
+Strawberry Cream Cheese by Bruegger's	326	7.0	9.3	30.2	RC	component ingredient build your own spread cheese Bruegger's VT Dining Turner Place campus	43|1 serving (1.5 oz)
+Butter Blend by Bruegger's	786	0.0	0.0	85.7	RC	component ingredient build your own spread Bruegger's VT Dining Turner Place campus	14|1 serving (0.5 oz)
+Chipotle Mayo by Bruegger's	643	0.0	7.1	71.4	RC	component ingredient build your own sauce spread Bruegger's VT Dining Turner Place campus	14|1 serving (0.5 oz)
+Mayo by Bruegger's	714	0.0	0.0	85.7	RC	component ingredient build your own sauce spread Bruegger's VT Dining Turner Place campus	14|1 serving (0.5 oz)
+Honey by Bruegger's	321	0.0	82.1	0.0	RC	component ingredient build your own spread Bruegger's VT Dining Turner Place campus	28|1 serving (1 oz)
+Grape Jelly by Bruegger's	250	0.0	64.3	0.0	RC	component ingredient build your own spread Bruegger's VT Dining Turner Place campus	28|1 serving (1 oz)
+Strawberry Jam by Bruegger's	214	0.0	57.1	0.0	RC	component ingredient build your own spread Bruegger's VT Dining Turner Place campus	28|1 serving (1 oz)
+Peanut Butter by Bruegger's	558	20.9	23.3	48.8	RC	component ingredient build your own spread Bruegger's VT Dining Turner Place campus	43|1 serving (1.5 oz)
+Sundried Tomato Spread by Bruegger's	500	7.1	32.1	39.3	RC	component ingredient build your own spread Bruegger's VT Dining Turner Place campus	28|1 serving (1 oz)
+Egg White by Bruegger's	69	10.3	0.0	1.7	RC	component ingredient build your own protein egg breakfast Bruegger's VT Dining Turner Place campus	58|1 egg white portion
+Whole Egg by Bruegger's	174	13.0	2.2	13.0	RC	component ingredient build your own protein egg breakfast Bruegger's VT Dining Turner Place campus	46|1 egg
+Peppered Bacon by Bruegger's	500	36.4	9.1	36.4	RC	component ingredient build your own protein breakfast Bruegger's VT Dining Turner Place campus	22|1 serving (0.8 oz)
+Brisket by Bruegger's	263	19.3	0.0	19.3	RC	component ingredient build your own protein beef Bruegger's VT Dining Turner Place campus	57|1 serving (2 oz)
+Ham by Bruegger's	105	14.0	4.7	2.3	RC	component ingredient build your own protein Bruegger's VT Dining Turner Place campus	43|1 serving (1.5 oz)
+Smoked Salmon by Bruegger's	211	21.1	1.8	14.0	RC	component ingredient build your own protein fish Bruegger's VT Dining Turner Place campus	57|1 serving (2 oz)
+Pork Sausage by Bruegger's	419	14.0	0.0	39.5	RC	component ingredient build your own protein breakfast Bruegger's VT Dining Turner Place campus	43|1 patty (1.5 oz)
+Sliced Turkey by Bruegger's	106	16.5	5.9	1.2	RC	component ingredient build your own protein Bruegger's VT Dining Turner Place campus	85|1 serving (3 oz)
+American Cheese by Bruegger's	357	14.3	7.1	32.1	RC	component ingredient build your own cheese Bruegger's VT Dining Turner Place campus	14|1 slice (0.5 oz)
+Asiago Cheese, Shredded by Bruegger's	429	35.7	0.0	28.6	RC	component ingredient build your own cheese Bruegger's VT Dining Turner Place campus	14|1 serving (0.5 oz)
+Cheddar Cheese by Bruegger's	429	21.4	0.0	35.7	RC	component ingredient build your own cheese Bruegger's VT Dining Turner Place campus	14|1 slice (0.5 oz)
+Swiss Cheese by Bruegger's	429	28.6	0.0	32.1	RC	component ingredient build your own cheese Bruegger's VT Dining Turner Place campus	14|1 slice (0.5 oz)
+Chicken & Wild Rice Soup by Bruegger's	119	4.0	4.8	8.8	RC	component ingredient build your own soup Bruegger's VT Dining Turner Place campus	227|1 cup (8 oz)
+Chicken Spaetzle Soup by Bruegger's	48	4.0	4.8	1.5	RC	component ingredient build your own soup Bruegger's VT Dining Turner Place campus	227|1 cup (8 oz)
+Vegetable Soup by Bruegger's	40	0.9	7.0	1.1	RC	component ingredient build your own soup Bruegger's VT Dining Turner Place campus	227|1 cup (8 oz)
+Twice Baked Hash Brown by Bruegger's	200	8.2	12.9	12.9	RC	component ingredient build your own side Bruegger's VT Dining Turner Place campus	85|1 serving (3 oz)
+Chick-n-Strips (3 ct) by Chick-fil-A	228	21.3	11.8	10.3	RC	component ingredient build your own protein chicken Chick-fil-A	136|3 strips
+Grilled Nuggets (12 ct) by Chick-fil-A	141	26.8	1.4	3.2	RC	component ingredient build your own protein chicken Chick-fil-A	142|12 nuggets
+4 ct Mini Yeast Rolls by Chick-fil-A	429	8.6	74.3	11.4	RC	component ingredient build your own bread Chick-fil-A	70|4 rolls
+Breakfast Waffle by Chick-fil-A	471	5.9	67.6	22.1	RC	component ingredient build your own bread breakfast Chick-fil-A	68|1 waffle
+Market Salad (no chicken) by Chick-fil-A	183	2.9	16.6	12.0	RC	component ingredient build your own salad base Chick-fil-A	241|1 salad
+Spicy Southwest Salad (no chicken) by Chick-fil-A	168	4.1	7.4	13.9	RC	component ingredient build your own salad base Chick-fil-A	339|1 salad
+Cobb Salad (no chicken) by Chick-fil-A	176	4.9	5.3	14.8	RC	component ingredient build your own salad base Chick-fil-A	284|1 salad
+Fruit Cup (medium) by Chick-fil-A	56	0.8	12.8	0.0	RC	component ingredient build your own side fruit Chick-fil-A	125|1 cup
+Toasted Marshmallow Whipped Topping by Chick-fil-A	261	4.3	30.4	13.0	RC	component ingredient build your own topping dessert Chick-fil-A	23|1 serving

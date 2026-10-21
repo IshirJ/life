@@ -1,9 +1,9 @@
 # Food database sources
 
 `foods.txt` is tab-separated, one food per line, no header:
-`name<TAB>kcal<TAB>protein<TAB>carbs<TAB>fat<TAB>source<TAB>aliases`. Values are per 100 g (or per 100 ml for drinks).
+`name<TAB>kcal<TAB>protein<TAB>carbs<TAB>fat<TAB>source<TAB>aliases<TAB>serving` (serving is `grams|label`, optional). Values are per 100 g (or per 100 ml for drinks).
 
-Total: 75,001 foods. File size: 5.10 MB (1.63 MB gzipped).
+Total: 75,133 foods. File size: 5.74 MB (1.85 MB gzipped).
 
 | Code | Count | Source | Licence |
 |---|---:|---|---|
@@ -15,6 +15,7 @@ Total: 75,001 foods. File size: 5.10 MB (1.63 MB gzipped).
 | `ON` | 8,518 | OpenNutrition 2025.1: everyday and prepared foods | ODbL 1.0 + modified DbCL 1.0 |
 | `ONR` | 4,080 | OpenNutrition 2025.1: restaurant menu items | ODbL 1.0 + modified DbCL 1.0 |
 | `ONB` | 50,000 | OpenNutrition 2025.1: branded grocery products. These are the first 50,000 that pass the checks, in dataset order, which is roughly by popularity. Partly derived from Open Food Facts. | ODbL 1.0 + modified DbCL 1.0. Open Food Facts portions are ODbL. |
+| `RC` | 132 | Restaurant components (build-your-own ingredients) for chains in Blacksburg / Christiansburg, VA, from each chain's official nutrition guide. See "Restaurant components" below. | Factual data from the chains' published nutrition guides; not affiliated with or endorsed by the chains. |
 
 ## Details
 
@@ -82,3 +83,20 @@ Total: 75,001 foods. File size: 5.10 MB (1.63 MB gzipped).
   - 1,097 failed the Atwater check
   - 148 had macros summing to more than 105 g
   - 27 had kcal above 950
+
+## Restaurant components (`RC`)
+Added 2026-10-21. Individual ingredients so a build-your-own order (e.g. a Qdoba bowl of rice + chicken + black beans + queso + salsa) can be logged piece by piece.
+- **Names:** `<Ingredient> by <Restaurant>`. Aliases always include `component ingredient build your own`, the category (protein, rice, beans, salsa, sauce, topping, bread, cheese, dressing, side, ...) and the restaurant name.
+- **Conversion:** the chain's per-serving calories, protein, carbohydrate and fat are scaled to per 100 g using the serving weight the chain publishes. The official serving goes in the serving column. Where a chain gives only ounces, 1 oz = 28.35 g (rounded to the gram). Items with no published weight (e.g. "1 tortilla" with no grams, sauces "per container") were skipped.
+- **Volume servings:** three Chipotle items are published in fluid ounces (Tomatillo-Green Chili Salsa, Tomatillo-Red Chili Salsa, Chipotle-Honey Vinaigrette, 2 fl oz) and Panera half & half (1 fl oz). These are stored as 1 ml = 1 g (59 g and 30 g).
+- **Checks:** every row passes 4P + 4C + 9F within 25% of the published kcal (only Qdoba Sour Cream, 28 g, is above 20%, at 22%, because of rounding on a small portion). Rows whose name already existed (after lowercasing and removing punctuation) were skipped, and near-identical items already present as OpenNutrition restaurant rows (Qdoba queso and guacamole cups, most Panda Express entrées and sides) were left out.
+- **Rounding:** published values were rounded by the chains, so small items (salsas, lettuce) carry large relative rounding error.
+
+| Chain | Rows | Source (retrieved 2026-10-21) | Notes |
+|---|---:|---|---|
+| Chipotle | 22 | https://www.chipotle.com/content/dam/chipotle/menu/nutrition/US-Nutrition-Facts-Paper-Menu-3-2025.pdf | US paper nutrition menu (print codes OCT-2024). Tortillas skipped (no weight). |
+| Qdoba | 36 | https://assets.ctfassets.net/0tc4847zqy12/bQFJBCmsAk4ww4qzdfAOm/65d8b143afc183a155450c442408f2f3/Nutrition-Brochure-Published-on-02-26-2026-QDOBA-Mexican-Eats.pdf | Nutrition brochure published 2026-02-26. Seasoned Potatoes skipped (published kcal inconsistent with macros). |
+| Panera Bread | 5 | https://www.panerabread.com/content/dam/panerabread/documents/c8-26-nutrition-guide.pdf | Effective 2026-09-02. Only bread slices, cream cheese container and half & half have published weights. 5 bread rows already existed. |
+| Panda Express | 4 | https://www.pandaexpress.com/nutritioninformation | Christiansburg (Peppers Ferry Rd). Most entrées and sides already existed as ONR rows. |
+| Bruegger's | 56 | https://www.brueggers.com/wp-content/uploads/2022/12/PDF-BRU-Nutritonal-Guide-2022-12-27.pdf | Data as of 2022-12-01 (latest published guide found). Location: Turner Place at Lavery Hall, Virginia Tech campus (VT Dining). Pastrami, turkey sausage and sriracha skipped (oz and g disagree). |
+| Chick-fil-A | 9 | https://www.chick-fil-a.com/nutrition-allergens | Only items not already in the file. Sauces skipped: per-container values with no weight. |

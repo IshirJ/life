@@ -1264,7 +1264,7 @@ function subOf(e){
   const j=a=>a.filter(Boolean).join(' · ');
   switch(e.type){
     case'class':return j([(e.days||[]).join(' '),e.place]);
-    case'task':return j([e.project,e.priority==='High'?'High priority':'']);
+    case'task':return j([typeof projOf==='function'&&projOf(e)?'':e.project,e.priority==='High'?'High priority':'']);
     case'meeting':return j([fmtDate(e.date),fmtT(e.time),e.with]);
     case'project':return e.next?`Next: ${e.next}`:'';
     case'food':return j([e.meal,e.grams?`${e.grams} g`:'',(e.protein!==''&&e.protein!=null)?`${Math.round(num(e.protein))}P ${Math.round(num(e.fat))}F ${Math.round(num(e.carbs))}C`:'',e.date&&dayDiff(e.date)?fmtDate(e.date):'']);
@@ -1528,7 +1528,8 @@ function hourGrid(days,wide){
   const hours=[...Array(h1-h0)].map((_,i)=>`<span style="top:${i*PH}px">${C24()?pad(h0+i):(((h0+i)%12)||12)+(h0+i<12?'a':'p')}</span>`).join('');
   const cols=days.map((d,di)=>`<div class="wcol${!wide&&d===sel?' on':''}"${wide?'':` data-wday="${d}"`}>${items[di].map(({e,st,en})=>{const top=(st-h0*60)/60*PH,ht=Math.max(wide?28:18,(en-st)/60*PH-2);
       const cl=e.type==='class'||e.type==='ext'||e.type==='block',t=cl?e.start:e.time,sub=[fmtT(t)+(cl&&e.end?`–${fmtT(e.end)}`:''),e.place||e.with].filter(Boolean).join(' · ');
-      const pc=e.color!==undefined&&e.color!==''&&PICK_COLS[+e.color];return`<button class="blk${wide?' wide':''} k-${e.type}" data-open="${esc(e.id)}" style="top:${top.toFixed(1)}px;height:${ht.toFixed(1)}px${pc?`;--c1:${pc[0]};--c2:${pc[1]}`:''}" aria-label="${esc(e.title)} ${esc(fmtT(t))}">${wide?esc(e.title):`<span class="bt" style="-webkit-line-clamp:${Math.max(1,Math.floor((ht-6)/11.5))};max-height:${(Math.max(1,Math.floor((ht-6)/11.5))*1.12).toFixed(2)}em">${esc(e.title)}</span>`}${wide?`<small>${esc(sub)}</small>`:''}</button>`}).join('')}${d===today()&&nowM>=h0*60&&nowM<=h1*60?`<i class="nowline" style="top:${((nowM-h0*60)/60*PH).toFixed(1)}px"></i>`:''}</div>`).join('');
+      const pc=e.color!==undefined&&e.color!==''&&PICK_COLS[+e.color];return`<button class="blk${wide?' wide':''}${ht<26?' sh':''} k-${e.type}" data-open="${esc(e.id)}" style="top:${top.toFixed(1)}px;height:${ht.toFixed(1)}px${pc?`;--c1:${pc[0]};--c2:${pc[1]}`:''}" aria-label="${esc(e.title)} ${esc(fmtT(t))}">${(()=>{/* lines that fully fit inside the block (padding 4px top+bottom, ~10.6px per line narrow / 16px wide); never clipped mid-line */
+        const ln=Math.max(1,Math.floor((ht-8)/(wide?16:10.6)));return wide?`<span class="bt one">${esc(e.title)}</span>${ht>=40&&sub?`<small>${esc(sub)}</small>`:''}`:`<span class="bt${ln===1?' one':''}" style="-webkit-line-clamp:${ln}">${esc(e.title)}</span>`})()}</button>`}).join('')}${d===today()&&nowM>=h0*60&&nowM<=h1*60?`<i class="nowline" style="top:${((nowM-h0*60)/60*PH).toFixed(1)}px"></i>`:''}</div>`).join('');
   const gcols=wkCols(days);
   const body=`<div class="wk-body" style="height:${H}px"><div class="wk-hours">${hours}</div><div class="wk-cols" style="--ph:${PH}px;grid-template-columns:${gcols}">${cols}</div></div>`;
   const strip=allDayStrip(days,wide);
@@ -1622,7 +1623,7 @@ function viewWork(){
     return h+section('Upcoming',list(up,'No meetings coming up.'))+(past.length?section('Past',list(past,'')):'');
   }
   let any='';
-  for(const st of['Active','Planning','Paused','Done']){const a=of('project').filter(e=>(e.status||'Active')===st);if(a.length)any+=section(st,list(a,''))}
+  for(const st of['Active','Planning','Paused','Done']){const a=of('project').filter(e=>(e.status||'Active')===st);if(a.length)any+=section(st,projCards(a))}
   return h+(any||section('Projects',list([],'No projects yet. Tap + to add one.')));
 }
 function viewHealth(){
@@ -1929,7 +1930,7 @@ function openDetail(id){
   for(const[k,lbl,kind]of t.f){
     if(k==='title'||k==='notes'||k==='pain'||kind==='look'||(k==='repeat'&&e[k]==='Never'))continue;
     let v=e[k];if(v===''||v==null||(Array.isArray(v)&&!v.length))continue;
-    if(kind==='date')v=fmtLong(v);else if(kind==='time')v=fmtT(v);else if(kind==='days')v=v.join(', ');else if(kind==='folder')v=find(v)?.title||'';
+    if(kind==='date')v=fmtLong(v);else if(kind==='time')v=fmtT(v);else if(kind==='days')v=v.join(', ');else if(kind==='folder')v=find(v)?.title||'';else if(kind==='project')v=projLabel(e)||'';
     if(v!=='')rows.push([lbl.replace(/ \(.*\)/,''),v+(k==='kcal'?' kcal':k==='protein'?' g':k==='minutes'?' min':k==='value'?' lb':'')]);
   }
   if(e.type==='task'||e.type==='reminder')rows.push(['Status',e.done?'Done':'Open']);
@@ -1966,7 +1967,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='179';
+const APP_VER='180';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -2597,7 +2598,8 @@ document.addEventListener('click',e=>{
 let lastY=0,ticking=false,hdrFloat=false,hdrAway=false,accum=0;
 SC.addEventListener('scroll',()=>{if(ticking)return;ticking=true;requestAnimationFrame(()=>{
   const y=SC.scrollTop,dy=y-lastY,top=$('#top');lastY=y;ticking=false;const bc=document.getElementById('bgcurve');if(bc)bc.style.transform=`translate3d(0,${Math.max(-innerHeight*.035,-y*.05).toFixed(1)}px,0)`;if(!top)return;
-  const f=y>24;if(f!==hdrFloat){hdrFloat=f;top.classList.toggle('float',f)}
+  /* hysteresis: float on past 40px, off only back under 8px, so a small scroll that stops near the edge can't flip it back and forth */
+  const f=hdrFloat?y>8:y>40;if(f!==hdrFloat){hdrFloat=f;top.classList.toggle('float',f)}
   accum=(dy>0)===(accum>0)?accum+dy:dy;
   let a=hdrAway;if(y<90)a=false;else if(accum>28)a=true;else if(accum<-18)a=false;
   if(a!==hdrAway){hdrAway=a;top.classList.toggle('away',a)}})},{passive:true});
@@ -3537,7 +3539,7 @@ document.addEventListener('click',e=>{
   const[pid,sid]=(b.dataset.step||b.dataset.stepdel||b.dataset.steptask).split(':'),p=find(pid),s=(p.steps||[]).find(x=>x.id===sid);if(!s)return;
   if(b.dataset.step){s.done=!s.done;save();if(s.done)tick();render(false);openProject(pid);return}
   if(b.dataset.stepdel){p.steps=p.steps.filter(x=>x.id!==sid);save();render(false);openProject(pid);return}
-  db.entries.push({id:uid(),type:'task',title:s.t,project:p.title||'',due:s.due||'',priority:'Normal',created:Date.now()});save();render(false);toast('Added to tasks');
+  db.entries.push({id:uid(),type:'task',title:s.t,project:p.id,due:s.due||'',priority:'Normal',created:Date.now()});save();render(false);toast('Added to tasks');
 },true);
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='stepIn'){e.preventDefault();addStep($('#stepAdd').dataset.pid)}});
 const _openDetail2=openDetail;
@@ -3792,7 +3794,7 @@ function finishFocus(discard){
   const f=FOCUS();if(!f)return;db.focusNow=null;clearInterval(fcTimer);
   const min=Math.round(f.focusMs/6e3)/10;
   if(!discard&&min>0){const r=f.ref?find(f.ref):null,rt=$('#fvRate [aria-pressed="true"]');
-    db.entries.push({id:uid(),type:'focus',title:f.label,ref:f.ref,refType:r?r.type:'',project:r?(r.type==='project'?r.title:r.project||''):'',minutes:min,blocks:f.done,rating:rt?+rt.dataset.frate:'',notes:($('#fvNote')||{}).value||'',start:f.started,end:f.ended||Date.now(),mode:f.mode,date:iso(new Date(f.started)),created:Date.now()})}
+    db.entries.push({id:uid(),type:'focus',title:f.label,ref:f.ref,refType:r?r.type:'',project:r?(r.type==='project'?r.title:(typeof projLabel==='function'?projLabel(r):r.project)||''):'',minutes:min,blocks:f.done,rating:rt?+rt.dataset.frate:'',notes:($('#fvNote')||{}).value||'',start:f.started,end:f.ended||Date.now(),mode:f.mode,date:iso(new Date(f.started)),created:Date.now()})}
   save();pushSchedule(true);hideFocus();pill();render(false);
   if(!discard&&min>0){tick();toast(`${fmtDur(min)} of focus saved`)}else if(!discard)toast('Nothing to save yet');
 }
@@ -4140,7 +4142,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=179';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=180';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -6935,6 +6937,350 @@ const _openJarvisB=openJarvis;openJarvis=function(){_openJarvisB();const d=today
   #flora,#mesh,#bgcurve{will-change:auto!important}
 }
 </style>`);
+
+/* ===================== polish 5: centred icons, one radius scale, timeline text, steady header,
+   projects that group tasks, daily injury log ===================== */
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="polish5">
+/* --- icons: optically centred in every icon button; the svg is a block inside a centring flex box --- */
+.ib,.x,.fab,.chk,.wk-nav,.insi,.qbi,.ico,.pj-act,.il-x,.dchip,.stepadd .primary,.chk i{display:inline-flex;align-items:center;justify-content:center;line-height:0}
+.chip,.link,.pill,.primary,.secondary,.danger,.banner button,.ilq,.ptag{display:inline-flex;align-items:center;justify-content:center}
+:is(.ib,.x,.fab,.chk,.chk i,.wk-nav,.insi,.qbi,.ico,.chip,.link,.pill,.primary,.secondary,.danger,.navrow,.tabs button,.banner button,.ilq,.pj-act,.il-x,.dchip,.h3d .p3)>svg{display:block;flex:none;margin:0}
+:where(button):has(>svg:only-child){display:inline-flex;align-items:center;justify-content:center;line-height:0}
+.ico .emo{line-height:1;display:block}
+.h3d .p3 svg{transform:translateZ(0)}
+.secondary{gap:8px}.secondary svg.i{width:18px;height:18px}
+.tabs button{align-items:center;justify-content:center}
+/* --- one radius scale: inner radius = outer radius - padding --- */
+.blk{border-radius:var(--r-s)}.blk.sh{border-radius:var(--r-xs)}.blk.wide{border-radius:var(--r-s)}
+input,textarea,.sel-btn{border-radius:var(--r-m)}
+.kv{border-radius:var(--r-l)}
+.wcol{border-radius:var(--r-xs)}
+.rvcard{border-radius:var(--r-l)}
+.rvcard .sh-actions button{border-radius:var(--r-m);height:48px}
+.link{border-radius:999px}
+/* --- week / day timeline: titles top-aligned with padding, never clipped; the now-line runs under the events --- */
+.blk{z-index:3;display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;padding:4px 5px;overflow:hidden}
+.blk:not(.wide){padding:4px 4px}
+.blk.sh{justify-content:center;padding-top:0;padding-bottom:0}
+.blk .bt{display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;max-height:none;overflow-wrap:break-word;flex:none}
+.blk .bt.one{display:block;white-space:nowrap;-webkit-line-clamp:unset}
+.blk.wide .bt{font-size:13px;line-height:16px}
+.blk small{flex:none;margin-top:1px}
+.nowline{z-index:2;pointer-events:none}
+/* --- lists: dots / checks sit on the first line of text --- */
+.rvlist li{display:flex;align-items:flex-start;gap:8px}.rvlist li>svg.i{margin-top:calc((1lh - 1em) / 2);width:1em;height:1em;flex:none}
+.wk-key span{line-height:1}
+/* --- project tag shown on tasks elsewhere --- */
+.ptag{gap:5px;height:20px;padding:0 8px 0 6px;margin:0 6px 0 0;border-radius:999px;font:700 11px/1 var(--ui);vertical-align:1px;max-width:60%;white-space:nowrap;overflow:hidden;
+  color:var(--pc2,#7D55B5);background:color-mix(in srgb,var(--pc1,#C9A7E8) 22%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pc1,#C9A7E8) 35%,transparent)}
+.ptag i{width:6px;height:6px;border-radius:50%;background:var(--pc2,#7D55B5);flex:none}
+.ptag span{overflow:hidden;text-overflow:ellipsis}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .ptag{color:var(--pc1,#C9A7E8)}}
+:root[data-theme="dark"] .ptag{color:var(--pc1,#C9A7E8)}
+/* --- project cards + sheet --- */
+.pjgrid{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr))}
+.pjcard{display:flex;flex-direction:column;gap:12px;padding:14px;border-radius:var(--r-l);text-align:left;width:100%;min-width:0}
+.pj-top{display:flex;align-items:center;gap:12px;min-width:0}
+.pj-top .ico{width:44px;height:44px;border-radius:var(--r-s);flex:none}
+.pj-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.pj-t b{font-weight:800;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pj-t small{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pj-top>svg.chev{transform:rotate(-90deg);color:var(--muted);width:18px;height:18px}
+.pjbar{display:block;height:8px;border-radius:999px;background:color-mix(in srgb,var(--ink) 10%,transparent);overflow:hidden}
+.pjbar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent) 70%,#fff));min-width:0;transition:width .5s cubic-bezier(.22,1,.36,1)}
+.pj-meta{display:flex;justify-content:space-between;gap:10px;font:600 12px/1.2 var(--ui);color:var(--muted)}
+.pj-prog{display:flex;align-items:center;gap:12px;margin:2px 0 18px}.pj-prog .pjbar{flex:1}.pj-prog b{font:800 13px var(--ui);min-width:38px;text-align:right}
+.pj-h{display:flex;align-items:center;justify-content:space-between;margin:18px 0 8px}
+.pj-h .cap{margin:0}
+.psteps{list-style:none;margin:0;padding:2px 0;border-radius:var(--r-l);background:color-mix(in srgb,var(--surface) 70%,transparent);border:1px solid color-mix(in srgb,var(--ink) 9%,transparent)}
+.psteps:empty{display:none}
+.psteps li{display:flex;align-items:center;gap:6px;padding:6px 8px 6px 4px;min-height:56px;min-width:0}
+.psteps li+li{border-top:1px solid color-mix(in srgb,var(--ink) 9%,transparent)}
+.psteps .chk{width:40px;height:40px;margin:0}
+.psteps .st{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;font-weight:700;font-size:14.5px;line-height:1.3;overflow-wrap:anywhere}
+.psteps .st small{font-weight:600;font-size:12px;color:var(--muted)}
+.psteps .st small.late{color:var(--late)}
+.psteps li.done .st>span{text-decoration:line-through;color:var(--muted)}
+.pj-acts{display:flex;align-items:center;gap:6px;flex:none;align-self:center}
+.pj-act{width:34px;height:34px;border-radius:50%;background:color-mix(in srgb,var(--ink) 8%,transparent);color:var(--ink2)}
+.pj-act svg.i{width:16px;height:16px}
+.pj-act.del:hover{color:var(--late)}
+.stepadd{display:flex;gap:8px;margin-top:10px;align-items:center}
+.stepadd input[type=text],.stepadd input:not([type]){flex:1;min-width:0;height:46px}
+.stepadd .primary{width:46px;height:46px;padding:0;flex:none;border-radius:50%}
+.dchip{position:relative;flex:none;height:46px;min-width:46px;padding:0 12px;gap:6px;border-radius:var(--r-m);font:700 13px var(--ui);color:var(--ink2);white-space:nowrap;
+  background:color-mix(in srgb,var(--surface) 80%,transparent);border:1px solid color-mix(in srgb,var(--ink) 14%,transparent);cursor:pointer}
+.dchip svg.i{width:17px;height:17px}
+.dchip.set{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
+.dchip input{position:absolute;inset:0;width:100%;height:100%;opacity:0;padding:0;margin:0;border:0;cursor:pointer;min-width:0}
+.dchip input::-webkit-calendar-picker-indicator{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.pjgrp .list{margin-bottom:6px}
+.pj-empty{margin:0;padding:12px 2px;color:var(--muted);font-size:13.5px}
+.pj-delask{display:flex;flex-direction:column;gap:10px;width:100%}
+.pj-delask p{margin:0 0 4px;font-size:14px;line-height:1.4;color:var(--ink2)}
+.pj-delask .row3{display:flex;gap:8px;flex-wrap:wrap}.pj-delask .row3>button{flex:1 1 140px;height:48px}
+/* --- injuries: quick log button, sheet, log form --- */
+.ilq{flex:none;gap:4px;height:32px;padding:0 11px 0 8px;border-radius:999px;font:800 12px/1 var(--ui);color:#fff;background:linear-gradient(160deg,#F28A92,#B83A4E);box-shadow:inset 0 1px 0 rgb(255 255 255 / .3);margin-left:6px}
+.ilq svg.i{width:14px;height:14px;stroke-width:2.6}
+.row .ilq+.pain,.row .pain+.ilq{margin-left:8px}
+.il-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 12px}
+.il-stats>div{padding:10px 12px;border-radius:var(--r-m);background:color-mix(in srgb,var(--surface) 70%,transparent);border:1px solid color-mix(in srgb,var(--ink) 9%,transparent);min-width:0}
+.il-stats b{display:block;font:800 20px/1.1 var(--ui)}.il-stats span{display:block;font-size:11.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.il-spark{padding:12px 12px 8px;border-radius:var(--r-l);background:color-mix(in srgb,var(--surface) 70%,transparent);border:1px solid color-mix(in srgb,var(--ink) 9%,transparent);margin-bottom:12px}
+.il-spark svg{display:block;width:100%;height:64px;overflow:visible}
+.il-spark .ax{display:flex;justify-content:space-between;font:400 10px var(--mono);color:var(--muted);margin-top:4px;text-transform:uppercase}
+.il-strip{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:3px;margin:0 0 6px}
+.il-day{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;border-radius:var(--r-xs);font:400 9.5px/1 var(--mono);color:var(--muted);min-width:0}
+.il-day b{font:800 12px/1 var(--ui);color:var(--ink)}
+.il-day i{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:800 9.5px/1 var(--ui);font-style:normal;color:#fff;background:color-mix(in srgb,var(--ink) 8%,transparent)}
+.il-day.on{background:var(--ink);color:var(--bg)}.il-day.on b{color:var(--bg)}
+.il-day.today b{color:var(--accent)}.il-day.on.today b{color:var(--bg)}
+.ilrows{list-style:none;margin:0 0 6px;padding:2px 0;border-radius:var(--r-l);background:color-mix(in srgb,var(--surface) 70%,transparent);border:1px solid color-mix(in srgb,var(--ink) 9%,transparent)}
+.ilrow{display:flex;align-items:flex-start;gap:12px;width:100%;padding:11px 14px;text-align:left;min-width:0}
+.ilrows li+li .ilrow{border-top:1px solid color-mix(in srgb,var(--ink) 9%,transparent)}
+.ilp{width:32px;height:32px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font:800 14px/1 var(--ui);color:#fff}
+.ilb{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;padding-top:1px}
+.ilb b{font-weight:800;font-size:14px;line-height:1.3}.ilb small{font-size:12.5px;line-height:1.35;color:var(--muted);overflow-wrap:anywhere}
+.ilb .ilmeds{color:var(--ink2)}
+.il-meds{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:6px}
+.il-meds li{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-m);background:color-mix(in srgb,var(--surface) 70%,transparent);border:1px solid color-mix(in srgb,var(--ink) 9%,transparent);font-size:13.5px;min-width:0}
+.il-meds li b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.il-meds li span{color:var(--muted);font:600 12.5px var(--ui);white-space:nowrap}
+.il-meds .pill-i{width:26px;height:26px;border-radius:var(--r-xs);flex:none;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,#62C7BE 22%,transparent);color:#1F7C80}
+.il-meds .pill-i svg.i{width:15px;height:15px}
+.il-when{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:10px}
+.il-when input{min-width:0;width:100%;-webkit-appearance:none;appearance:none;height:52px}
+.il-pain{display:flex;align-items:center;gap:14px;margin:4px 0 2px}
+.il-pain output{width:52px;height:52px;border-radius:var(--r-m);display:flex;align-items:center;justify-content:center;font:800 22px/1 var(--ui);color:#fff;flex:none}
+.il-pain input{flex:1;padding:0;border:0;background:none}
+.il-scale{display:flex;justify-content:space-between;font:400 10px var(--mono);color:var(--muted);margin:0 0 14px 66px;text-transform:uppercase}
+.il-mchips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.il-mchips .chip{height:36px;padding:0 13px;font-size:13px;gap:6px}
+.il-mchips .chip svg.i{width:14px;height:14px}
+.il-mchips .chip.new{border-style:dashed;color:var(--accent)}
+.il-picked{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:6px}
+.il-picked li{display:grid;grid-template-columns:minmax(0,1fr) 92px 104px 34px;align-items:center;gap:6px;padding:6px 6px 6px 12px;border-radius:var(--r-m);background:color-mix(in srgb,var(--surface) 70%,transparent);border:1px solid color-mix(in srgb,var(--ink) 9%,transparent)}
+.il-picked b{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.il-picked input{height:38px;padding:0 8px;font-size:13.5px;border-radius:var(--r-s);min-width:0;-webkit-appearance:none;appearance:none}
+.il-x{width:34px;height:34px;border-radius:50%;background:color-mix(in srgb,var(--ink) 8%,transparent)}.il-x svg.i{width:15px;height:15px}
+.il-new{display:grid;grid-template-columns:minmax(0,1fr) 96px 46px;gap:6px;margin:0 0 12px}
+.il-new input{height:46px;min-width:0}.il-new .primary{width:46px;height:46px;padding:0;border-radius:50%}
+@media (max-width:380px){.il-picked li{grid-template-columns:minmax(0,1fr) 76px 92px 32px}}
+/* --- focus card --- */
+.fcard .rvgrid{align-items:start;margin:4px 0 12px}
+.fcard .rvgrid>div{min-width:0}.fcard .rvgrid span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fcard .sh-actions{display:flex;gap:8px}.fcard .sh-actions button{flex:1 1 0;min-width:0;gap:8px;padding:0 12px}
+.fcard .sh-actions svg.i{width:17px;height:17px}
+/* --- header: the toggle never changes the header's height in the layout (fixed box; only paint and transforms change) --- */
+#top{height:var(--toph,auto);box-sizing:border-box}
+#top.float{height:var(--toph,auto);min-height:0}
+</style>`);
+
+/* ---------- projects: a task / reminder links to a project with project:<id> (old entries may hold the project's title) ---------- */
+const projById=id=>{const p=id?find(id):null;return p&&p.type==='project'?p:null};
+function projOf(e){if(!e||!e.project)return null;const p=projById(e.project);if(p)return p;const t=String(e.project).trim().toLowerCase();if(!t)return null;return of('project').find(x=>(x.title||'').trim().toLowerCase()===t)||null}
+function projLabel(e){const p=projOf(e);return p?(p.title||'Project'):(e&&e.project&&!projById(e.project)&&!/^[a-z0-9]{10,}$/.test(e.project)?e.project:'')}
+const projItems=p=>db.entries.filter(e=>(e.type==='task'||e.type==='reminder')&&e.project&&projOf(e)===p);
+function projStats(p){const s=p.steps||[],it=projItems(p),done=s.filter(x=>x.done).length+it.filter(x=>x.done).length,tot=s.length+it.length;return{s,it,done,tot,pct:tot?done/tot:0,open:it.filter(x=>!x.done).length}}
+const pcol=p=>{const c=p&&p.color!==undefined&&p.color!==''?PICK_COLS[+p.color]:null;return c?`--pc1:${c[0]};--pc2:${c[1]}`:''};
+TYPES.task.f=TYPES.task.f.map(f=>f[0]==='project'?['project','Project','project']:f);
+if(!TYPES.reminder.f.some(f=>f[0]==='project'))TYPES.reminder.f.push(['project','Project','project']);
+const _field5=field;
+field=function(f,v){
+  if(f[2]!=='project')return _field5(f,v);
+  let cur=v||'';const m=cur?projOf({project:cur}):null;if(m)cur=m.id;
+  if(!cur&&PJ_CTX&&projById(PJ_CTX))cur=PJ_CTX;
+  const ps=of('project').filter(p=>(p.status||'Active')!=='Done'||p.id===cur).sort((a,b)=>(a.title||'').localeCompare(b.title||''));
+  const opts=[['','No project'],...ps.map(p=>[p.id,p.title||'Project'])];if(cur&&!opts.some(o=>o[0]===cur))opts.push([cur,cur]);
+  return`<label class="fld" for="f_project"><span>${f[1]}</span>${selectHTML('project',opts,cur,'f_project')}</label>`;
+};
+let PJ_CTX=null,ROW_NOPTAG=false;
+const _row5=row;
+row=function(e){
+  let h=_row5(e);
+  if((e.type==='task'||e.type==='reminder')&&!ROW_NOPTAG){const p=projOf(e);
+    if(p){const tag=`<span class="ptag" style="${pcol(p)}"><i></i><span>${esc(p.title||'Project')}</span></span>`;
+      const i=h.indexOf('<span class="rs">');
+      if(i>=0)h=h.slice(0,i+17)+tag+h.slice(i+17);
+      else{const j=h.indexOf('</button>',h.indexOf('class="rowbtn"'));if(j>0)h=h.slice(0,j)+`<span class="rs">${tag}</span>`+h.slice(j)}}}
+  if(e.type==='injury'&&e.status!=='Healed'){const j=h.lastIndexOf('</li>');h=h.slice(0,j)+`<button class="ilq" data-injlog="${esc(e.id)}" aria-label="Log ${esc(e.title||'injury')} today">${ic('plus')}Log</button>`+h.slice(j)}
+  return h;
+};
+function projCards(a){
+  return`<div class="pjgrid">${a.map(p=>{const st=projStats(p),nx=st.s.find(x=>!x.done);
+    const sub=[nx?`Next: ${nx.t}`:p.next?`Next: ${p.next}`:'',].filter(Boolean).join(' · ')||(st.tot?'All done':'No steps or tasks yet');
+    return`<button class="card-s pjcard" data-open="${esc(p.id)}"><span class="pj-top">${tileE(p)}<span class="pj-t"><b>${esc(p.title||'Project')}</b><small>${esc(sub)}</small></span>${ic('chev','i chev')}</span>
+      <span class="pjbar"><i style="width:${Math.round(st.pct*100)}%"></i></span>
+      <span class="pj-meta"><span>${st.s.length?`${st.s.filter(x=>x.done).length}/${st.s.length} steps`:'No steps'}</span><span>${st.it.length?`${st.open} open · ${st.it.length-st.open} done`:'No tasks'}</span></span></button>`}).join('')}</div>`;
+}
+const dueTxt=d=>{if(!d)return'';const n=dayDiff(d);return n<0?`${relDue(d)}`:`Due ${relDue(d).toLowerCase()==='today'?'today':relDue(d).toLowerCase()==='tomorrow'?'tomorrow':relDue(d)}`};
+const dchip=(id,val,label)=>`<label class="dchip${val?' set':''}" title="${esc(label)}">${ic('cal')}<span>${val?esc(fmtDate(val)):'Date'}</span><input id="${id}" type="date" value="${esc(val||'')}" aria-label="${esc(label)}"></label>`;
+function projSheetHTML(e){
+  const st=projStats(e),s=st.s,open=st.it.filter(x=>!x.done).sort(byDue),done=st.it.filter(x=>x.done).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
+  ROW_NOPTAG=true;let L1,L2;try{L1=open.length?list(open,''):`<p class="pj-empty">Nothing open. Add a task below.</p>`;L2=done.length?list(done,''):''}finally{ROW_NOPTAG=false}
+  return`<div id="pjSheet" data-pid="${esc(e.id)}"><div class="sh-h"><div class="lhs"><span class="cap">Project · ${esc(e.status||'Active')}</span></div><button type="button" class="x" data-close aria-label="Close">${ic('close')}</button></div>
+    <div class="dhead">${tileE(e)}<div style="min-width:0"><h3>${esc(e.title||'Project')}</h3><div class="rs" style="margin-top:4px">${st.tot?`${st.done} of ${st.tot} done`:'No steps or tasks yet'}${st.open?` · ${st.open} open task${st.open===1?'':'s'}`:''}</div></div></div>
+    <div class="pj-prog"><span class="pjbar"><i style="width:${Math.round(st.pct*100)}%"></i></span><b class="num">${Math.round(st.pct*100)}%</b></div>
+    <div class="pj-h"><span class="cap">Steps${s.length?` · ${s.filter(x=>x.done).length}/${s.length}`:''}</span></div>
+    <ul class="psteps" id="stepList">${s.map(x=>{const late=x.due&&!x.done&&dayDiff(x.due)<0;return`<li class="${x.done?'done':''}"><button class="chk${x.done?' on':''}" data-step="${e.id}:${x.id}" aria-label="${x.done?'Mark not done':'Mark done'}"><i><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg></i></button><span class="st"><span>${esc(x.t)}</span>${x.due?`<small class="${late?'late':''}">${esc(dueTxt(x.due))}</small>`:''}</span><span class="pj-acts"><button class="pj-act" data-steptask="${e.id}:${x.id}" aria-label="Make it a task" title="Make it a task">${ic('check')}</button><button class="pj-act del" data-stepdel="${e.id}:${x.id}" aria-label="Delete step" title="Delete step">${ic('close')}</button></span></li>`}).join('')}</ul>
+    <div class="stepadd"><input id="stepIn" placeholder="Add a step" enterkeyhint="done" autocomplete="off">${dchip('stepDue','','Step due date (optional)')}<button class="primary" id="stepAdd" data-pid="${esc(e.id)}" aria-label="Add step">${ic('plus')}</button></div>
+    <div class="pj-h"><span class="cap">Tasks &amp; reminders · ${st.it.length}</span></div>
+    <div class="pjgrp"><div class="cap" style="margin:0 0 6px;opacity:.8">Open · ${open.length}</div>${L1}${done.length?`<div class="cap" style="margin:12px 0 6px;opacity:.8">Done · ${done.length}</div>${L2}`:''}</div>
+    <div class="stepadd"><input id="pjTaskIn" placeholder="Add task to this project" enterkeyhint="done" autocomplete="off">${dchip('pjTaskDue','','Task due date (optional)')}<button class="primary" id="pjTaskAdd" data-pid="${esc(e.id)}" aria-label="Add task">${ic('plus')}</button></div>
+    ${e.notes?`<div class="cap" style="margin:18px 0 8px">Notes</div><div class="notes">${esc(e.notes)}</div>`:''}
+    <div class="sh-actions"><button class="primary" data-edit="${esc(e.id)}">${ic('edit')}Edit project</button></div></div>`;
+}
+openProject=function(id){
+  const e=find(id);if(!e)return;const html=projSheetHTML(e);
+  if(!wrap.hidden&&wrap.classList.contains('open')&&$('#pjSheet')){const sh=$('.sheet'),sb=sh.scrollTop;$('#sheetBody').innerHTML=html;sh.scrollTop=sb}else openSheet(html);
+};
+function pjAddTask(pid){const p=find(pid),inp=$('#pjTaskIn'),t=(inp&&inp.value||'').trim();if(!p)return;if(!t){inp&&inp.focus();return}
+  db.entries.push({id:uid(),type:'task',title:t,project:p.id,due:($('#pjTaskDue')||{}).value||'',priority:'Normal',created:Date.now()});delete p.sample;save();render(false);openProject(pid);
+  setTimeout(()=>{const i=$('#pjTaskIn');i&&i.focus({preventScroll:true})},30)}
+/* delete a project: choose what happens to its tasks and reminders */
+function pjDeleteAsk(btn,p){
+  const it=projItems(p),acts=btn.closest('.sh-actions');if(!acts)return;
+  acts.innerHTML=`<div class="pj-delask"><p><b>Delete “${esc(p.title||'Project')}”?</b> It has ${it.length} task${it.length===1?'':'s'} and reminder${it.length===1?'':'s'} linked to it.</p>
+    <div class="row3"><button type="button" class="secondary" data-pjdel="unassign" data-pid="${esc(p.id)}">Keep them, unassign</button><button type="button" class="danger" data-pjdel="all" data-pid="${esc(p.id)}">Delete them too</button></div>
+    <button type="button" class="link" data-pjdel="cancel" data-pid="${esc(p.id)}" style="align-self:center">Cancel</button></div>`;
+}
+function pjDelete(pid,mode){const p=find(pid);if(!p)return;const it=projItems(p),ids=new Set(it.map(x=>x.id));
+  if(mode==='all')db.entries=db.entries.filter(x=>!ids.has(x.id)&&x.id!==pid);
+  else{it.forEach(x=>{x.project='';delete x.sample});db.entries=db.entries.filter(x=>x.id!==pid)}
+  save();closeSheet();render(false);toast(mode==='all'?`Deleted project and ${it.length} item${it.length===1?'':'s'}`:'Project deleted · tasks kept')}
+
+/* ---------- injuries: a daily log (pain 0–10, notes, medication) stored in db.injlog; meds you reuse in db.meds.
+   Both are lists of objects with ids, so sync merges them item by item like entries. ---------- */
+const injlog=()=>(db.injlog=Array.isArray(db.injlog)?db.injlog:[]);
+const medsL=()=>(db.meds=Array.isArray(db.meds)?db.meds:[]);
+const injLogs=id=>injlog().filter(x=>x&&x.inj===id&&x.at).sort((a,b)=>b.at.localeCompare(a.at));
+const painCol=p=>`hsl(${Math.round(130-12*Math.max(0,Math.min(10,num(p))))} 62% ${p>=7?46:44}%)`;
+const nowT=()=>{const d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes())};
+const dayAvg=l=>l.length?l.reduce((s,x)=>s+num(x.pain),0)/l.length:null;
+function injSpark(id){
+  const L=injLogs(id),by={};L.forEach(x=>{(by[x.at.slice(0,10)]=by[x.at.slice(0,10)]||[]).push(x)});
+  const pts=[];for(let i=29;i>=0;i--){const d=addDays(-i),a=by[d];if(a)pts.push([29-i,dayAvg(a)])}
+  if(pts.length<2)return`<div class="il-spark"><p class="small" style="margin:0">${pts.length?'One day logged. The 30-day trend appears after a second day.':'No logs yet. Tap “Log today” to start a 30-day pain trend.'}</p></div>`;
+  const W=300,H=60,X=i=>(i/29*W).toFixed(1),Y=v=>(H-4-(v/10)*(H-8)).toFixed(1);
+  const line=pts.map(([i,v],k)=>`${k?'L':'M'}${X(i)} ${Y(v)}`).join(''),area=`${line}L${X(pts[pts.length-1][0])} ${H}L${X(pts[0][0])} ${H}Z`;
+  const last=pts[pts.length-1];
+  return`<div class="il-spark"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Pain over the last 30 days">
+    <defs><linearGradient id="ilg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F28A92" stop-opacity=".45"/><stop offset="1" stop-color="#F28A92" stop-opacity="0"/></linearGradient></defs>
+    <path d="M0 ${Y(5)}H${W}" stroke="currentColor" stroke-opacity=".12" stroke-dasharray="3 4" vector-effect="non-scaling-stroke"/>
+    <path d="${area}" fill="url(#ilg)"/><path d="${line}" fill="none" stroke="#E0566A" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+    <circle cx="${X(last[0])}" cy="${Y(last[1])}" r="3.5" fill="#E0566A" vector-effect="non-scaling-stroke"/></svg>
+    <div class="ax"><span>30 days ago</span><span>Pain 0–10</span><span>Today</span></div></div>`;
+}
+let INJ_SEL=null;
+function medLine(m){return[m.name||(medsL().find(x=>x.id===m.med)||{}).name||'Medication',m.dose,m.time?fmtT(m.time):''].filter(Boolean).join(' · ')}
+function injSheetHTML(e){
+  const L=injLogs(e.id),td=today(),tl=L.filter(x=>x.at.slice(0,10)===td),by={};L.forEach(x=>{(by[x.at.slice(0,10)]=by[x.at.slice(0,10)]||[]).push(x)});
+  const cur=L.length?num(L[0].pain):num(e.pain),w7=L.filter(x=>dayDiff(x.at.slice(0,10))>-7),a7=dayAvg(w7);
+  const days=[...Array(14)].map((_,i)=>addDays(i-13));
+  const strip=`<div class="il-strip">${days.map(d=>{const a=by[d],v=a?dayAvg(a):null;return`<button class="il-day${d===td?' today':''}${INJ_SEL===d?' on':''}" data-ilday="${d}" aria-label="${esc(fmtLong(d))}${v!=null?`, pain ${v.toFixed(1)}`:''}"><span>${wdOf(d).slice(0,1)}</span><b>${+d.slice(8)}</b><i${v!=null?` style="background:${painCol(v)}"`:''}>${v!=null?Math.round(v):''}</i></button>`}).join('')}</div>`;
+  const showDays=Object.keys(by).sort().reverse().filter(d=>!INJ_SEL||d===INJ_SEL).slice(0,INJ_SEL?1:10);
+  const meds=tl.flatMap(x=>(x.meds||[]).map(m=>({...m,_at:x.at}))).sort((a,b)=>(a.time||a._at.slice(11)).localeCompare(b.time||b._at.slice(11)));
+  const rowsFor=d=>`<ul class="ilrows">${by[d].map(x=>`<li><button class="ilrow" data-ilog="${esc(x.id)}" data-inj="${esc(e.id)}"><span class="ilp" style="background:${painCol(x.pain)}">${Math.round(num(x.pain))}</span><span class="ilb"><b>${esc(fmtT(x.at.slice(11,16)))}</b>${x.notes?`<small>${esc(x.notes)}</small>`:''}${(x.meds||[]).length?`<small class="ilmeds">💊 ${esc(x.meds.map(medLine).join(', '))}</small>`:''}</span></button></li>`).join('')}</ul>`;
+  const kv=[['Status',e.status||'Active'],e.date?['Started',fmtLong(e.date)]:null].filter(Boolean);
+  return`<div id="injSheet" data-inj="${esc(e.id)}"><div class="sh-h"><div class="lhs"><span class="cap">Injury · ${esc(e.status||'Active')}</span></div><button type="button" class="x" data-close aria-label="Close">${ic('close')}</button></div>
+    <div class="dhead">${tileE(e)}<div style="min-width:0"><h3>${esc(e.title||'Injury')}</h3><div class="rs" style="margin-top:4px">${esc([e.date?`since ${fmtDate(e.date)}`:'',L.length?`${L.length} log${L.length===1?'':'s'}`:'not logged yet'].filter(Boolean).join(' · '))}</div></div></div>
+    <div class="il-stats"><div><b class="num" style="color:${painCol(cur)}">${Math.round(cur)}<small style="font-size:12px;color:var(--muted)">/10</small></b><span>pain now</span></div><div><b class="num">${a7!=null?a7.toFixed(1):'—'}</b><span>7-day average</span></div><div><b class="num">${tl.length}</b><span>logs today</span></div></div>
+    ${injSpark(e.id)}
+    <div class="sh-actions" style="margin:0 0 6px"><button class="primary" data-injlog="${esc(e.id)}">${ic('plus')}Log today</button></div>
+    <div class="pj-h"><span class="cap">Today’s meds</span></div>
+    ${meds.length?`<ul class="il-meds">${meds.map(m=>`<li><span class="pill-i">${ic('check')}</span><b>${esc(m.name||'Medication')}</b><span>${esc([m.dose,m.time?fmtT(m.time):fmtT(m._at.slice(11,16))].filter(Boolean).join(' · '))}</span></li>`).join('')}</ul>`:`<p class="pj-empty" style="padding-top:0">No medication logged today.</p>`}
+    <div class="pj-h"><span class="cap">Last 14 days</span>${INJ_SEL?`<button class="link" data-ilday="">Show all</button>`:''}</div>
+    ${strip}
+    ${showDays.length?showDays.map(d=>`<div class="cap" style="margin:12px 0 6px">${esc(dayDiff(d)===0?'Today':dayDiff(d)===-1?'Yesterday':fmtLong(d))} · ${by[d].length} entr${by[d].length===1?'y':'ies'} · avg ${dayAvg(by[d]).toFixed(1)}</div>${rowsFor(d)}`).join(''):`<p class="pj-empty">${INJ_SEL?'Nothing logged that day.':'Entries you log show up here, grouped by day.'}</p>`}
+    <ul class="kv" style="margin-top:16px">${kv.map(([l,v])=>`<li><span class="cap">${esc(l)}</span><b>${esc(v)}</b></li>`).join('')}</ul>
+    ${e.notes?`<div class="cap" style="margin-bottom:8px">Notes</div><div class="notes">${esc(e.notes)}</div>`:''}
+    <div class="sh-actions"><button class="secondary" data-edit="${esc(e.id)}">${ic('edit')}Edit injury</button></div></div>`;
+}
+function openInjury(id,keep){const e=find(id);if(!e)return;if(!keep)INJ_SEL=null;const html=injSheetHTML(e);
+  if(!wrap.hidden&&wrap.classList.contains('open')&&$('#injSheet')){const sh=$('.sheet'),sb=sh.scrollTop;$('#sheetBody').innerHTML=html;sh.scrollTop=sb}else openSheet(html)}
+const _odInj=openDetail;openDetail=function(id){const e=find(id);if(e&&e.type==='injury')return openInjury(id);return _odInj(id)};
+let ILF=null;
+function ilMedsHTML(){return ILF.meds.map((m,i)=>`<li><b>${esc(m.name)}</b><input data-ilm="${i}" data-k="dose" value="${esc(m.dose||'')}" placeholder="Dose" aria-label="Dose of ${esc(m.name)}"><input data-ilm="${i}" data-k="time" type="time" value="${esc(m.time||'')}" aria-label="Time taken"><button type="button" class="il-x" data-ilmx="${i}" aria-label="Remove ${esc(m.name)}">${ic('close')}</button></li>`).join('')}
+function ilChipsHTML(){return medsL().map(m=>`<button type="button" class="chip" data-ilpick="${esc(m.id)}">${ic('plus')}${esc(m.name)}${m.dose?`<small style="opacity:.6;font-weight:600">${esc(m.dose)}</small>`:''}</button>`).join('')+`<button type="button" class="chip new" data-ilnew>${ic('plus')}New med</button>`}
+function openInjLog(injId,logId){
+  const e=find(injId);if(!e)return;const x=logId?injlog().find(l=>l.id===logId):null;
+  ILF={inj:injId,id:x?x.id:'',meds:x?(x.meds||[]).map(m=>({...m})):[]};
+  const at=x?x.at:`${today()}T${nowT()}`,p=x?num(x.pain):(injLogs(injId)[0]?num(injLogs(injId)[0].pain):num(e.pain));
+  openSheet(`<form id="ilForm">${sheetHead(`${x?'Edit':'Log'} <em>${esc(e.title||'injury')}</em>`,`open:${injId}`)}
+    <div class="il-when"><label class="fld" for="ilDate"><span>Date</span><input id="ilDate" type="date" value="${esc(at.slice(0,10))}" required></label><label class="fld" for="ilTime"><span>Time</span><input id="ilTime" type="time" value="${esc(at.slice(11,16))}" required></label></div>
+    <label class="fld" for="ilPain"><span>Pain</span></label>
+    <div class="il-pain"><output id="ilOut" style="background:${painCol(p)}">${Math.round(p)}</output><input id="ilPain" type="range" min="0" max="10" step="1" value="${Math.round(p)}" style="--p:${Math.round(p)*10}%" aria-label="Pain from 0 to 10"></div>
+    <div class="il-scale"><span>0 none</span><span>5</span><span>10 worst</span></div>
+    <label class="fld" for="ilNotes"><span>Notes (optional)</span><textarea id="ilNotes" rows="2" placeholder="What made it better or worse?">${esc(x?x.notes||'':'')}</textarea></label>
+    <div class="fld" style="margin-bottom:4px"><span>Medication taken</span></div>
+    <ul class="il-picked" id="ilPicked">${ilMedsHTML()}</ul>
+    <div class="il-mchips" id="ilChips">${ilChipsHTML()}</div>
+    <div class="il-new" id="ilNew" hidden><input id="ilNewName" placeholder="Medication name" autocomplete="off"><input id="ilNewDose" placeholder="Dose" autocomplete="off"><button type="button" class="primary" id="ilNewAdd" aria-label="Save medication">${ic('check')}</button></div>
+    <div class="sh-actions">${x?`<button type="button" class="danger" id="ilDel">Delete</button>`:''}<button class="primary" type="submit">Save</button></div></form>`);
+}
+function ilRefreshMeds(){const a=$('#ilPicked');if(a)a.innerHTML=ilMedsHTML();const c=$('#ilChips');if(c)c.innerHTML=ilChipsHTML()}
+function ilSave(){
+  const d=$('#ilDate').value||today(),t=$('#ilTime').value||nowT(),e=find(ILF.inj);if(!e)return;
+  const o={inj:ILF.inj,at:`${d}T${t}`,pain:Math.max(0,Math.min(10,num($('#ilPain').value))),notes:($('#ilNotes').value||'').trim(),meds:ILF.meds.filter(m=>m.name).map(m=>({med:m.med||'',name:m.name,dose:(m.dose||'').trim(),time:m.time||''}))};
+  const L=injlog();if(ILF.id){const x=L.find(l=>l.id===ILF.id);if(x)Object.assign(x,o)}else L.push({id:uid(),created:Date.now(),...o});
+  const latest=injLogs(ILF.inj)[0];if(latest&&num(e.pain)!==latest.pain){e.pain=latest.pain;delete e.sample}
+  save();render(false);toast('Logged');NAV_DIR=-1;openInjury(ILF.inj);
+}
+
+/* ---------- focus card: no repeated numbers; three aligned stats, centred buttons ---------- */
+focusSection=function(){
+  const w=focusWeek(),td=of('focus').filter(e=>e.date===today()),tdm=td.reduce((s,e)=>s+num(e.minutes),0);
+  const named=w.by.filter(([k])=>k&&k!=='Focus'&&k!=='focus');
+  const third=named.length?[fmtDurS(named[0][1]),named[0][0]]:[fmtDurS(tdm),'today'];
+  return section('Focus <em>this week</em>',`<div class="card-s rvcard fcard"><div class="rvgrid"><div><b class="num">${fmtDurS(w.total)}</b><span>this week</span></div><div><b class="num">${w.n}</b><span>session${w.n===1?'':'s'}</span></div><div><b class="num">${third[0]}</b><span>${esc(third[1])}</span></div></div><div class="sh-actions" style="margin:0"><button class="secondary" data-focus="">${ic('play')}<span>${FOCUS()?'Open timer':'Start Pomodoro'}</span></button><button class="secondary" id="fcLog3">${ic('list')}<span>Log</span></button></div></div>`,`<button class="link" data-focus="">${ic('plus')}Focus</button>`);
+};
+
+/* ---------- clicks for all of the above (window capture runs before the app's document handlers) ---------- */
+window.addEventListener('click',ev=>{
+  const t=ev.target;if(!t.closest)return;
+  const stop=()=>{ev.preventDefault();ev.stopImmediatePropagation()};
+  const dc=t.closest('.dchip');if(dc&&t.tagName!=='INPUT'){const i=dc.querySelector('input');stop();try{i.showPicker()}catch(e){i.focus();i.click()}return}
+  if(t.closest('.dchip input')){const i=t.closest('.dchip input');try{if(i.showPicker){ev.preventDefault();i.showPicker()}}catch(e){}ev.stopImmediatePropagation();return}
+  let b=t.closest('#pjTaskAdd');if(b){stop();pjAddTask(b.dataset.pid);return}
+  b=t.closest('#pjSheet [data-chk]');if(b){stop();const x=find(b.dataset.chk);if(!x)return;x.done=!x.done;x.doneAt=Date.now();delete x.sample;save();if(x.done){tick();toast('Done')}
+    b.classList.toggle('on',x.done);anim(b.querySelector('i'),{scale:[.5,1]},{spring:true,k:600,d:14});const pid=$('#pjSheet').dataset.pid;setTimeout(()=>{render(false);if($('#pjSheet'))openProject(pid)},x.done?380:0);return}
+  b=t.closest('#pjSheet [data-steptask]');if(b){stop();const[pid,sid]=b.dataset.steptask.split(':'),p=find(pid),s=p&&(p.steps||[]).find(x=>x.id===sid);if(!s)return;
+    db.entries.push({id:uid(),type:'task',title:s.t,project:p.id,due:s.due||'',priority:'Normal',created:Date.now()});save();render(false);openProject(pid);toast('Added as a task in this project');return}
+  b=t.closest('#delBtn');if(b){const f=$('#entryForm');const p=f&&f.dataset.type==='project'?find(f.dataset.id):null;if(p&&projItems(p).length){stop();pjDeleteAsk(b,p);return}}
+  b=t.closest('[data-pjdel]');if(b){stop();const m=b.dataset.pjdel;if(m==='cancel'){openForm('project',b.dataset.pid);return}pjDelete(b.dataset.pid,m);return}
+  b=t.closest('[data-injlog]');if(b){stop();openInjLog(b.dataset.injlog);return}
+  b=t.closest('[data-ilog]');if(b){stop();openInjLog(b.dataset.inj,b.dataset.ilog);return}
+  b=t.closest('[data-ilday]');if(b&&$('#injSheet')){stop();const d=b.dataset.ilday;INJ_SEL=d&&INJ_SEL!==d?d:null;openInjury($('#injSheet').dataset.inj,true);return}
+  b=t.closest('[data-ilpick]');if(b&&ILF){stop();const m=medsL().find(x=>x.id===b.dataset.ilpick);if(m){ILF.meds.push({med:m.id,name:m.name,dose:m.dose||'',time:nowT()});ilRefreshMeds()}return}
+  b=t.closest('[data-ilmx]');if(b&&ILF){stop();ILF.meds.splice(+b.dataset.ilmx,1);ilRefreshMeds();return}
+  b=t.closest('[data-ilnew]');if(b){stop();const n=$('#ilNew');n.hidden=!n.hidden;if(!n.hidden)setTimeout(()=>$('#ilNewName').focus(),30);return}
+  b=t.closest('#ilNewAdd');if(b&&ILF){stop();const nm=($('#ilNewName').value||'').trim(),ds=($('#ilNewDose').value||'').trim();if(!nm){$('#ilNewName').focus();return}
+    let m=medsL().find(x=>(x.name||'').toLowerCase()===nm.toLowerCase());if(!m){m={id:uid(),name:nm,dose:ds};medsL().push(m);save()}
+    ILF.meds.push({med:m.id,name:m.name,dose:ds||m.dose||'',time:nowT()});$('#ilNewName').value='';$('#ilNewDose').value='';$('#ilNew').hidden=true;ilRefreshMeds();return}
+  b=t.closest('#ilDel');if(b&&ILF){stop();arm(b,'Tap again to delete',()=>{db.injlog=injlog().filter(x=>x.id!==ILF.id);const e=find(ILF.inj),l=injLogs(ILF.inj)[0];if(e&&l)e.pain=l.pain;save();render(false);toast('Deleted');NAV_DIR=-1;openInjury(ILF.inj)});return}
+},true);
+document.addEventListener('submit',ev=>{if(ev.target.id!=='ilForm')return;ev.preventDefault();ilSave()});
+document.addEventListener('input',ev=>{const t=ev.target;
+  if(t.id==='ilPain'){const v=+t.value,o=$('#ilOut');t.style.setProperty('--p',v*10+'%');if(o){o.textContent=v;o.style.background=painCol(v)}return}
+  if(t.dataset&&t.dataset.ilm!==undefined&&ILF){const m=ILF.meds[+t.dataset.ilm];if(m)m[t.dataset.k]=t.value;return}
+  const dc=t.closest&&t.closest('.dchip');if(dc){dc.classList.toggle('set',!!t.value);dc.querySelector('span').textContent=t.value?fmtDate(t.value):'Date'}});
+document.addEventListener('change',ev=>{const t=ev.target,dc=t.closest&&t.closest('.dchip');if(dc){dc.classList.toggle('set',!!t.value);dc.querySelector('span').textContent=t.value?fmtDate(t.value):'Date'}});
+document.addEventListener('keydown',ev=>{if(ev.key!=='Enter')return;
+  if(ev.target.id==='pjTaskIn'){ev.preventDefault();pjAddTask($('#pjTaskAdd').dataset.pid)}
+  else if(ev.target.id==='ilNewName'||ev.target.id==='ilNewDose'){ev.preventDefault();$('#ilNewAdd').click()}},true);
+
+/* ---------- header: one fixed layout height for both states, so floating can never move the scroll position ---------- */
+(function(){const t=document.getElementById('top');if(!t)return;let tm=0;
+  function measure(){const top=document.getElementById('top');if(!top||top.classList.contains('float'))return;
+    top.style.setProperty('--toph','auto');const h=Math.ceil(top.getBoundingClientRect().height);if(h>20)top.style.setProperty('--toph',h+'px')}
+  window.measureTop=measure;
+  const later=()=>{clearTimeout(tm);tm=setTimeout(measure,420)};
+  const _rT=render;render=function(a,f,d){const r=_rT(a,f,d);requestAnimationFrame(measure);return r};
+  addEventListener('resize',later);
+  new MutationObserver(()=>{if(!t.classList.contains('float'))later()}).observe(t,{attributes:true,attributeFilter:['class']});
+  requestAnimationFrame(measure);setTimeout(measure,600);
+  /* the greeting fit runs on resize / class change; it can no longer move layout, and it is capped so nothing can make it loop */
+  const _fit=fitHello;let n=0,t0=0;fitHello=function(){const now=performance.now();if(now-t0>1000){t0=now;n=0}if(++n>6)return;return _fit()};
+})();
 
 /* ===================== boot ===================== */
 load();
