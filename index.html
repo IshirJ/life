@@ -1929,7 +1929,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='112';
+const APP_VER='113';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -3985,7 +3985,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=112';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=113';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -5721,8 +5721,7 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-pane
   if(b.id==='jobsNow'){await importJobs(true);toast('Checked');return}
   if(p==='reels'){NAV_DIR=1;openSheet(`${sheetHead('Reel <em>saver</em>','conn')}<p class="small" style="margin-top:0">Share a reel to “Save to Life” and Gemini turns it into a guide: recipes go to Ideas → Reels and your food library (with macros), workouts become a workout template.</p>
     <ol class="steps"><li>Open <b>Shortcuts</b> → <b>+</b> → name it <b>Save to Life</b> → (i) → turn on <b>Show in Share Sheet</b>, accepting <b>URLs</b> and <b>Media</b>.</li>
-    <li>Add <b>Get Contents of URL</b>: URL <code>${esc(WURL())}/reels</code>, Method <b>POST</b>, Header <code>X-Life-Key</code> = your key (Settings → Connections), Request Body <b>File</b> = <b>Shortcut Input</b>.</li>
-    <li>Add <b>Show Notification</b> with the result.</li>
+    <li>Add <b>Get Type</b> → <b>If</b> Type contains <code>URL</code>: <b>Get Contents of URL</b> <code>${esc(WURL())}/reels</code>, POST, header <code>X-Life-Key</code> = your key, JSON body <code>url</code> = Shortcut Input.</li><li>Under <b>Otherwise</b>: the same call but Request Body <b>File</b> = Shortcut Input.</li><li>Add <b>Show Notification</b> with the result.</li>
     <li>Instagram/TikTok: tap Share → <b>Save to Life</b>. If Instagram hides the caption, save or screen-record the reel and share the video from Photos instead. YouTube links work directly.</li></ol>`);return}
   if(p==='stopper'){const pu=`${location.origin}${location.pathname.replace(/[^/]*$/,'')}pause.html`;NAV_DIR=1;openSheet(`${sheetHead('Social media <em>pause</em>','conn')}
     <div class="pv"><i></i></div><p class="small" style="margin-top:0;text-align:center">When you open Instagram, TikTok or YouTube, your phone shows a 30-second breathing pause first. Then you choose to close it or go in for 10 minutes.</p>
