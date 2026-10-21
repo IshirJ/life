@@ -154,3 +154,15 @@ test('jarvis restart reaches a running JARVIS through next', async () => {
   assert.deepEqual(await (await call(env, req('/jarvis/next?v=2', { key }))).json(), { restart: true });
   assert.deepEqual(await (await call(env, req('/jarvis/wake', { key }))).json(), {});
 });
+
+test('jarvis steps attach to the running command; stop marks it at once', async () => {
+  const { env, key } = await paired();
+  const { id } = await (await call(env, req('/jarvis/cmd', { method: 'POST', key, body: { text: 'do a thing' } }))).json();
+  await call(env, req('/jarvis/next', { key }));
+  await call(env, req('/jarvis/step', { method: 'POST', key, body: { id, lines: ['[router] web', 'opening Opera'] } }));
+  let log = await (await call(env, req('/jarvis/log', { key }))).json();
+  assert.deepEqual(log.log[0].steps, ['[router] web', 'opening Opera']);
+  await call(env, req('/jarvis/wake', { method: 'POST', key, body: { mode: 'stop' } }));
+  log = await (await call(env, req('/jarvis/log', { key }))).json();
+  assert.equal(log.log[0].state, 'error'); assert.equal(log.log[0].reply, 'Stopped.');
+});

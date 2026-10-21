@@ -174,7 +174,11 @@ export class SyncHub {
       const b = await request.json().catch(() => ({}));
       const mode = ['start', 'restart', 'stop'].includes(b.mode) ? b.mode : 'start';
       const j = (await this.ctx.storage.get('jarvis')) || { q: [], log: [], seen: 0 };
-      if (mode === 'stop') j.stop = Date.now(); else j.wake = { mode, at: Date.now() };
+      if (mode === 'stop') {
+        j.stop = Date.now(); j.q = [];
+        // the phone sees it stopped right away, even if the laptop is asleep
+        for (const l of j.log) if (l.state === 'running' || l.state === 'queued') { l.state = 'error'; l.reply = 'Stopped.'; l.done = Date.now(); }
+      } else j.wake = { mode, at: Date.now() };
       await this.ctx.storage.put('jarvis', j);
       this.broadcast({ t: 'jarvis' }, null);
       return Response.json({ ok: true });
@@ -186,6 +190,20 @@ export class SyncHub {
       if (j.wake) { delete j.wake; await this.ctx.storage.put('jarvis', j); }
       if (w) this.broadcast({ t: 'jarvis' }, null);
       return Response.json(w ? { mode: w.mode } : {});
+    }
+    // live progress lines from the laptop for the command it's working on
+    if (path === '/jarvis/step' && method === 'POST') {
+      const b = await request.json().catch(() => ({}));
+      const j = (await this.ctx.storage.get('jarvis')) || { q: [], log: [], seen: 0 };
+      const l = j.log.find((x) => x.id === String(b.id || ''));
+      if (l && l.state === 'running') {
+        const lines = (Array.isArray(b.lines) ? b.lines : [b.line]).map((x) => String(x || '').replace(/\s+/g, ' ').trim().slice(0, 160)).filter(Boolean);
+        l.steps = [...(l.steps || []), ...lines].slice(-40);
+        j.seen = Date.now();
+        await this.ctx.storage.put('jarvis', j);
+        this.broadcast({ t: 'jarvis' }, null);
+      }
+      return Response.json({ ok: true });
     }
     if (path === '/jarvis/log' && method === 'GET') {
       const j = (await this.ctx.storage.get('jarvis')) || { q: [], log: [], seen: 0 };

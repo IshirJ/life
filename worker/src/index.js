@@ -423,6 +423,7 @@ async function route(request, env, url) {
     case 'POST /jarvis/reply':
     case 'GET /jarvis/log':
     case 'POST /jarvis/wake':
+    case 'POST /jarvis/step':
     case 'GET /jarvis/wake':
       return hub(env, request);
     case 'GET /sync':

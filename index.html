@@ -1931,7 +1931,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='151';
+const APP_VER='153';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -3998,7 +3998,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=151';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=153';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -5751,7 +5751,7 @@ afterSplash(()=>setTimeout(()=>importReels(true),5000));
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){importReels();importJobs()}});
 
 /* ---------- JARVIS on your laptop, from here ---------- */
-let JV={log:[],seen:0,launcher:0,waking:null,t:0,local:[]};
+let JV={log:[],seen:0,launcher:0,waking:null,t:0,local:[],since:Date.now(),open:new Set(),restartAt:0};
 async function jvLoad(){try{const r=await api('/jarvis/log');JV.log=r.log||[];JV.seen=r.seen||0;JV.launcher=r.launcher||0;JV.waking=r.waking||null;jvPaint()}catch(e){}}
 /* questions the app can answer itself, instantly, without the laptop */
 function jvTime(e){const t=e.allDay?'':(e.type==='meeting'?e.time:e.start)||'';const hm=t.length>5?t.slice(11,16):t;return hm?fmtT(hm):'All day'}
@@ -5768,15 +5768,15 @@ function jvState(){const now=Date.now(),on=now-JV.seen<20000,lau=now-JV.launcher
 function jvPaint(){const L=$('#jvLog');if(!L)return;const{on,lau}=jvState();
   const st=$('#jvSt');if(st){st.className='jv-st'+(on?' on':'');
     const txt=on?'Laptop online':JV.waking?'Starting JARVIS on your laptop…':JV.seen?`JARVIS off · last seen ${esc(ago(JV.seen))}`:'JARVIS hasn’t checked in yet';
-    const act=on?`<button class="jv-act" data-jvwake="restart">${ic('refresh')}Restart</button>`:`<button class="jv-act pri" data-jvwake="start" ${JV.waking?'disabled':''}>${ic('play')}${JV.waking?'Starting…':'Start JARVIS'}</button>`;
+    const rs=JV.restartAt&&Date.now()-JV.restartAt<45000&&JV.seen<JV.restartAt+3000;const act=on||rs?`<button class="jv-act${rs?' busy':''}" data-jvwake="restart" ${rs?'disabled':''}>${ic('refresh')}${rs?'Restarting…':'Restart'}</button>`:`<button class="jv-act pri" data-jvwake="start" ${JV.waking?'disabled':''}>${ic('play')}${JV.waking?'Starting…':'Start JARVIS'}</button>`;
     st.innerHTML=`<i></i><span>${txt}</span>${act}`}
   const nt=$('#jvNote');if(nt)nt.innerHTML=!on&&!lau?'Your laptop isn’t answering. It’s asleep, offline, or hasn’t been logged into since the update. Wake it and tap Start.':'';
   const all=[...JV.log.map(x=>({...x})),...JV.local].sort((a,b)=>(a.at||0)-(b.at||0)).slice(-30);
-  const run=all.some(x=>!x.reply&&(x.state==='running'||x.state==='queued'));
-  L.innerHTML=all.length?all.map(x=>`<div class="jv-me">${esc(x.text)}</div>${x.reply?`<div class="jv-ai${x.local?' loc':''}">${esc(x.reply)}</div>`:`<div class="jv-ai wait">${x.state==='running'?'Working on it…':on?'Sent…':'Waiting for your laptop…'}</div>`}`).join(''):'<p class="hint">Type anything you’d say to JARVIS. Calendar and due-date questions are answered here instantly; everything else runs on your laptop.</p>';
-  const sb=$('#jvStop');if(sb)sb.hidden=!run;L.scrollTop=L.scrollHeight}
+  const run=all.some(x=>!x.reply&&(x.state==='running'||x.state==='queued')&&(x.at||0)>=JV.since&&Date.now()-(x.at||0)<6e5);
+  L.innerHTML=all.length?all.map(x=>`<div class="jv-me">${esc(x.text)}</div>${x.reply?`<div class="jv-ai${x.local?' loc':''}">${esc(x.reply)}</div>`:`<div class="jv-ai wait">${x.state==='running'?`<details class="jvsteps"${JV.open.has(x.id)?' open':''} data-jvid="${esc(x.id||'')}"><summary><span class="jvdot"></span>Working on it…${(x.steps||[]).length?`<em>${x.steps.length} step${x.steps.length>1?'s':''}</em>`:''}<i class="chev">${ic('chev')}</i></summary><ol>${(x.steps||[]).length?x.steps.map(l=>`<li>${esc(l.replace(/[\[\]]/g,'').trim())}</li>`).join(''):'<li class="mu">Waiting for the first step…</li>'}</ol></details>`:on?'Sent…':'Waiting for your laptop…'}</div>`}`).join(''):'<p class="hint">Type anything you’d say to JARVIS. Calendar and due-date questions are answered here instantly; everything else runs on your laptop.</p>';
+  const sb=$('#jvStop');if(sb)sb.hidden=!run;if(!JV.keepScroll)L.scrollTop=L.scrollHeight;JV.keepScroll=false}
 function openJarvis(){NAV_DIR=1;FORCE_MODE='m-bottom tall';openSheet(`${sheetHead('<em>JARVIS</em>')}${needSrv()}<div class="jv-st" id="jvSt"><i></i><span>Checking…</span></div><p class="small jv-note" id="jvNote"></p><div class="jv-log" id="jvLog"></div>
-  <button class="jv-stop" id="jvStop" hidden>${ic('close')}Stop what it’s doing</button>
+  <button class="jv-stop" id="jvStop" hidden>${ic('close')}Stop</button>
   <div class="jv-in"><input id="jvIn" placeholder="Ask JARVIS to do something" enterkeyhint="send" autocomplete="off"><button id="jvSend" aria-label="Send">${ic('send')}</button></div>
   <div class="jv-sugg">${['What’s on my calendar today?','What’s due this week?','Open Canvas in Opera','Open Outlook','Lock my laptop'].map(s=>`<button data-jvs="${esc(s)}">${esc(s)}</button>`).join('')}</div>
   <p class="small">Final submit, pay and send steps still need you to say "confirm" on the laptop.</p>`);jvLoad();clearInterval(JV.t);JV.t=setInterval(()=>{if(!$('#jvLog'))clearInterval(JV.t);else jvLoad()},5000)}
@@ -5784,7 +5784,7 @@ async function jvSend(t){t=(t||'').trim();if(!t)return;const i=$('#jvIn');if(i)i
   const loc=jvLocal(t);if(loc){JV.local.push({text:t,reply:loc,at:Date.now(),local:true});jvPaint();return}
   JV.log.push({text:t,state:'queued',at:Date.now()});jvPaint();
   try{await api('/jarvis/cmd',{method:'POST',body:JSON.stringify({text:t})});if(!jvState().on&&!JV.waking)await jvWake('start',true);jvLoad()}catch(e){toast('Couldn’t send: '+e.message)}}
-async function jvWake(mode,quiet){try{await api('/jarvis/wake',{method:'POST',body:JSON.stringify({mode})});if(mode!=='stop')JV.waking=mode;jvPaint();if(!quiet)toast(mode==='stop'?'Stopping…':mode==='restart'?'Restarting JARVIS…':'Starting JARVIS…');setTimeout(jvLoad,1500)}catch(e){toast('Couldn’t reach your server: '+e.message)}}
+async function jvWake(mode,quiet){if(mode==='stop'){JV.log.forEach(x=>{if(!x.reply&&(x.state==='running'||x.state==='queued')){x.state='error';x.reply='Stopped.'}});jvPaint()}if(mode==='restart'){JV.restartAt=Date.now();jvPaint()}try{await api('/jarvis/wake',{method:'POST',body:JSON.stringify({mode})});if(mode!=='stop')JV.waking=mode;jvPaint();if(!quiet)toast(mode==='stop'?'Stopping…':mode==='restart'?'Restarting JARVIS…':'Starting JARVIS…');setTimeout(jvLoad,1500)}catch(e){toast('Couldn’t reach your server: '+e.message)}}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-jarvis],#jvSend,[data-jvs],[data-jvwake],#jvStop');if(!b)return;e.stopImmediatePropagation();e.preventDefault();
   if(b.dataset.jarvis!==undefined)return openJarvis();if(b.id==='jvSend')return jvSend($('#jvIn').value);
   if(b.dataset.jvwake)return jvWake(b.dataset.jvwake);if(b.id==='jvStop')return jvWake('stop');jvSend(b.dataset.jvs)},true);
@@ -5928,10 +5928,10 @@ function jvReactor(){
   <text x="100" y="103.5" text-anchor="middle" font-family="Space Mono,monospace" font-size="8.5" font-weight="700" letter-spacing="1.6" fill="#2A1208">JARVIS</text></g></svg>`}
 const SRC=window.SpeechRecognition||window.webkitSpeechRecognition;
 const JH={rec:null,listening:false,heard:'',seen:new Set(),voice:null,lastSub:''};
-function jvHudState(){const h=$('#jvHud');if(!h)return;const run=[...JV.log].some(x=>!x.reply&&(x.state==='running'||x.state==='queued'));
+function jvHudState(){const h=$('#jvHud');if(!h)return;const run=[...JV.log].some(x=>!x.reply&&(x.state==='running'||x.state==='queued')&&(x.at||0)>=JV.since&&Date.now()-(x.at||0)<6e5);
   const speaking=typeof speechSynthesis!=='undefined'&&speechSynthesis.speaking;
   h.classList.toggle('listen',JH.listening);h.classList.toggle('think',!JH.listening&&run);h.classList.toggle('speak',!JH.listening&&!run&&speaking);
-  const m=$('#jvhMode');if(m)m.textContent=JH.listening?'Listening':run?'Working':speaking?'Speaking':'Standing by'}
+  const m=$('#jvhMode');if(m&&!h.classList.contains('boot'))m.textContent=JH.listening?'Listening':run?'Working':speaking?'Speaking':'Standing by'}
 function jvSay(text){try{if(typeof speechSynthesis==='undefined'||!text)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(text).slice(0,400));
   const vs=speechSynthesis.getVoices();JH.voice=JH.voice||vs.find(v=>/Daniel|Arthur|en-GB/i.test(v.name+' '+v.lang)&&/en-GB/i.test(v.lang))||vs.find(v=>/en-GB/i.test(v.lang))||null;
   if(JH.voice)u.voice=JH.voice;u.lang=JH.voice?JH.voice.lang:'en-GB';u.rate=1.02;u.pitch=.92;u.onstart=u.onend=()=>jvHudState();speechSynthesis.speak(u);setTimeout(jvHudState,60)}catch(e){}}
@@ -5976,10 +5976,10 @@ openJarvis=function(){
     ${syncOn()?'':`<p class="jv-note">Connect your server first (Settings → Connections).</p>`}
     <div class="jvh-stage"><div class="jvh-r" id="jvhR" aria-hidden="true">${jvReactor()}</div><div class="jvh-mode" id="jvhMode">Standing by</div><div class="jv-st jvh-st" id="jvSt"><i></i><span>Linking…</span></div><div class="jvh-sub" id="jvhSub">Tap the mic and talk.</div></div>
     <p class="jv-note" id="jvNote"></p><div class="jvh-log jv-log" id="jvLog"></div>
-    <button class="jv-stop" id="jvStop" hidden>${ic('close')}Stop what it’s doing</button>
+    <button class="jv-stop" id="jvStop" hidden>${ic('close')}Stop</button>
     <div class="jvh-in"><button class="jvh-mic" id="jvhMic" aria-label="Talk">${ic('mic')}</button><input id="jvIn" placeholder="Or type a command" enterkeyhint="send" autocomplete="off"><button id="jvSend" aria-label="Send">${ic('send')}</button></div>
     <div class="jv-sugg">${['What’s on my calendar today?','What’s due this week?','Open Canvas in Opera','Open Outlook','Open Spotify','Lock my laptop'].map(s=>`<button data-jvs="${esc(s)}">${esc(s)}</button>`).join('')}</div>`;
-  document.body.appendChild(h);JH.armed=false;JH.seen.clear();requestAnimationFrame(()=>h.classList.add('on'));JSPIN.last=0;if(!JSPIN.raf)JSPIN.raf=requestAnimationFrame(jvSpin);setTimeout(()=>document.documentElement.classList.add('jv-open'),380);
+  document.body.appendChild(h);if(!JV.booted){JV.booted=1;h.classList.add('boot');const m=h.querySelector('#jvhMode');if(m)m.textContent='Initializing';setTimeout(()=>{h.classList.remove('boot');jvHudState()},1500)}JH.armed=false;JH.seen.clear();requestAnimationFrame(()=>h.classList.add('on'));JSPIN.last=0;if(!JSPIN.raf)JSPIN.raf=requestAnimationFrame(jvSpin);setTimeout(()=>document.documentElement.classList.add('jv-open'),380);
   jvLoad();clearInterval(JV.t);JV.t=setInterval(()=>{if(!$('#jvLog'))clearInterval(JV.t);else jvLoad()},4000);
   try{speechSynthesis&&speechSynthesis.getVoices()}catch(e){}
 };
@@ -6145,6 +6145,85 @@ html:not([data-lay="port"]) .hart .hw{right:30px;top:18px;font-size:54px}
 </style>`);
 
 (document.body||document.head).insertAdjacentHTML('beforeend',`<style>.h3d .o{display:none}</style>`);
+
+document.addEventListener('toggle',e=>{const d=e.target;if(!d.matches||!d.matches('details.jvsteps'))return;const id=d.dataset.jvid;if(d.open)JV.open.add(id);else JV.open.delete(id);JV.keepScroll=true},true);
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="jvsteps">
+.jv-ai.wait{font-style:normal;opacity:1;min-width:62%}
+.jvsteps summary{list-style:none;display:flex;align-items:center;gap:8px;cursor:pointer;font-style:italic;color:rgb(244 239 230 / .85)}
+.jvsteps summary::-webkit-details-marker{display:none}
+.jvsteps summary em{font:600 11px var(--mono);font-style:normal;color:#86CFA0;background:rgb(134 207 160 / .12);padding:2px 7px;border-radius:999px;margin-left:auto}
+.jvsteps .chev{display:grid;place-items:center;width:20px;height:20px;transition:transform .3s cubic-bezier(.22,1,.36,1);margin-left:4px}.jvsteps .chev svg{width:14px;height:14px}
+.jvsteps summary:not(:has(em)) .chev{margin-left:auto}
+.jvsteps[open] .chev{transform:rotate(180deg)}
+.jvdot{width:8px;height:8px;border-radius:50%;background:#F2A65A;box-shadow:0 0 10px #F2A65A;animation:jvdp 1s ease-in-out infinite;flex:none}
+@keyframes jvdp{50%{opacity:.35}}
+.jvsteps ol{margin:10px 0 2px;padding:0 0 0 2px;list-style:none;display:flex;flex-direction:column;gap:6px;max-height:34vh;overflow:auto;font:400 12px/1.45 var(--mono);color:rgb(244 239 230 / .78);counter-reset:s}
+.jvsteps li{counter-increment:s;display:grid;grid-template-columns:22px 1fr;gap:4px;overflow-wrap:anywhere}
+.jvsteps li::before{content:counter(s);color:#F06D44;font-weight:700}
+.jvsteps li:last-child{color:#F4EFE6}
+.jvsteps li.mu{opacity:.6}.jvsteps li.mu::before{content:"…"}
+@keyframes jvsl{from{opacity:0;transform:translateY(4px)}}
+.jv-act.busy svg{animation:jvrs .8s linear infinite}
+@keyframes jvrs{to{transform:rotate(360deg)}}
+.jv-act:active{transform:scale(.94)}.jv-act{transition:transform .15s ease,background .3s}
+</style>`);
+
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="jvboot">
+#jvHud.boot .jvh-r{animation:jvb 1.3s cubic-bezier(.22,1,.36,1) both}
+#jvHud.boot .jvh-r g{animation:jvbg .9s ease-out both}
+#jvHud.boot .jvh-r g:nth-of-type(1){animation-delay:.05s}#jvHud.boot .jvh-r g:nth-of-type(2){animation-delay:.18s}#jvHud.boot .jvh-r g:nth-of-type(3){animation-delay:.3s}
+#jvHud.boot .jvh-r g:nth-of-type(4){animation-delay:.42s}#jvHud.boot .jvh-r g:nth-of-type(5){animation-delay:.54s}#jvHud.boot .jvh-r g:nth-of-type(6){animation-delay:.7s}
+#jvHud.boot .jvh-r::after{content:"";position:absolute;left:-10%;right:-10%;height:2px;top:0;background:linear-gradient(90deg,transparent,#86CFA0,transparent);box-shadow:0 0 12px #86CFA0;animation:jvscan 1.1s ease-in-out .1s both}
+#jvHud.boot .jvh-mode{animation:jvbt .3s steps(2) 4}
+@keyframes jvb{0%{transform:scale(.55);opacity:0;filter:brightness(2.2)}55%{transform:scale(1.05);opacity:1}100%{transform:none;filter:none}}
+@keyframes jvbg{from{opacity:0}to{opacity:1}}
+@keyframes jvscan{0%{top:0;opacity:0}15%{opacity:1}85%{opacity:1}100%{top:100%;opacity:0}}
+@keyframes jvbt{50%{opacity:.25}}
+</style>`);
+
+/* every tappable thing gets a tiny press motion. :where() has zero specificity, so anything that already
+   defines its own transition or :active effect keeps it untouched. */
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="pressfx">
+:where(button,a.btn,label.pill,[role="button"],[data-open],[data-add],.chip,.tile,.navrow,.trow){transition:transform .16s cubic-bezier(.22,1,.36,1),filter .16s ease}
+:where(button,a.btn,label.pill,[role="button"],[data-open],[data-add],.chip,.tile,.navrow,.trow):active{transform:scale(.965);filter:brightness(1.08)}
+@media (prefers-reduced-motion:reduce){:where(button,[role="button"]):active{transform:none}}
+</style>`);
+
+/* ---------- camera flash (torch) for the barcode scanner and the AI food camera ---------- */
+async function torchSet(video,on){const st=video&&video.srcObject;const tr=st&&st.getVideoTracks&&st.getVideoTracks()[0];if(!tr)throw new Error('Start the camera first');
+  const cap=tr.getCapabilities?tr.getCapabilities():{};if(cap&&cap.torch===false)throw new Error('no torch');
+  await tr.applyConstraints({advanced:[{torch:on}]});return on}
+function torchBtn(id){return`<button type="button" class="torch" id="${id}" aria-pressed="false" aria-label="Flash">${ic('bolt')}<span>Flash</span></button>`}
+document.addEventListener('click',async e=>{const b=e.target.closest('#scanTorch,#aicTorch');if(!b)return;e.preventDefault();e.stopImmediatePropagation();
+  const v=document.getElementById(b.id==='scanTorch'?'scanvid':'aicVid'),on=b.getAttribute('aria-pressed')!=='true';
+  try{await torchSet(v,on);b.setAttribute('aria-pressed',String(on))}catch(x){toast(/first/.test(x.message)?x.message:'This phone doesn’t let web apps use the flash. Turn on the Flashlight in Control Center instead.')}},true);
+/* scanner: add the flash button over the camera box */
+const _flBodyT=flBody;flBody=function(){let h=_flBodyT();if(FL.tab==='scan')h=h.replace('<div class="frame"></div></div>','<div class="frame"></div>'+torchBtn('scanTorch')+'</div>');return h};
+/* AI photo: an in-app camera with flash (the phone's own camera keeps its own flash button too) */
+const AIC={stream:null};
+function aicStop(){try{AIC.stream&&AIC.stream.getTracks().forEach(t=>t.stop())}catch(e){}AIC.stream=null}
+document.addEventListener('click',async e=>{const b=e.target.closest('#aicOpen,#aicShot,#aicClose');if(!b)return;e.preventDefault();e.stopImmediatePropagation();
+  if(b.id==='aicOpen'){const box=$('#aicBox');if(!box)return;box.hidden=false;
+    try{AIC.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280}},audio:false});const v=$('#aicVid');v.srcObject=AIC.stream;await v.play()}
+    catch(x){box.hidden=true;toast('Camera not available here. Use “Take photo” instead.')}return}
+  if(b.id==='aicClose'){aicStop();const box=$('#aicBox');if(box)box.hidden=true;return}
+  if(b.id==='aicShot'){const v=$('#aicVid');if(!v||!v.videoWidth)return;const s=Math.min(1,800/Math.max(v.videoWidth,v.videoHeight)),c=document.createElement('canvas');c.width=Math.round(v.videoWidth*s);c.height=Math.round(v.videoHeight*s);
+    c.getContext('2d').drawImage(v,0,0,c.width,c.height);AIF.img=c.toDataURL('image/jpeg',.74);AIF.items=null;AIF.err='';aicStop();flRefresh(false)}},true);
+const _flBodyA=flBody;flBody=function(){let h=_flBodyA();if(FL.tab==='ai'&&!AIF.img)h=h.replace('<div class="aif-pick">',`<div class="aic" id="aicBox" hidden><video id="aicVid" playsinline muted></video>${torchBtn('aicTorch')}<div class="aic-bar"><button type="button" id="aicClose" aria-label="Close camera">${ic('close')}</button><button type="button" class="aic-shot" id="aicShot" aria-label="Take photo"></button><span></span></div></div><div class="aif-pick"><button type="button" class="aic-open" id="aicOpen">${ic('camera')}Camera + flash</button>`);if(FL.tab!=='ai')aicStop();return h};
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="torchcss">
+.scanbox{position:relative}
+.torch{position:absolute;right:12px;top:12px;z-index:3;display:flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:999px;background:rgb(0 0 0 / .5);color:#fff;font:700 12.5px var(--ui);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgb(255 255 255 / .2)}
+.torch svg{width:16px;height:16px}.torch[aria-pressed="true"]{background:#F2C14E;color:#1A1205;border-color:transparent;box-shadow:0 0 18px rgb(242 193 78 / .6)}
+.aic{position:relative;border-radius:var(--r-l);overflow:hidden;background:#000;margin-bottom:12px;aspect-ratio:3/4;max-height:52vh}
+.aic video{width:100%;height:100%;object-fit:cover;display:block}
+.aic-bar{position:absolute;left:0;right:0;bottom:12px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 16px}
+.aic-bar button:first-child{width:40px;height:40px;border-radius:50%;background:rgb(0 0 0 / .5);color:#fff;display:grid;place-items:center}
+.aic-shot{width:66px;height:66px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px rgb(0 0 0 / .35),0 0 0 7px #fff}
+.aif-pick{grid-template-columns:repeat(3,1fr)!important}
+.aic-open{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;height:110px;border-radius:var(--r-l);border:1.5px dashed var(--line);background:var(--surface);font:700 13.5px var(--ui);color:var(--ink);text-align:center}.aic-open svg.i{width:26px;height:26px;color:var(--accent)}
+</style>`);
+
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style>#aifGo{height:52px;min-height:52px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;margin-top:12px}</style>`);
 
 /* ===================== boot ===================== */
 load();
