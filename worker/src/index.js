@@ -72,7 +72,7 @@ function mergeConfig(cur, body) {
     const k = String(body.fdcKey).trim().slice(0, 100);
     if (k) next.fdcKey = k; else delete next.fdcKey;
   }
-  if (body.jarvisVoice != null) { const v = String(body.jarvisVoice); if (/^[a-z]{2}-[A-Z]{2}-[A-Za-z]+Neural$/.test(v)) next.jarvisVoice = v; else if (!v) delete next.jarvisVoice; }
+  if (body.jarvisVoice != null) { const v = String(body.jarvisVoice); if (v === 'jarvis' || /^[a-z]{2}-[A-Z]{2}-[A-Za-z]+Neural$/.test(v)) next.jarvisVoice = v; else if (!v) delete next.jarvisVoice; }
   for (const k of ['unsplashKey', 'geminiKey', 'geminiModel']) {
     if (body[k] == null || body[k] === MASK) continue;
     const v = String(body[k]).trim().slice(0, 120);
@@ -426,7 +426,7 @@ async function route(request, env, url) {
       const id = (url.searchParams.get('id') || '').replace(/[^a-z0-9]/gi, '').slice(0, 40);
       const buf = await request.arrayBuffer();
       if (!id || !buf.byteLength) return err(400, 'id and audio required');
-      if (buf.byteLength > 1_500_000) return err(413, 'audio too large');
+      if (buf.byteLength > 4_000_000) return err(413, 'audio too large');
       await env.LIFE.put(`jvoice:${id}`, buf, { expirationTtl: 3600 });
       return json({ ok: true });
     }
@@ -445,7 +445,9 @@ async function route(request, env, url) {
       const id = (url.searchParams.get('id') || '').replace(/[^a-z0-9]/gi, '').slice(0, 40);
       const a = id && await env.LIFE.get(`jvoice:${id}`, 'arrayBuffer');
       if (!a) return err(404, 'no audio');
-      return new Response(a, { headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'private, max-age=3600' } });
+      const riff = new Uint8Array(a, 0, 4);
+      const type = String.fromCharCode(...riff) === 'RIFF' ? 'audio/wav' : 'audio/mpeg';
+      return new Response(a, { headers: { 'Content-Type': type, 'Cache-Control': 'private, max-age=3600' } });
     }
     case 'POST /jarvis/cmd':
     case 'GET /jarvis/next':

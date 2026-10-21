@@ -1931,7 +1931,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='166';
+const APP_VER='167';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -3998,7 +3998,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=166';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=167';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -5938,7 +5938,7 @@ function jvSay(text){try{if(typeof speechSynthesis==='undefined'||!text)return;i
 function jvSub(t){const s=$('#jvhSub');if(s&&t!==JH.lastSub){JH.lastSub=t;s.textContent=t;try{s.animate([{opacity:0,transform:'translateY(6px)'},{opacity:.92,transform:'none'}],{duration:320,easing:'ease-out'})}catch(e){}}}
 const _jvPaintH=jvPaint;jvPaint=function(){_jvPaintH();if(!$('#jvHud'))return;
   /* speak + subtitle replies that arrive while the screen is open */
-  const all=[...JV.log,...JV.local];for(const x of all){const k=(x.id||x.at)+'|'+(x.reply?1:0);if(x.reply&&!JH.seen.has(k)){JH.seen.add(k);if(JH.armed){jvSub(x.reply);if(!JH.listening&&x.reply!=='Stopped.')jvSpeak(x.reply,null)}}}
+  const all=[...JV.log,...JV.local];for(const x of all){const k=(x.id||x.at)+'|'+(x.reply?1:0);if(x.reply&&!JH.seen.has(k)){JH.seen.add(k);if(JH.armed){jvSub(x.reply);if(!JH.listening&&x.reply!=='Stopped.')jvSpeak(x.reply,x.local?null:x.id)}}}
   JH.armed=true;jvHudState()};
 function jvListen(){
   if(JH.listening){jvFinish();return}
@@ -6320,11 +6320,11 @@ async function jvRecord(){
 jvListen=jvRecord;
 
 /* voice picker: all free Microsoft neural voices, used by the laptop and played on the phone */
-const JVOICES=[['en-US-AndrewMultilingualNeural','Andrew','Warm, natural · default'],['en-US-BrianMultilingualNeural','Brian','Relaxed, conversational'],['en-GB-RyanNeural','Ryan','British, crisp'],
+const JVOICES=[['jarvis','JARVIS','The movie AI · offline on your laptop'],['en-US-AndrewMultilingualNeural','Andrew','Warm, natural'],['en-US-BrianMultilingualNeural','Brian','Relaxed, conversational'],['en-GB-RyanNeural','Ryan','British, crisp'],
   ['en-GB-ThomasNeural','Thomas','British, soft'],['en-US-ChristopherNeural','Christopher','Deep, steady'],['en-IE-ConnorNeural','Connor','Irish, friendly'],['en-US-AvaMultilingualNeural','Ava','Warm, female'],['en-GB-SoniaNeural','Sonia','British, female']];
 document.addEventListener('click',async e=>{const b=e.target.closest('#jvhVoice,[data-jvvoice]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();
   const L=$('#jvhVlist');if(!L)return;
-  if(b.id==='jvhVoice'){if(!L.hidden){L.hidden=true;return}if(!SV.cfg)try{SV.cfg=await api('/config')}catch(x){}const cur=(SV.cfg&&SV.cfg.jarvisVoice)||JVOICES[0][0];
+  if(b.id==='jvhVoice'){if(!L.hidden){L.hidden=true;return}if(!SV.cfg)try{SV.cfg=await api('/config')}catch(x){}const cur=(SV.cfg&&SV.cfg.jarvisVoice)||'jarvis';
     L.innerHTML=JVOICES.map(([id,n,d])=>`<button data-jvvoice="${id}" class="${id===cur?'on':''}"><b>${n}</b><small>${d}</small>${id===cur?ic('check'):''}</button>`).join('');L.hidden=false;return}
   const v=b.dataset.jvvoice;try{SV.cfg=await api('/config',{method:'PUT',body:JSON.stringify({jarvisVoice:v})});L.hidden=true;toast('Voice changed. Saying hello in it…');
     await api('/jarvis/cmd',{method:'POST',body:JSON.stringify({text:'__voicetest'})});jvLoad()}catch(x){toast('Couldn’t change the voice: '+x.message)}},true);
