@@ -1931,7 +1931,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='147';
+const APP_VER='151';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -2690,7 +2690,7 @@ async function refreshStatus(){if(!syncOn())return null;try{SV.status=await api(
 const b64uBytes=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return Uint8Array.from(atob(s),c=>c.charCodeAt(0))};
 
 /* notifications: Life works out the exact times, your server sends them */
-const NDEF={on:false,reminders:true,digestOn:true,digest:'08:00',classes:true,events:false,food:false,foodTime:'20:00',review:true,backup:true};
+const NDEF={on:false,reminders:true,digestOn:true,digest:'08:00',classes:true,events:false,food:false,foodTime:'20:00',review:true,backup:true,habits:true,urgent:true};
 const NS=()=>({...NDEF,...(SYNC.notif||{})});
 async function enablePush(){
   if(!syncOn()){toast('Connect your server first');return false}
@@ -2712,6 +2712,14 @@ function buildSchedule(){
   const add=(id,dt,title,body,url)=>{if(!dt)return;const t=dt.getTime();if(t>now-6e4&&t<lim)out.push({id,at:dt.toISOString(),title,body:body||'',url:url||APP_URL,tag:id})};
   for(let i=0;i<7;i++){const d=addDays(i),wd=wdOf(d);
     if(n.reminders)of('reminder').filter(e=>!e.done&&e.due===d).forEach(e=>add('r:'+e.id,atLocal(d,e.time||'09:00'),e.title,'Reminder'));
+    /* urgent reminders/tasks nag through the day (8 AM - 2 AM) until done: High every 90 min, Medium every 3 h */
+    if(i<2&&n.urgent)of('reminder').concat(of('task')).filter(x=>!x.done&&+x.urg>=2&&x.due&&x.due<=d).forEach(x=>{const step=+x.urg===3?90:180;
+      for(let m=8*60;m<26*60;m+=step){const t=new Date(atLocal(d,'00:00').getTime()+m*6e4);add(`u:${x.id}:${d}:${m}`,t,(+x.urg===3?'🔴 ':'')+x.title,+x.urg===3?'High urgency · still not done':'Still to do')}});
+    /* habit check-ins (8 AM - 2 AM): water ~every 50 min, creatine & vitamins every 3 h - they stop once ticked for the day */
+    if(i<2&&n.habits&&typeof habits==='function')habits().forEach(h=>{const nm=(h.name||'').toLowerCase();
+      const step=/water|hydrat/.test(nm)?50:/creatine|vitamin|supplement|multivit|omega|fish oil/.test(nm)?180:0;if(!step)return;
+      if(typeof hCount==='function'&&hCount(h,d)>=(h.target||1))return;
+      for(let m=8*60;m<26*60;m+=step){const t=new Date(atLocal(d,'00:00').getTime()+m*6e4);add(`h:${h.id}:${d}:${m}`,t,/water|hydrat/.test(nm)?'Drink some water 💧':`Take your ${h.name}`,/water/.test(nm)?'Tap to log it in Life.':'Tick it off in Life when done.',APP_URL+'#today')}});
     if(n.digestOn){const due=[...of('task').filter(e=>!e.done&&e.due&&(e.due===d||(i===0&&e.due<d))),...extOn(d).filter(e=>e.allDay&&e.date===d&&!isExtDone(e))];
       if(due.length)add('dg:'+d,atLocal(d,n.digest),`${due.length} task${due.length>1?'s':''} due${i===0&&due.some(e=>e.due<d)?' or late':''}`,due.slice(0,3).map(e=>e.title).join(' · '))}
     if(n.classes){of('class').filter(e=>(e.days||[]).includes(wd)&&e.start).forEach(e=>add(`c:${e.id}:${d}`,new Date(atLocal(d,e.start)-6e5),e.title,`Starts ${fmtT(e.start)}${e.place?' · '+e.place:''}`));
@@ -3128,6 +3136,8 @@ function openNotif(){
     ${trow('id="nOn"',!!n.on,'Allow notifications','Your iPhone asks once. Life must be opened from the Home Screen icon.')}
     <div class="set-grp">Send me</div>
     ${t('reminders','Reminders','At the time you set on each reminder')}
+    ${t('urgent','Urgent reminders','High: every 90 min · Medium: every 3 h · 8 AM–2 AM until done')}
+    ${t('habits','Habit check-ins','Water every ~50 min · creatine & vitamins every 3 h · 8 AM–2 AM until ticked')}
     ${t('classes','Classes and meetings','10 minutes before they start')}
     ${t('events','Linked calendar events','10 minutes before (Outlook, iCloud)')}
     ${t('digestOn','Morning digest','Tasks due today and anything late')}
@@ -3988,7 +3998,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=147';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=151';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -4828,7 +4838,7 @@ viewToday=function(){
 };
 /* rows know who they are, so swipe actions can find them; finished calendar items render crossed out */
 const _row=row;row=function(e){let h=_row(e);if(e.type==='ext'&&isExtDone(e)&&!/<li class="row done/.test(h))h=h.replace('<li class="row','<li class="row done');
-  const sid=e.type==='ext'?'x:'+(e.xid||''):e.id;return h.replace('<li class="row',`<li data-sid="${esc(sid)}" class="row`)};
+  const sid=e.type==='ext'?'x:'+(e.xid||''):e.id;const u=(e.type==='reminder'||e.type==='task')&&!e.done&&+e.urg?` urg${+e.urg}`:'';return h.replace('<li class="row',`<li data-sid="${esc(sid)}" class="row${u}`)};
 
 /* ticking a row: it stays where it is and a line draws through it; Undo in the toast or by swiping */
 function setDone(sid,val,rowEl){
@@ -4860,24 +4870,28 @@ function swActions(r){
 function swEnsure(r){let s=r.querySelector(':scope>.swa');if(s)return s;const a=swActions(r);if(!a.length)return null;
   s=document.createElement('div');s.className='swa';s.innerHTML=a.map(([k,c,i,l])=>`<button type="button" class="${c}" data-swact="${k}" aria-label="${l}">${ic(i)}<span>${l}</span></button>`).join('');
   r.appendChild(s);const w=a.length*74;r.style.setProperty('--sw',w+'px');r.dataset.sww=w;return s}
+function swEnsureL(r){let s=r.querySelector(':scope>.swl');if(s)return s;const e=find(r.dataset.sid||'');if(!e||!(e.type==='reminder'||e.type==='task')||e.done)return null;
+  const cur=+e.urg||0;s=document.createElement('div');s.className='swl';
+  s.innerHTML=[[0,'None'],[1,'Low'],[2,'Medium'],[3,'High']].map(([n,l])=>`<button type="button" class="u${n}${cur===n?' on':''}" data-urg="${n}" aria-label="Urgency ${l}"><b>${n?'!'.repeat(n):'–'}</b><span>${l}</span></button>`).join('');
+  r.appendChild(s);r.style.setProperty('--swl','256px');r.dataset.swlw=256;return s}
 function swSet(r,x){r.style.setProperty('--sx',x+'px')}
-function swClose(r){if(!r)return;swSet(r,0);if(SWO&&SWO===r)SWO=null;setTimeout(()=>{if(r!==SWO&&!r.classList.contains('swiping')){const s=r.querySelector(':scope>.swa');if(s&&getComputedStyle(r).getPropertyValue('--sx').trim()==='0px')s.remove()}},420)}
+function swClose(r){if(!r)return;swSet(r,0);if(SWO&&SWO===r)SWO=null;setTimeout(()=>{if(r!==SWO&&!r.classList.contains('swiping')){const s=r.querySelector(':scope>.swa');if(getComputedStyle(r).getPropertyValue('--sx').trim()==='0px'){if(s)s.remove();const l=r.querySelector(':scope>.swl');if(l)l.remove();delete r.dataset.side}}},420)}
 document.addEventListener('pointerdown',e=>{
   const r=e.target.closest('li.row[data-sid]');
-  if(SWO&&r!==SWO&&!e.target.closest('.swa'))swClose(SWO);
-  if(!r||e.target.closest('.swa')||(e.pointerType==='mouse'&&e.button!==0))return;
-  SW={r,x0:e.clientX,y0:e.clientY,base:r===SWO?-(+r.dataset.sww||0):0,dir:0,t:performance.now(),lx:e.clientX,v:0};
+  if(SWO&&r!==SWO&&!e.target.closest('.swa,.swl'))swClose(SWO);
+  if(!r||e.target.closest('.swa,.swl')||(e.pointerType==='mouse'&&e.button!==0))return;
+  SW={r,x0:e.clientX,y0:e.clientY,base:r===SWO?(r.dataset.side==='l'?(+r.dataset.swlw||0):-(+r.dataset.sww||0)):0,dir:0,t:performance.now(),lx:e.clientX,v:0};
 },{passive:true});
 document.addEventListener('pointermove',e=>{
   if(!SW)return;const dx=e.clientX-SW.x0,dy=e.clientY-SW.y0;
-  if(!SW.dir){if(Math.abs(dx)>9&&Math.abs(dx)>Math.abs(dy)*1.25){if(!swEnsure(SW.r)){SW=null;return}SW.dir=1;SW.r.classList.add('swiping');try{SW.r.setPointerCapture(e.pointerId)}catch(x){}}
+  if(!SW.dir){if(Math.abs(dx)>9&&Math.abs(dx)>Math.abs(dy)*1.25){const R=SW.base+dx>0;if(R?!swEnsureL(SW.r):!swEnsure(SW.r)){SW=null;return}SW.dir=1;SW.r.classList.add('swiping');try{SW.r.setPointerCapture(e.pointerId)}catch(x){}}
     else if(Math.abs(dy)>9){SW=null;return}else return}
-  const w=+SW.r.dataset.sww||0;let x=SW.base+dx;if(x>0)x=x*.2;if(x<-w)x=-w+(x+w)*.3;
+  const w=+SW.r.dataset.sww||0,wl=SW.r.querySelector(':scope>.swl')?(+SW.r.dataset.swlw||0):0;let x=SW.base+dx;if(x>0){if(!wl)x=x*.2;else if(x>wl)x=wl+(x-wl)*.3}if(x<-w)x=-w+(x+w)*.3;if(x<0&&!SW.r.querySelector(':scope>.swa')&&!swEnsure(SW.r))x=x*.2;
   const now=performance.now();SW.v=(e.clientX-SW.lx)/Math.max(1,now-SW.t);SW.t=now;SW.lx=e.clientX;swSet(SW.r,Math.round(x));SW.x=x;
 },{passive:true});
 function swEnd(){if(!SW)return;const s=SW;SW=null;if(!s.dir)return;s.r.classList.remove('swiping');SWBLOCK=Date.now();
-  const w=+s.r.dataset.sww||0,open=(s.x<-w*.4&&s.v<.4)||s.v<-.5;
-  if(open){swSet(s.r,-w);SWO=s.r}else swClose(s.r)}
+  const w=+s.r.dataset.sww||0,wl=+s.r.dataset.swlw||0,open=(s.x<-w*.4&&s.v<.4)||s.v<-.5,openL=wl&&s.r.querySelector(':scope>.swl')&&((s.x>wl*.4&&s.v>-.4)||s.v>.5);
+  if(openL){swSet(s.r,wl);SWO=s.r;s.r.dataset.side='l'}else if(open&&w){swSet(s.r,-w);SWO=s.r;s.r.dataset.side='r'}else swClose(s.r)}
 document.addEventListener('pointerup',swEnd,{passive:true});document.addEventListener('pointercancel',swEnd,{passive:true});
 document.addEventListener('click',e=>{if(Date.now()-SWBLOCK<350&&e.target.closest('li.row')&&!e.target.closest('.swa')){e.stopImmediatePropagation();e.preventDefault()}},true);
 document.addEventListener('click',e=>{
@@ -5032,6 +5046,24 @@ addEventListener('resize',()=>{const p=$('#fcPill');if(p&&p._drag)setTimeout(()=
 setInterval(()=>{const f=FOCUS(),v=$('#fcView');
   if(f){if(!v||v.hidden||!v.classList.contains('on'))focusTick()}
   else{if(v&&!v.hidden&&v.classList.contains('on')&&!v.querySelector('#fvRate'))hideFocus();const p=$('#fcPill');if(p)p.remove()}},1000);
+
+/* urgency: swipe a reminder or task to the RIGHT and pick None / Low / Medium / High */
+document.addEventListener('click',e=>{const b=e.target.closest('[data-urg]');if(!b)return;e.stopImmediatePropagation();e.preventDefault();
+  const r=b.closest('li.row'),x=find(r.dataset.sid),n=+b.dataset.urg;if(!x)return;x.urg=n||undefined;if(!n)delete x.urg;x.updated=Date.now();swClose(r);save();
+  toast(n===3?'High urgency: you’ll be reminded through the day until it’s done':n?`Urgency set to ${['','Low','Medium'][n]}`:'Urgency cleared');setTimeout(()=>render(false),380)},true);
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="urgcss">
+.swl{position:absolute;top:0;bottom:0;left:0;display:flex;align-items:stretch;width:var(--swl,0px);transform:translateX(calc(-1 * var(--swl,0px) + var(--sx,0px)));transition:transform .38s cubic-bezier(.22,1,.36,1)}
+li.row.swiping .swl{transition:none}
+.swl button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:700 11px var(--ui);color:#fff;min-width:0}
+.swl button b{font:800 17px/1 var(--ui)}
+.swl .u0{background:#5C574D}.swl .u1{background:#B98A3A}.swl .u2{background:#D9652E}.swl .u3{background:#E5352B}
+.swl button.on{box-shadow:inset 0 -4px 0 rgb(255 255 255 / .85)}
+li.row.urg1{box-shadow:inset 3px 0 0 #E0A34A}
+li.row.urg2{box-shadow:inset 4px 0 0 #F0753A;background:linear-gradient(90deg,rgb(240 117 58 / .10),transparent 40%)}
+li.row.urg3{box-shadow:inset 5px 0 0 #FF3B30,0 0 0 1px rgb(255 59 48 / .45);background:linear-gradient(90deg,rgb(255 59 48 / .24),rgb(255 59 48 / .06) 55%,transparent)}
+li.row.urg3 .t,li.row.urg3 b:first-child{color:#FF8A80}
+li.row>.swl{transform:translateX(calc(-1 * var(--swl,0px) + var(--sx,0px)))!important}
+</style>`);
 
 
 /* ===================== ui3: every section its own look, living plants, scroll sparks, focus on the lock screen, layout fixes ===================== */
@@ -5407,7 +5439,7 @@ body::before{background:linear-gradient(to bottom,rgb(0 0 0 / .5),rgb(0 0 0 / 0)
   background:linear-gradient(180deg,rgb(255 255 255 / .30),rgb(255 255 255 / .06));-webkit-background-clip:text;background-clip:text;color:transparent}
 @keyframes hg{to{transform:translate3d(-8%,6%,0) scale(1.12)}}
 /* 3D glass stack per section: three floating plates in perspective, the section's icon embossed on top, two glowing orbs */
-.hart .h3d{position:absolute;right:22px;top:66px;width:62px;height:62px;transform-style:preserve-3d;transform:perspective(520px) rotateX(55deg) rotateZ(-40deg);animation:none}
+.hart .h3d{position:absolute;right:24px;top:84px;width:56px;height:56px;transform-style:preserve-3d;transform:perspective(520px) rotateX(55deg) rotateZ(-40deg);animation:none}
 .h3d .p{position:absolute;inset:0;border-radius:var(--r-m);display:grid;place-items:center;transform-style:preserve-3d}
 .h3d .p1{transform:translateZ(0);background:color-mix(in srgb,var(--hc,#F06D44) 40%,#000);box-shadow:0 26px 40px rgb(0 0 0 / .45)}
 .h3d .p2{transform:translateZ(14px);background:linear-gradient(135deg,color-mix(in srgb,var(--hc,#F06D44) 70%,#fff 10%),color-mix(in srgb,var(--hc,#F06D44) 45%,#000));opacity:.85;border:1px solid rgb(255 255 255 / .2)}
@@ -6095,6 +6127,24 @@ fitHello=function(){const h=$('#top .hello h1');if(!h)return;h.style.transition=
 </style>`);
 
 (document.body||document.head).insertAdjacentHTML('beforeend',`<style id="topfix">.top.float::before{display:none!important}</style>`);
+
+/* ===== wide screens (iPad / landscape / laptop): predictable grid instead of newspaper columns =====
+   full-width: chips, hero, banners, week/timeline, notebooks, footers; everything else fills 2-3 even columns left to right */
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="widegrid">
+html:not([data-lay="port"]) .pane{columns:auto!important;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));column-gap:24px;row-gap:0;align-items:start;grid-auto-flow:row dense}
+html:not([data-lay="port"]) .pane>*{grid-column:auto;min-width:0}
+html:not([data-lay="port"]) .pane>.chips,html:not([data-lay="port"]) .pane>.hero,html:not([data-lay="port"]) .pane>.banner,html:not([data-lay="port"]) .pane>.qbar,
+html:not([data-lay="port"]) .pane>.sprig,html:not([data-lay="port"]) .pane>.lay-wide,html:not([data-lay="port"]) .pane>.sec:has(.wk),html:not([data-lay="port"]) .pane>.sec:has(.abars),
+html:not([data-lay="port"]) .pane>.sec:has(#nbStrip),html:not([data-lay="port"]) .pane>.sec:has(.nbs),html:not([data-lay="port"]) .pane>.sec:has(.fd-meal),html:not([data-lay="port"]) .pane>.tsum,
+html:not([data-lay="port"]) .pane>:not(.sec):not(.card-s){grid-column:1/-1}
+html:not([data-lay="port"]) .pane>.sec{margin-top:22px}
+html:not([data-lay="port"]) .nbs{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))!important}
+html:not([data-lay="port"]) .hero{padding:26px 28px 24px}
+html:not([data-lay="port"]) .hart .h3d{right:34px;top:92px;width:70px;height:70px}
+html:not([data-lay="port"]) .hart .hw{right:30px;top:18px;font-size:54px}
+</style>`);
+
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style>.h3d .o{display:none}</style>`);
 
 /* ===================== boot ===================== */
 load();
