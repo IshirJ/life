@@ -1931,7 +1931,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='163';
+const APP_VER='164';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -3998,7 +3998,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=163';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=164';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -6300,9 +6300,9 @@ async function jvRecord(){
   const AC=window.AudioContext||window.webkitAudioContext,ctx=new AC();await ctx.resume();
   const src=ctx.createMediaStreamSource(stream),proc=ctx.createScriptProcessor(4096,1,1),mute=ctx.createGain();mute.gain.value=0;
   const ratio=ctx.sampleRate/16000,chunks=[];let started=false,quiet=0,t0=performance.now(),done=false,peak=0;
-  JR.on=true;JH.listening=true;JH.boost=1;jvSub('Listening…');jvHudState();
+  JR.on=true;JR.noise=null;JR.thr=0.01;JH.listening=true;JH.boost=1;jvSub('Listening… tap the mic again when you’re done');jvHudState();
   const finish=async(send)=>{if(done)return;done=true;JR.on=false;JH.listening=false;try{proc.disconnect();src.disconnect();stream.getTracks().forEach(t=>t.stop());ctx.close()}catch(e){}jvHudState();
-    if(!send||!started){jvSub(started?'Cancelled.':'I didn’t hear anything.');return}
+    const secs=chunks.reduce((t,c)=>t+c.length,0)/16000;if(!send||secs<0.6){jvSub('I didn’t hear anything. Tap the mic, speak, then tap it again.');return}
     jvSub('Thinking…');const h=$('#jvHud');if(h)h.classList.add('think');
     try{const b=new Blob([wavEncode(chunks,16000)]);const url=await new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result.replace(/^data:[^;]*/,'data:audio/wav'));f.readAsDataURL(b)});
       const r=await api('/ai/stt',{method:'POST',body:JSON.stringify({audio:url})});const t=(r.text||'').trim();
@@ -6311,8 +6311,8 @@ async function jvRecord(){
   JR.stop=()=>finish(true);
   proc.onaudioprocess=e=>{if(done)return;const d=e.inputBuffer.getChannelData(0);let sum=0;for(let i=0;i<d.length;i++)sum+=d[i]*d[i];const rms=Math.sqrt(sum/d.length);peak=Math.max(peak*.95,rms);
     const out=new Float32Array(Math.floor(d.length/ratio));for(let i=0;i<out.length;i++)out[i]=d[Math.floor(i*ratio)];chunks.push(out);
-    const dt=d.length/ctx.sampleRate,thr=0.018;if(rms>thr){started=true;quiet=0;JH.boost=Math.min(1.5,rms*25)}else if(started)quiet+=dt;
-    const el=(performance.now()-t0)/1000;if((started&&quiet>1.4)||el>15||(!started&&el>7))finish(true)};
+    const dt=d.length/ctx.sampleRate,thr=JR.thr;JR.noise=JR.noise==null?rms:Math.min(JR.noise*1.002+1e-5,Math.max(JR.noise*.98,rms));JR.thr=Math.max(0.004,(JR.noise||0)*2.6);if(rms>thr){started=true;quiet=0;JH.boost=Math.min(1.5,rms*25)}else if(started)quiet+=dt;
+    const el=(performance.now()-t0)/1000;JR.el=el;if((started&&quiet>1.5)||el>15||(!started&&el>10))finish(true)};
   src.connect(proc);proc.connect(mute);mute.connect(ctx.destination);
 }
 jvListen=jvRecord;
