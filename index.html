@@ -1963,7 +1963,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='171';
+const APP_VER='172';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -4136,7 +4136,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=171';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=172';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -5842,17 +5842,19 @@ afterSplash(()=>setTimeout(()=>{bgPhoto();hydratePhotos();deEmoji($('#view'))},6
 /* ---------- readiness: overnight resting HR vs your normal, last night's sleep, yesterday's training ---------- */
 function readiness(){
   if(typeof hday!=='function')return null;const td=today(),h=hday(td)||{},y=hday(addDays(-1))||{};
-  const rhr=num(h.restingHr)||num(y.restingHr)||0,sleep=num(h.sleepMin)||0;
+  const rhrT=num(h.restingHr),rhr=rhrT||num(y.restingHr)||0,sleep=num(h.sleepMin)||0;
   const base=[];for(let i=1;i<=21;i++){const d=hday(addDays(-i));if(d&&num(d.restingHr))base.push(num(d.restingHr))}
   if(!rhr&&!sleep)return null;
   const b=base.length>=4?base.reduce((s,v)=>s+v,0)/base.length:null;
   const load=of('workout').filter(e=>e.date===addDays(-1)).reduce((s,e)=>s+num(e.minutes),0);
-  const pr=b&&rhr?Math.max(0,Math.min(1,1-(rhr-b+1)/8)):.7;           // 1 bpm under normal ≈ full marks; 7 over ≈ zero
-  const ps=sleep?Math.max(0,Math.min(1,sleep/480)):.6;
+  // only last night's resting HR counts; yesterday's is a weak stand-in, so it can't earn more than half marks
+  let pr=b&&rhr?Math.max(0,Math.min(1,1-(rhr-b+1)/8)):.5;if(!rhrT)pr=Math.min(pr,.5);           // 1 bpm under normal ≈ full marks; 7 over ≈ zero
+  // no sleep recorded counts as no sleep: a missing night must never look like a good one
+  const ps=sleep?Math.max(0,Math.min(1,sleep/480)):0;
   const pl=load>120?.4:load>75?.7:1;
   const score=Math.round(100*(pr*.45+ps*.4+pl*.15));
   const label=score>=85?'Ready to push':score>=68?'Train normally':score>=50?'Go easy today':'Recover today';
-  return{score,label,rhr,base:b?Math.round(b):null,sleep,load,parts:[['Heart',pr,b&&rhr?`${rhr} vs ${Math.round(b)} bpm`:'need a few nights'],['Sleep',ps,sleep?`${(sleep/60).toFixed(1)} h`:'no data'],['Training',pl,load?`${load} min yesterday`:'rest day']]}}
+  return{score,label,rhr,base:b?Math.round(b):null,sleep,load,parts:[['Heart',pr,b&&rhr?`${rhr} vs ${Math.round(b)} bpm${rhrT?'':' (yesterday)'}`:'need a few nights'],['Sleep',ps,sleep?`${(sleep/60).toFixed(1)} h`:'none recorded'],['Training',pl,load?`${load} min yesterday`:'rest day']]}}
 function dial(v,max,col,label,big){const r=50,c=2*Math.PI*r,p=Math.max(0,Math.min(1,v/max));
   return`<div class="ts-dial"><svg viewBox="0 0 120 120"><g class="ticks">${Array.from({length:40},(_,i)=>{const a=i/40*Math.PI*2;return`<line x1="${(60+57*Math.cos(a)).toFixed(1)}" y1="${(60+57*Math.sin(a)).toFixed(1)}" x2="${(60+(i%5?55:53)*Math.cos(a)).toFixed(1)}" y2="${(60+(i%5?55:53)*Math.sin(a)).toFixed(1)}"/>`}).join('')}</g><circle class="tk" cx="60" cy="60" r="${r}" stroke-width="9"/><circle class="pg" cx="60" cy="60" r="${r}" stroke-width="9" stroke="${col}" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${c.toFixed(1)}" data-off="${(c*(1-p)).toFixed(1)}"/></svg><div><b class="num">${big}</b><small>${label}</small></div></div>`}
 function animDials(root){requestAnimationFrame(()=>requestAnimationFrame(()=>$$('[data-off]',root||document).forEach(c=>c.style.strokeDashoffset=c.dataset.off)))}
