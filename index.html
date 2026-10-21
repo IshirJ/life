@@ -1931,7 +1931,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='153';
+const APP_VER='155';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -3998,7 +3998,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=153';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=155';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -5932,7 +5932,7 @@ function jvHudState(){const h=$('#jvHud');if(!h)return;const run=[...JV.log].som
   const speaking=typeof speechSynthesis!=='undefined'&&speechSynthesis.speaking;
   h.classList.toggle('listen',JH.listening);h.classList.toggle('think',!JH.listening&&run);h.classList.toggle('speak',!JH.listening&&!run&&speaking);
   const m=$('#jvhMode');if(m&&!h.classList.contains('boot'))m.textContent=JH.listening?'Listening':run?'Working':speaking?'Speaking':'Standing by'}
-function jvSay(text){try{if(typeof speechSynthesis==='undefined'||!text)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(String(text).slice(0,400));
+function jvSay(text){try{if(typeof speechSynthesis==='undefined'||!text)return;if(speechSynthesis.speaking||speechSynthesis.pending)speechSynthesis.cancel();if(speechSynthesis.paused)speechSynthesis.resume();const u=new SpeechSynthesisUtterance(String(text).slice(0,400));
   const vs=speechSynthesis.getVoices();JH.voice=JH.voice||vs.find(v=>/Daniel|Arthur|en-GB/i.test(v.name+' '+v.lang)&&/en-GB/i.test(v.lang))||vs.find(v=>/en-GB/i.test(v.lang))||null;
   if(JH.voice)u.voice=JH.voice;u.lang=JH.voice?JH.voice.lang:'en-GB';u.rate=1.02;u.pitch=.92;u.onstart=u.onend=()=>jvHudState();speechSynthesis.speak(u);setTimeout(jvHudState,60)}catch(e){}}
 function jvSub(t){const s=$('#jvhSub');if(s&&t!==JH.lastSub){JH.lastSub=t;s.textContent=t;try{s.animate([{opacity:0,transform:'translateY(6px)'},{opacity:.92,transform:'none'}],{duration:320,easing:'ease-out'})}catch(e){}}}
@@ -6224,6 +6224,23 @@ const _flBodyA=flBody;flBody=function(){let h=_flBodyA();if(FL.tab==='ai'&&!AIF.
 </style>`);
 
 (document.body||document.head).insertAdjacentHTML('beforeend',`<style>#aifGo{height:52px;min-height:52px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;margin-top:12px}</style>`);
+
+/* iPhone only lets a page talk after it has spoken once during a tap: "unlock" the voice on every JARVIS tap */
+function jvUnlockVoice(){try{if(typeof speechSynthesis==='undefined'||JH.unlocked)return;const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);speechSynthesis.getVoices();JH.unlocked=true}catch(e){}}
+document.addEventListener('pointerdown',e=>{if(e.target.closest('#jvHud,[data-jarvis]'))jvUnlockVoice()},true);
+document.addEventListener('keydown',e=>{if(e.target&&e.target.id==='jvIn')jvUnlockVoice()},true);
+try{if(typeof speechSynthesis!=='undefined')speechSynthesis.onvoiceschanged=()=>{JH.voice=null}}catch(e){}
+/* the glow behind the reactor breathes while it listens, works or talks, and pulses once when you send a command */
+const _jvSendP=jvSend;jvSend=async function(t){const r=$('#jvhR');if(r&&(t||'').trim()){r.classList.remove('kick');void r.offsetWidth;r.classList.add('kick')}return _jvSendP(t)};
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="jvglow">
+.jvh-r::before{will-change:transform,opacity}
+#jvHud.listen .jvh-r::before{animation:jvgl .9s ease-in-out infinite}
+#jvHud.think .jvh-r::before{animation:jvgl 1.6s ease-in-out infinite}
+#jvHud.speak .jvh-r::before{animation:jvgl .55s ease-in-out infinite}
+.jvh-r.kick::before{animation:jvkick .9s cubic-bezier(.22,1,.36,1)}
+@keyframes jvgl{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.18);opacity:1}}
+@keyframes jvkick{0%{transform:scale(1);opacity:1}35%{transform:scale(1.35);opacity:1;filter:brightness(1.6)}100%{transform:scale(1);opacity:.85}}
+</style>`);
 
 /* ===================== boot ===================== */
 load();
