@@ -1,5 +1,5 @@
 // Data sources: ICS calendars, Outlook (Graph) mail/calendar, Gmail ingest, health (Apple ingest + Google Health).
-import { kvGet, cacheGet, cachePut, looseNumber, DEFAULT_TZ } from './util.js';
+import { kvGet, cacheGet, cachePut, looseNumber, DEFAULT_TZ, fetchT, responseText } from './util.js';
 import { expandIcs } from './ics.js';
 import { getAccessToken, ReauthError } from './oauth.js';
 import { localToUtc, utcToLocal, parseYmd, fmtDate, todayIn, ianaToWindows, dayNum, fromDayNum } from './tz.js';
@@ -17,13 +17,21 @@ function errorEntry(source, e) {
 // ---------------- ICS calendars ----------------
 export const normalizeIcsUrl = (u) => String(u || '').trim().replace(/^webcals?:\/\//i, 'https://');
 
+const ICS_MAX = 5 * 1024 * 1024;
 async function fetchIcs(url) {
   const ck = `ics:${url}`;
   const hit = await cacheGet(ck);
   if (hit != null) return hit;
-  const res = await fetch(url, { headers: { Accept: 'text/calendar, */*', 'User-Agent': 'life-sync/1.0' } });
+  if (!/^https?:\/\//i.test(url)) throw new Error('calendar link must start with https://');
+  let res;
+  try {
+    res = await fetchT(url, { headers: { Accept: 'text/calendar, */*', 'User-Agent': 'life-sync/1.0' } }, 10000);
+  } catch (e) {
+    throw new Error(e?.name === 'TimeoutError' ? 'calendar took too long to answer' : 'calendar unreachable');
+  }
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const text = await res.text();
+  let text;
+  try { text = await responseText(res, ICS_MAX); } catch { throw new Error('calendar feed too large (max 5 MB)'); }
   if (!/BEGIN:VCALENDAR/i.test(text)) throw new Error('not an iCalendar feed');
   await cachePut(ck, text, 15 * 60);
   return text;
@@ -48,9 +56,9 @@ export async function getCalendar(config, from, to) {
 // ---------------- Outlook via Graph ----------------
 async function graph(env, config, path, headers = {}) {
   const token = await getAccessToken('ms', env, config);
-  const res = await fetch(path.startsWith('http') ? path : GRAPH + path, {
+  const res = await fetchT(path.startsWith('http') ? path : GRAPH + path, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', ...headers },
-  });
+  }, 15000);
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const e = new Error(`Graph ${res.status}: ${data?.error?.code || ''} ${data?.error?.message || ''}`.trim());
@@ -192,7 +200,7 @@ export function normalizeHealthDay(raw, tz) {
 
 export async function ingestHealth(env, body, config, now = Date.now()) {
   const tz = tzOf(config);
-  const list = Array.isArray(body.days) ? body.days : [body];
+  const list = Array.isArray(body) ? body : Array.isArray(body.days) ? body.days : [body];
   const store = (await kvGet(env, 'health')) || { days: {}, updated: null };
   let n = 0;
   for (const raw of list) {
@@ -216,10 +224,10 @@ const civil = (ymd) => ({ date: { year: ymd.y, month: ymd.m, day: ymd.d }, time:
 
 async function googleFetch(env, config, url, init = {}) {
   const token = await getAccessToken('google', env, config);
-  const res = await fetch(url, {
+  const res = await fetchT(url, {
     ...init,
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json', ...(init.headers || {}) },
-  });
+  }, 15000);
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(`Google Health ${res.status}: ${data?.error?.status || ''} ${data?.error?.message || ''}`.trim());
   return data;

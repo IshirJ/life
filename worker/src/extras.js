@@ -1,6 +1,7 @@
 // Extras: Unsplash photos, Blacksburg Transit departures, Gemini (food photos + reel guides),
 // job emails from Gmail, social-media pause log. All free services; keys live in the server config.
-import { kvGet, kvPut, json, err, readJson, HttpError, cacheGet, cachePut } from './util.js';
+import { kvGet, kvPut, json, err, readJson, HttpError, cacheGet, cachePut, fetchT, responseText, safeIso } from './util.js';
+import { todayIn } from './tz.js';
 
 const DAY = 864e5;
 const clip = (v, n) => String(v ?? '').slice(0, n);
@@ -17,7 +18,9 @@ export async function getImages(env, config, url) {
   if (hit && Date.now() - hit.at < 7 * DAY) return json({ photos: hit.photos, cached: true });
   if (!config.unsplashKey) return json({ photos: hit?.photos || [], error: 'no_key' });
   const api = `https://api.unsplash.com/search/photos?query=${encodeURIComponent(q)}&orientation=${o}&per_page=12&content_filter=high`;
-  const r = await fetch(api, { headers: { Authorization: `Client-ID ${config.unsplashKey}`, 'Accept-Version': 'v1' } });
+  let r;
+  try { r = await fetchT(api, { headers: { Authorization: `Client-ID ${config.unsplashKey}`, 'Accept-Version': 'v1' } }, 10000); }
+  catch { return json({ photos: hit?.photos || [], error: 'unsplash unreachable' }); }
   if (!r.ok) return json({ photos: hit?.photos || [], error: r.status === 403 || r.status === 429 ? 'rate' : `unsplash ${r.status}` });
   const d = await r.json();
   const photos = (d.results || []).map((p) => ({
@@ -39,12 +42,25 @@ export async function imageUsed(request, env, config) {
   const { dl } = await readJson(request, 2000);
   if (!config.unsplashKey || typeof dl !== 'string' || !dl.startsWith('https://api.unsplash.com/photos/')) return json({ ok: false });
   const seen = (await cacheGet('imgseen:' + dl)) || null;
-  if (!seen) { await fetch(dl, { headers: { Authorization: `Client-ID ${config.unsplashKey}` } }).catch(() => {}); await cachePut('imgseen:' + dl, 1, 86400); }
+  if (!seen) { await fetchT(dl, { headers: { Authorization: `Client-ID ${config.unsplashKey}` } }, 8000).catch(() => {}); await cachePut('imgseen:' + dl, 1, 86400); }
   return json({ ok: true });
 }
 
 // ---------------- Blacksburg Transit ----------------
-const BT = 'http://www.bt4uclassic.org/webservices/bt4u_webservice.asmx';
+// HTTPS first (the service publishes https links); plain http only if https can't be reached at all.
+const BT_HOSTS = ['https://www.bt4uclassic.org', 'http://www.bt4uclassic.org'];
+const BT_PATH = '/webservices/bt4u_webservice.asmx';
+const BT_MAX = 512 * 1024;
+async function btFetch(op) {
+  let last;
+  for (const h of BT_HOSTS) {
+    try {
+      const r = await fetchT(`${h}${BT_PATH}/${op}`, {}, 3000);
+      return { ok: r.ok, status: r.status, text: r.ok ? await responseText(r, BT_MAX, true) : '' };
+    } catch (e) { last = e; }
+  }
+  return { ok: false, status: 0, error: last?.name === 'TimeoutError' ? 'timeout' : 'unreachable', text: '' };
+}
 const tag = (xml, t) => [...xml.matchAll(new RegExp(`<${t}>([^<]*)</${t}>`, 'g'))].map((m) => m[1]);
 export async function getBus(url) {
   const route = clip(url.searchParams.get('route'), 8).toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -53,11 +69,12 @@ export async function getBus(url) {
   const ck = `bus:${route}:${stop}`;
   const hit = await cacheGet(ck);
   if (hit) return json(hit);
-  const r = await fetch(`${BT}/GetNextDepartures?routeShortName=${route}&stopCode=${stop}`);
-  if (!r.ok) return json({ route, stop, deps: [], error: `BT ${r.status}` });
-  const xml = await r.text();
+  const r = await btFetch(`GetNextDepartures?routeShortName=${route}&stopCode=${stop}`);
+  if (!r.ok) return json({ route, stop, deps: [], error: r.error ? `BT ${r.error}` : `BT ${r.status}` });
+  const xml = r.text;
   const times = tag(xml, 'AdjustedDepartureTime'), names = tag(xml, 'StopName');
-  const out = { route, stop, stopName: names[0] || '', deps: times.map((t) => new Date(t).toISOString()).filter((t) => t !== 'Invalid Date').slice(0, 8), at: Date.now() };
+  // one malformed time must not sink the whole answer
+  const out = { route, stop, stopName: names[0] || '', deps: times.map((t) => safeIso(t)).filter(Boolean).slice(0, 8), at: Date.now() };
   await cachePut(ck, out, 20);
   return json(out);
 }
@@ -67,12 +84,56 @@ export async function getBusStops(url) {
   const ck = `busstops:${route}`;
   const hit = await cacheGet(ck);
   if (hit) return json(hit);
-  const r = await fetch(`${BT}/GetScheduledStopCodes?routeShortName=${route}`);
-  const xml = r.ok ? await r.text() : '';
+  const r = await btFetch(`GetScheduledStopCodes?routeShortName=${route}`);
+  const xml = r.ok ? r.text : '';
   const codes = tag(xml, 'StopCode'), names = tag(xml, 'StopName');
   const out = { route, stops: codes.map((c, i) => ({ code: c, name: names[i] || c })) };
   if (out.stops.length) await cachePut(ck, out, 6 * 3600);
   return json(out);
+}
+
+// ---------------- AI output is untrusted: coerce + clamp everything ----------------
+export function num(v, lo, hi, dp = 0) {
+  const n = typeof v === 'number' ? v : typeof v === 'string' ? parseFloat(v) : NaN;
+  const c = Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : lo;
+  return dp ? +c.toFixed(dp) : Math.round(c);
+}
+const str = (v, n = 80) => (typeof v === 'string' || typeof v === 'number' ? String(v) : '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, n).trim();
+export function cleanFood(x) {
+  return {
+    name: str(x.name), grams: num(x.grams, 0, 3000), kcal: num(x.kcal, 0, 5000),
+    protein: num(x.protein, 0, 500, 1), fat: num(x.fat, 0, 500, 1), carbs: num(x.carbs, 0, 500, 1),
+    confidence: ['high', 'medium', 'low'].includes(str(x.confidence, 10).toLowerCase()) ? str(x.confidence, 10).toLowerCase() : '',
+  };
+}
+const ACTION_TYPES = ['add_task', 'add_reminder', 'log_food', 'tick_habit', 'complete', 'start_focus', 'set_bus_stop', 'needs_laptop'];
+const MEALS = ['breakfast', 'lunch', 'dinner', 'snack'];
+// Only known action types and fields, with sane values; anything else is dropped.
+export function cleanActions(list) {
+  const out = [];
+  for (const a of Array.isArray(list) ? list : []) {
+    if (out.length >= 5) break;
+    if (!a || typeof a !== 'object' || !ACTION_TYPES.includes(a.type)) continue;
+    const o = { type: a.type };
+    const title = str(a.title);
+    if (title) o.title = title;
+    if (typeof a.due === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(a.due.trim()) && !Number.isNaN(Date.parse(a.due.trim()))) o.due = a.due.trim();
+    if (typeof a.time === 'string' && /^([01]?\d|2[0-3]):[0-5]\d$/.test(a.time.trim())) o.time = a.time.trim().padStart(5, '0');
+    if (a.urgency != null) o.urgency = num(a.urgency, 0, 3);
+    if (a.type === 'log_food') {
+      for (const [k, hi] of [['kcal', 5000], ['protein', 500], ['fat', 500], ['carbs', 500], ['grams', 3000]]) if (a[k] != null) o[k] = num(a[k], 0, hi, k === 'kcal' || k === 'grams' ? 0 : 1);
+      const meal = str(a.meal, 20).toLowerCase();
+      if (MEALS.includes(meal)) o.meal = meal;
+    }
+    if (a.type === 'start_focus' && a.minutes != null) o.minutes = num(a.minutes, 1, 600);
+    if (a.type === 'set_bus_stop') {
+      const route = str(a.route, 8).toUpperCase().replace(/[^A-Z0-9]/g, ''), stop = str(a.stop, 8).replace(/\D/g, '');
+      if (route) o.route = route;
+      if (stop) o.stop = stop;
+    }
+    out.push(o);
+  }
+  return out;
 }
 
 // ---------------- Gemini (free tier) ----------------
@@ -140,8 +201,8 @@ export async function aiFood(request, config) {
   if (!parts.length && !text) return err(400, 'image or text required');
   parts.push({ text: `You are a careful nutrition logger. Identify each separate food or drink ${parts.length ? 'in the photo' : 'described'}${text ? ` (the person says: "${text}")` : ''}. Estimate the eaten portion in grams and its calories, protein, fat and carbs for that portion, using standard nutrition databases (USDA, IFCT for Indian dishes). Prefer realistic home or restaurant portions. Use short plain names. confidence is high, medium or low. If nothing edible is visible, return an empty list with a note.` });
   const out = await gemini(config, parts, FOOD_SCHEMA);
-  const items = (out.items || []).slice(0, 12).map((x) => ({ name: clip(x.name, 80), grams: Math.round(+x.grams || 0), kcal: Math.round(+x.kcal || 0), protein: +(+x.protein || 0).toFixed(1), fat: +(+x.fat || 0).toFixed(1), carbs: +(+x.carbs || 0).toFixed(1), confidence: clip(x.confidence, 10) }));
-  return json({ items, note: clip(out.note, 200) });
+  const items = (Array.isArray(out?.items) ? out.items : []).slice(0, 12).filter((x) => x && typeof x === 'object').map(cleanFood);
+  return json({ items, note: clip(out?.note, 200).trim() });
 }
 
 // Reel → guide. Accepts a link (YouTube works directly; Instagram/TikTok use the public caption when the
@@ -155,27 +216,32 @@ const REEL_SCHEMA = { type: 'OBJECT', properties: {
 const REEL_PROMPT = 'Turn this short video into a clean, organised guide. If it is a recipe: list ingredients with amounts, numbered steps, servings, and estimate calories/protein/fat/carbs per serving. If it is a workout: list each exercise with sets, reps and form notes. Otherwise: summarise the key points as steps or tips. Keep it faithful to the video; do not invent steps that are not shown or said. Short title (max 60 chars).';
 async function pageMeta(link) {
   try {
-    const r = await fetch(link, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; facebookexternalhit/1.1)', Accept: 'text/html' }, redirect: 'follow' });
+    if (!/^https?:\/\//i.test(link)) return '';
+    const r = await fetchT(link, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; facebookexternalhit/1.1)', Accept: 'text/html' }, redirect: 'follow' }, 8000);
     if (!r.ok) return '';
-    const html = (await r.text()).slice(0, 400000);
+    const html = await responseText(r, 400000, true);   // never buffers more than 400 KB of a page
     const get = (p) => (new RegExp(`<meta[^>]+(?:property|name)=["']${p}["'][^>]+content=["']([^"']*)`, 'i').exec(html) || [])[1] || '';
     return [get('og:title'), get('og:description'), get('description')].filter(Boolean).join('\n').replace(/&#x27;|&#39;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&').slice(0, 4000);
   } catch { return ''; }
 }
 async function uploadToGemini(config, stream, mime, size) {
-  const start = await fetch(`${GEM}/upload/v1beta/files`, { method: 'POST', headers: { 'x-goog-api-key': config.geminiKey, 'X-Goog-Upload-Protocol': 'resumable', 'X-Goog-Upload-Command': 'start', 'X-Goog-Upload-Header-Content-Length': String(size), 'X-Goog-Upload-Header-Content-Type': mime, 'Content-Type': 'application/json' }, body: JSON.stringify({ file: { display_name: 'life-reel' } }) });
+  const start = await fetchT(`${GEM}/upload/v1beta/files`, { method: 'POST', headers: { 'x-goog-api-key': config.geminiKey, 'X-Goog-Upload-Protocol': 'resumable', 'X-Goog-Upload-Command': 'start', 'X-Goog-Upload-Header-Content-Length': String(size), 'X-Goog-Upload-Header-Content-Type': mime, 'Content-Type': 'application/json' }, body: JSON.stringify({ file: { display_name: 'life-reel' } }) }, 15000);
   const up = start.headers.get('x-goog-upload-url');
   if (!up) throw new HttpError(502, `Gemini upload ${start.status}`);
-  const fin = await fetch(up, { method: 'POST', headers: { 'Content-Length': String(size), 'X-Goog-Upload-Offset': '0', 'X-Goog-Upload-Command': 'upload, finalize' }, body: stream });
+  const fin = await fetchT(up, { method: 'POST', headers: { 'Content-Length': String(size), 'X-Goog-Upload-Offset': '0', 'X-Goog-Upload-Command': 'upload, finalize' }, body: stream }, 120000);
   const f = (await fin.json().catch(() => ({}))).file;
   if (!f?.uri) throw new HttpError(502, 'Gemini upload failed');
   for (let i = 0; i < 30 && f.state === 'PROCESSING'; i++) {            // videos take a few seconds to be ready
     await new Promise((res) => setTimeout(res, 2000));
-    const s = await fetch(`${GEM}/v1beta/${f.name}`, { headers: { 'x-goog-api-key': config.geminiKey } }).then((x) => x.json()).catch(() => ({}));
+    const s = await fetchT(`${GEM}/v1beta/${f.name}`, { headers: { 'x-goog-api-key': config.geminiKey } }, 8000).then((x) => x.json()).catch(() => ({}));
     f.state = s.state || f.state;
   }
   if (f.state === 'FAILED') throw new HttpError(502, 'Gemini could not read that video');
   return f;
+}
+const YT_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'music.youtube.com', 'youtu.be', 'www.youtu.be']);
+export function isYouTube(link) {
+  try { const u = new URL(link); return (u.protocol === 'https:' || u.protocol === 'http:') && YT_HOSTS.has(u.hostname.toLowerCase()); } catch { return false; }
 }
 export async function postReel(request, env, config) {
   const ct = (request.headers.get('Content-Type') || '').toLowerCase();
@@ -192,7 +258,7 @@ export async function postReel(request, env, config) {
     link = (String(b.url || b.text || '').match(/https?:\/\/\S+/) || [])[0] || '';
     if (!link) return err(400, 'send a link or a video');
     source = link;
-    if (/youtu\.?be/.test(link)) parts.push({ file_data: { file_uri: link, mime_type: 'video/*' } });
+    if (isYouTube(link)) parts.push({ file_data: { file_uri: link, mime_type: 'video/*' } });
     else {
       const meta = await pageMeta(link);
       if (!meta) return err(422, 'That page doesn’t share its caption. Save the reel (or screen-record it) and share the video instead.');
@@ -223,10 +289,11 @@ export async function ingestJobs(request, env) {
   const cur = (await kvGet(env, 'jobmail')) || { items: {} };
   let added = 0;
   for (const m of b.items.slice(0, 3000)) {
+    if (!m || typeof m !== 'object') continue;
     const id = clip(m.id, 40);
     if (!id) continue;
     if (!cur.items[id]) added++;
-    cur.items[id] = { id, from: clip(m.from, 120), domain: clip(m.domain, 80), subject: clip(m.subject, 200), date: m.date ? new Date(m.date).toISOString() : '', label: clip(m.label, 80) };
+    cur.items[id] = { id, from: clip(m.from, 120), domain: clip(m.domain, 80), subject: clip(m.subject, 200), date: safeIso(m.date), label: clip(m.label, 80) };
   }
   const all = Object.values(cur.items).sort((x, y) => (y.date || '').localeCompare(x.date || '')).slice(0, 4000);
   cur.items = Object.fromEntries(all.map((x) => [x.id, x]));
@@ -240,11 +307,12 @@ export async function listJobs(env) {
 }
 
 // ---------------- Social media pauses (sent by the iPhone Shortcut) ----------------
-export async function logScreen(request, env) {
+// The day is the user's local calendar day (X-Life-TZ, else the saved tz, else America/New_York).
+export async function logScreen(request, env, tz = 'America/New_York', now = Date.now()) {
   const b = await readJson(request, 2000);
   const app = clip(b.app || 'social', 30).toLowerCase().replace(/[^a-z0-9 ]/g, '');
   const ev = ['paused', 'opened', 'skipped'].includes(b.event) ? b.event : 'paused';
-  const day = new Date(Date.now() - 4 * 3600e3).toISOString().slice(0, 10);
+  const day = todayIn(tz, now);
   const s = (await kvGet(env, 'screen')) || { days: {} };
   const d = (s.days[day] ||= {});
   const k = `${app}:${ev}`;
@@ -297,11 +365,12 @@ For "complete", put the item's title (as in his data) in title. If the request n
 Never invent data he didn't give you; answer questions about his day only from the data above.`;
   try {
     const out = await gemini(config, [{ text: sys + '\n\nIshir: ' + text }], ASK_SCHEMA);
-    return json({ reply: clip(out.reply, 800), actions: (out.actions || []).slice(0, 6), via: 'gemini' });
+    return json({ reply: str(out?.reply, 800), actions: cleanActions(out?.actions), via: 'gemini' });
   } catch (e) {
     if (!env?.AI) throw e;
     const r = await env.AI.run('@cf/meta/llama-3.1-8b-instruct', { messages: [{ role: 'system', content: sys + ' Reply as JSON: {"reply": "...", "actions": [...]}.' }, { role: 'user', content: text }], max_tokens: 400 });
     let o = {}; try { o = JSON.parse(String(r?.response || '').replace(/^[^{]*/, '').replace(/[^}]*$/, '')); } catch { o = { reply: String(r?.response || '').slice(0, 600) }; }
-    return json({ reply: clip(o.reply || '', 800), actions: Array.isArray(o.actions) ? o.actions.slice(0, 6) : [], via: 'workers-ai' });
+    if (!o || typeof o !== 'object') o = {};
+    return json({ reply: str(o.reply, 800), actions: cleanActions(o.actions), via: 'workers-ai' });
   }
 }

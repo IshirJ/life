@@ -64,8 +64,8 @@ h1 b{font-style:normal;color:var(--accent);font-weight:500}
     var s=steps[i];stage.style.setProperty('--t',s[1]+'s');stage.classList.toggle('big',s[2]);word.textContent=s[0];left=s[1];count.textContent=left;
     clearInterval(timer);timer=setInterval(function(){left--;if(left>0)count.textContent=left;else{clearInterval(timer);run(i+1)}},1000);
   }
-  setTimeout(function(){run(0)},900);
-  document.getElementById('skip').onclick=function(){clearInterval(timer);show()};
+  var startT=setTimeout(function(){run(0)},900);
+  document.getElementById('skip').onclick=function(){clearTimeout(startT);clearInterval(timer);show()};
   document.getElementById('done').onclick=function(){document.getElementById('note').textContent='Good call. Swipe up to leave '+app+'.';this.disabled=true};
 })();
 </script>

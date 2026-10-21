@@ -1,5 +1,5 @@
 // Web Push: RFC 8291 (aes128gcm message encryption) + RFC 8292 (VAPID), WebCrypto only.
-import { b64uEncode, b64uDecode, concatBytes, hmacSha256, randomBytes, utf8, kvGet, kvPut } from './util.js';
+import { b64uEncode, b64uDecode, concatBytes, hmacSha256, randomBytes, utf8, kvGet, kvPut, fetchT } from './util.js';
 
 // Apple rejects placeholder contacts (BadJwtToken); use the app's real https URL.
 const VAPID_SUB = 'https://ishirj.github.io/life/';
@@ -14,8 +14,16 @@ export async function getVapid(env) {
     const kp = await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']);
     const privateJwk = await crypto.subtle.exportKey('jwk', kp.privateKey);
     const publicKey = b64uEncode(await crypto.subtle.exportKey('raw', kp.publicKey));
-    v = { privateJwk, publicKey, created: Date.now() };
-    await kvPut(env, 'vapid', v);
+    const fresh = { privateJwk, publicKey, created: Date.now() };
+    if (env.HUB) {
+      // The Durable Object keeps the first key ever proposed, so concurrent first calls agree on one key.
+      const r = await env.HUB.get(env.HUB.idFromName('main')).fetch(new Request('https://hub/_/vapid', { method: 'POST', body: JSON.stringify({ v: fresh }) }));
+      if (!r.ok) throw new Error(`vapid ${r.status}`);
+      v = (await r.json()).v;
+    } else {
+      v = fresh;
+      await kvPut(env, 'vapid', v);
+    }
   }
   vapidMem = { env, v };
   return v;
@@ -80,13 +88,20 @@ export async function sendPush(env, subscription, payload) {
   if (!subscription?.endpoint || !subscription?.keys?.p256dh || !subscription?.keys?.auth) {
     return { status: 0, ok: false, error: 'no subscription' };
   }
-  const vapid = await getVapid(env);
-  const aud = new URL(subscription.endpoint).origin;
-  const jwt = await vapidJwt(vapid.privateJwk, aud);
-  const body = await encryptPayload(utf8(JSON.stringify(trimPayload(payload))), subscription.keys.p256dh, subscription.keys.auth);
+  let jwt, vapid, body;
+  try {
+    vapid = await getVapid(env);
+    const aud = new URL(subscription.endpoint).origin;
+    jwt = await vapidJwt(vapid.privateJwk, aud);
+    body = await encryptPayload(utf8(JSON.stringify(trimPayload(payload))), subscription.keys.p256dh, subscription.keys.auth);
+  } catch (e) {
+    // a bad stored subscription (keys/endpoint) can never succeed: report it as permanent, don't throw
+    console.error('push prepare failed', e);
+    return { status: 400, ok: false, error: 'bad subscription', permanent: true };
+  }
   let res;
   try {
-    res = await fetch(subscription.endpoint, {
+    res = await fetchT(subscription.endpoint, {
       method: 'POST',
       headers: {
         Authorization: `vapid t=${jwt}, k=${vapid.publicKey}`,
@@ -96,9 +111,10 @@ export async function sendPush(env, subscription, payload) {
         Urgency: 'high',
       },
       body,
-    });
+    }, 15000);
   } catch (e) {
-    return { status: 0, ok: false, error: String(e?.message || e) };
+    console.error('push send failed', e);
+    return { status: 0, ok: false, error: e?.name === 'TimeoutError' ? 'timeout' : 'network error' };
   }
   if (res.status === 404 || res.status === 410) await env.LIFE.delete('sub');
   const ok = res.status >= 200 && res.status < 300;
@@ -107,11 +123,19 @@ export async function sendPush(env, subscription, payload) {
   return { status: res.status, ok, ...(reason ? { reason } : {}), host: new URL(subscription.endpoint).host };
 }
 
-function trimPayload(p) {
-  return {
+// A push record holds at most RS-17 bytes of JSON. Long bodies are shortened (then the encrypted
+// copy dropped) so the payload always fits instead of failing every minute.
+const MAX_JSON = RS - 17 - 64;
+export function trimPayload(p) {
+  const out = {
     title: String(p.title ?? 'Life').slice(0, 120),
     body: String(p.body ?? '').slice(0, 1000),
     url: String(p.url ?? '').slice(0, 500) || undefined,
     tag: p.tag ? String(p.tag).slice(0, 100) : undefined,
   };
+  if (p.enc && typeof p.enc.iv === 'string' && typeof p.enc.ct === 'string') out.enc = { iv: p.enc.iv, ct: p.enc.ct };
+  const size = () => utf8(JSON.stringify(out)).length;
+  while (size() > MAX_JSON && out.body.length > 40) out.body = out.body.slice(0, Math.floor(out.body.length * 0.7)) + '…';
+  if (size() > MAX_JSON) delete out.enc;
+  return out;
 }

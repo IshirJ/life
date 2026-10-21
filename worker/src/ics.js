@@ -5,7 +5,8 @@ import {
 } from './tz.js';
 
 const MAX_INSTANCES = 2000;
-const MAX_ITER = 200000;
+const MAX_ITER = 50000;          // recurrence periods per event
+const FEED_BUDGET = 200000;      // recurrence periods per feed, across all events
 const WD = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 };
 
 // ---- lexing ----
@@ -288,6 +289,7 @@ export function expandIcs(text, { from, to, tz, cal = '' }) {
   }
 
   const out = [];
+  const budget = { left: FEED_BUDGET };
   const emit = (ev, inst, recurring) => {
     if (out.length >= MAX_INSTANCES || ev.cancelled) return;
     if (inst.allDay) {
@@ -328,7 +330,7 @@ export function expandIcs(text, { from, to, tz, cal = '' }) {
       if (!isOverridden(ev.start)) emit(ev, ev.start, false);
       continue;
     }
-    for (const inst of expandRule(ev, rangeEnd, rangeEndDn)) {
+    for (const inst of expandRule(ev, rangeEnd, rangeEndDn, rangeStartDn, budget)) {
       if (out.length >= MAX_INSTANCES) break;
       if (excluded(inst) || isOverridden(inst)) continue;
       emit(ev, inst, true);
@@ -348,7 +350,26 @@ export function expandIcs(text, { from, to, tz, cal = '' }) {
 }
 
 // Generator of instances {allDay, dn} or {utc} in chronological order until past range end.
-function* expandRule(ev, rangeEnd, rangeEndDn) {
+// First period worth generating for a rule with no COUNT: periods that end well before the range can't
+// produce visible instances, so an old daily rule doesn't walk years of days one by one. (With COUNT,
+// every instance from DTSTART must be counted, so no skipping.)
+function firstPeriod(rule, st, rangeStartDn, spanDays) {
+  if (rule.count != null) return 0;
+  const target = rangeStartDn - spanDays - 2;   // an instance starting here could still overlap the range
+  if (target <= st.dn) return 0;
+  const t = fromDayNum(target);
+  let i;
+  switch (rule.freq) {
+    case 'DAILY': i = Math.floor((target - st.dn) / rule.interval); break;
+    case 'WEEKLY': i = Math.floor((target - st.dn) / (7 * rule.interval)) - 1; break;
+    case 'MONTHLY': i = Math.floor(((t.y * 12 + t.m) - (st.y * 12 + st.m) - 1) / rule.interval); break;
+    case 'YEARLY': i = Math.floor((t.y - st.y - 1) / rule.interval); break;
+    default: i = 0;
+  }
+  return Math.max(0, i);
+}
+
+function* expandRule(ev, rangeEnd, rangeEndDn, rangeStartDn = -Infinity, budget = { left: Infinity }) {
   const s = ev.start;
   const rule = ev.rrule;
   const startDn = s.allDay ? s.dn : dayNum(s.y, s.m, s.d);
@@ -399,7 +420,9 @@ function* expandRule(ev, rangeEnd, rangeEndDn) {
   if (!rule) { yield* flushRdates(null); return; }
   if (rule.count != null && count >= rule.count) { yield* flushRdates(null); return; }
 
-  for (let i = 0; i < MAX_ITER; i++) {
+  const spanDays = s.allDay ? ev.durDays : Math.ceil(ev.durMs / 86400000) + 1;
+  const i0 = Number.isFinite(rangeStartDn) ? firstPeriod(rule, st, rangeStartDn, spanDays) : 0;
+  for (let i = i0; i < i0 + MAX_ITER && budget.left-- > 0; i++) {
     const cands = periodCandidates(rule, i, st);
     let stop = false;
     for (const dn of cands) {

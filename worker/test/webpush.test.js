@@ -115,3 +115,13 @@ test('sendPush sets headers, body decrypts, 410 deletes sub', async () => {
     assert.equal(env.LIFE.map.has('sub'), false);
   } finally { f.restore(); }
 });
+
+test('encrypted reminder: enc passes through unchanged inside the push payload', async () => {
+  const env = makeEnv();
+  const { ua, auth, sub } = fakeSubscription();
+  const f = mockFetch(() => new Response(null, { status: 201 }));
+  try {
+    await sendPush(env, sub, { title: 'Life', body: '', tag: 't', enc: { iv: 'aXZ2', ct: 'Y3Q=' } });
+    assert.deepEqual(JSON.parse(decrypt(f.calls[0].init.body, ua, auth)), { title: 'Life', body: '', tag: 't', enc: { iv: 'aXZ2', ct: 'Y3Q=' } });
+  } finally { f.restore(); }
+});

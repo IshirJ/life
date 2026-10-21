@@ -67,7 +67,7 @@ export function json(data, status = 200, headers = {}) {
     headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...headers },
   });
 }
-export const err = (status, error, extra = {}) => json({ error, ...extra }, status);
+export const err = (status, error, extra = {}, headers = {}) => json({ error, ...extra }, status, headers);
 
 export function redirect(url, status = 302) {
   return new Response(null, { status, headers: { Location: url, 'Cache-Control': 'no-store' } });
@@ -76,7 +76,7 @@ export function redirect(url, status = 302) {
 export function corsHeaders(origin) {
   const h = {
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Life-Key, X-Life-Device',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Life-Key, X-Life-Device, X-Life-TZ',
     'Access-Control-Expose-Headers': 'X-Backup-Ts',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
@@ -147,11 +147,76 @@ export async function cachePut(name, value, ttlSec) {
 
 export function cacheClear() { mem.clear(); }
 
+export async function cacheDel(name) {
+  mem.delete(name);
+  try {
+    if (typeof caches !== 'undefined' && caches.default) await caches.default.delete(new Request(CACHE_HOST + encodeURIComponent(name)));
+  } catch { /* ignore */ }
+}
+
+// ---- bounded body reads ----
+// Read a stream into bytes, giving up as soon as it passes maxBytes (never buffers more than that).
+async function readCapped(stream, maxBytes, onOver) {
+  if (!stream) return new Uint8Array(0);
+  const reader = stream.getReader();
+  const chunks = [];
+  let n = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const v = value instanceof Uint8Array ? value : new Uint8Array(value);
+    if (n + v.length > maxBytes) {
+      try { await reader.cancel(); } catch { /* ignore */ }
+      if (onOver === 'truncate') { chunks.push(v.subarray(0, maxBytes - n)); n = maxBytes; break; }
+      throw new HttpError(413, 'body too large');
+    }
+    chunks.push(v);
+    n += v.length;
+  }
+  return chunks.length === 1 ? chunks[0] : concatBytes(...chunks);
+}
+
+// Request body with a byte cap: rejects by Content-Length first, then while streaming.
+export async function readBody(request, maxBytes) {
+  const len = Number(request.headers.get('Content-Length') || 0);
+  if (len > maxBytes) throw new HttpError(413, 'body too large');
+  return readCapped(request.body, maxBytes);
+}
+export const readText = async (request, maxBytes) => fromUtf8(await readBody(request, maxBytes));
+
 export async function readJson(request, maxBytes = 1_000_000) {
-  const text = await request.text();
-  if (text.length > maxBytes) throw new HttpError(413, 'body too large');
+  const text = await readText(request, maxBytes);
   if (!text.trim()) return {};
-  try { return JSON.parse(text); } catch { throw new HttpError(400, 'invalid JSON'); }
+  let v;
+  try { v = JSON.parse(text); } catch { throw new HttpError(400, 'invalid JSON'); }
+  if (v === null || typeof v !== 'object') throw new HttpError(400, 'JSON object required');
+  return v;
+}
+
+// Upstream response text with a byte cap. truncate=true keeps the first maxBytes, otherwise throws.
+export async function responseText(res, maxBytes, truncate = false) {
+  const len = Number(res.headers.get('Content-Length') || 0);
+  if (len > maxBytes && !truncate) { try { await res.body?.cancel(); } catch { /* ignore */ } throw new Error('response too large'); }
+  try {
+    return fromUtf8(await readCapped(res.body, maxBytes, truncate ? 'truncate' : 'throw'));
+  } catch (e) {
+    if (e instanceof HttpError) throw new Error('response too large');
+    throw e;
+  }
+}
+
+// fetch with a timeout (combined with any signal the caller passed).
+export function fetchT(url, init = {}, ms = 10000) {
+  const t = AbortSignal.timeout(ms);
+  const signal = init.signal && AbortSignal.any ? AbortSignal.any([init.signal, t]) : t;
+  return fetch(url, { ...init, signal });
+}
+
+// Date → ISO string, or fallback when the value isn't a real date (new Date(bad).toISOString() throws).
+export function safeIso(v, fallback = '') {
+  if (v == null || v === '') return fallback;
+  const t = typeof v === 'number' ? v : Date.parse(String(v));
+  return Number.isFinite(t) && Math.abs(t) <= 8.64e15 ? new Date(t).toISOString() : fallback;
 }
 
 export class HttpError extends Error {

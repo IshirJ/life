@@ -121,14 +121,14 @@ async function library(){
       <button class="nb-ib" data-nb="night" aria-pressed="${S.night}" aria-label="Dark pages" title="Dark pages">${svg('moon')}</button>
       <button class="nb-pill nbghost" data-nb="importpdf">${svg('pdf')}<span>Import PDF</span></button><button class="nb-pill" data-nb="new">${svg('plus')}<span>New</span></button></header>
     <label class="nb-search">${svg('search')}<input id="nbQ" type="search" placeholder="Search notebooks and typed text" value="${esc(S.q)}"></label>
-    <div class="nb-grid">${list.map(b=>`<div class="nb-card" data-open="${b.id}" role="button" tabindex="0" aria-label="${esc(b.title)}">
-      <div class="nb-cover" style="--cv:${esc(b.color)}"><canvas data-thumb="${b.id}" width="300" height="424"></canvas><span class="nb-spine"></span></div>
-      <div class="nb-meta"><span><b>${esc(b.title)}</b><small>${b.pages.length} page${b.pages.length===1?'':'s'} · ${esc(agoS(b.u))}</small></span><button class="nb-ib sm nbghost" data-menu="${b.id}" aria-label="Options for ${esc(b.title)}">${svg('more')}</button></div></div>`).join('')}
+    <div class="nb-grid">${list.map(b=>`<div class="nb-card" data-open="${esc(b.id)}" role="button" tabindex="0" aria-label="${esc(b.title)}">
+      <div class="nb-cover" style="--cv:${esc(b.color)}"><canvas data-thumb="${esc(b.id)}" width="300" height="424"></canvas><span class="nb-spine"></span></div>
+      <div class="nb-meta"><span><b>${esc(b.title)}</b><small>${b.pages.length} page${b.pages.length===1?'':'s'} · ${esc(agoS(b.u))}</small></span><button class="nb-ib sm nbghost" data-menu="${esc(b.id)}" aria-label="Options for ${esc(b.title)}">${svg('more')}</button></div></div>`).join('')}
       ${!list.length?`<div class="nb-empty">${S.q?'Nothing matches that search.':`${svg('book')}<b>No notebooks yet</b><span>Make one for each class, or import a PDF to write on.</span>`}</div>`:''}</div>
     <input type="file" id="nbPdf" accept="application/pdf,.pdf" hidden></div>`;
   list.forEach(b=>thumb(b));
 }
-async function thumb(b){const c=$(`canvas[data-thumb="${b.id}"]`,V);if(!c||!b.pages[0])return;const p=await IDB.get('pages',b.pages[0]);if(!p)return;
+async function thumb(b){const c=$(`canvas[data-thumb="${esc(b.id)}"]`,V);if(!c||!b.pages[0])return;const p=await IDB.get('pages',b.pages[0]);if(!p)return;
   c.height=Math.round(c.width*HH(p)/PW);const img=await renderPageCanvas(p,b,c.width);c.getContext('2d').drawImage(img,0,0)}
 
 /* ---------- notebook settings / new ---------- */
@@ -238,7 +238,7 @@ function paintPage(el){
   el.querySelector('.nb-txts').innerHTML=(p.texts||[]).map(t=>`<div class="nb-txt" data-tid="${esc(t.id)}" contenteditable="${S.tool==='text'?'true':'false'}" spellcheck="true" style="left:${+t.x*s}px;top:${+t.y*s}px;width:${+t.w*s}px;font-size:${+t.size*s}px;font-weight:${t.bold?700:500};color:${esc(t.c||ink)}">${esc(t.txt)}</div>`).join('');
   if(S.sel&&S.sel.pid===p.id)drawSel(el);
 }
-function repaint(pid){const el=$(`.nb-page[data-pid="${pid}"]`,V);if(el)paintPage(el)}
+function repaint(pid){const el=$(`.nb-page[data-pid="${esc(pid)}"]`,V);if(el)paintPage(el)}
 
 /* ---------- saving ---------- */
 const dirty=new Set();let saveT=0;
@@ -351,8 +351,8 @@ function clearSel(){S.sel=null;$$('.nb-selbox,.nb-selbar',V).forEach(n=>n.remove
 function previewMove(){const s=act.el.clientWidth/PW;$$('.nb-selbox,.nb-selbar',act.el).forEach(n=>n.style.transform=`translate(${act.dx*s}px,${act.dy*s}px)`);
   if(!act.ghost)act.ghost=liveCanvas(act.el);const g=act.ghost,ctx=g.getContext('2d');ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,g.width,g.height);ctx.setTransform(g._k,0,0,g._k,act.dx*g._k,act.dy*g._k);
   ctx.globalAlpha=.6;S.sel.strokes.forEach(i=>{const st=act.p.strokes[i];if(st)drawStroke(ctx,st)});ctx.globalAlpha=1;
-  S.sel.imgs.forEach(id=>{const im=act.el.querySelector(`img[data-iid="${id}"]`);if(im)im.style.transform=`translate(${act.dx*s}px,${act.dy*s}px)`});
-  S.sel.texts.forEach(id=>{const t=act.el.querySelector(`.nb-txt[data-tid="${id}"]`);if(t)t.style.transform=`translate(${act.dx*s}px,${act.dy*s}px)`})}
+  S.sel.imgs.forEach(id=>{const im=act.el.querySelector(`img[data-iid="${esc(id)}"]`);if(im)im.style.transform=`translate(${act.dx*s}px,${act.dy*s}px)`});
+  S.sel.texts.forEach(id=>{const t=act.el.querySelector(`.nb-txt[data-tid="${esc(id)}"]`);if(t)t.style.transform=`translate(${act.dx*s}px,${act.dy*s}px)`})}
 function commitMove(a){a.ghost?.remove();const p=a.p,dx=a.dx,dy=a.dy;if(Math.abs(dx)+Math.abs(dy)<1){S.undo.pop();drawSel(a.el);return}
   p.strokes=p.strokes.map((st,i)=>S.sel.strokes.includes(i)?moveStroke(st,dx,dy):st);
   p.imgs=p.imgs.map(m=>S.sel.imgs.includes(m.id)?{...m,x:m.x+dx,y:m.y+dy}:m);p.texts=p.texts.map(t=>S.sel.texts.includes(t.id)?{...t,x:t.x+dx,y:t.y+dy}:t);
@@ -366,12 +366,12 @@ function selAction(k){const p=S.pages.find(x=>x.id===S.sel.pid);if(!p)return;sna
   touch(p);repaint(p.id)}
 document.addEventListener('pointerdown',e=>{const h=e.target.closest&&e.target.closest('[data-nbrz]');if(!h||!S.sel)return;e.stopPropagation();e.preventDefault();
   const pageEl=h.closest('.nb-page'),p=pageOf(pageEl),m=p.imgs.find(z=>z.id===S.sel.imgs[0]);if(!m)return;snap(p);const s=pageEl.clientWidth/PW,x0=e.clientX,w0=m.w,h0=m.h;
-  const mv=ev=>{const w=Math.max(60,w0+(ev.clientX-x0)/s);m.w=w;m.h=w*h0/w0;const im=pageEl.querySelector(`img[data-iid="${m.id}"]`);if(im){im.style.width=m.w*s+'px';im.style.height=m.h*s+'px'}};
+  const mv=ev=>{const w=Math.max(60,w0+(ev.clientX-x0)/s);m.w=w;m.h=w*h0/w0;const im=pageEl.querySelector(`img[data-iid="${esc(m.id)}"]`);if(im){im.style.width=m.w*s+'px';im.style.height=m.h*s+'px'}};
   const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);S.sel.box=selBox(p);touch(p);paintPage(pageEl)};addEventListener('pointermove',mv);addEventListener('pointerup',up)},true);
 
 /* ---------- text boxes ---------- */
 function addText(p,pageEl,x,y){snap(p);const c=S.cfg.text,t={id:uid(),x:Math.max(10,x-4),y:Math.max(10,y-c.size*.6),w:Math.min(600,PW-x-20),size:c.size,bold:!!c.bold,txt:'',c:colorOf('text')};p.texts.push(t);paintPage(pageEl);
-  const el=pageEl.querySelector(`.nb-txt[data-tid="${t.id}"]`);if(el)el.focus()}
+  const el=pageEl.querySelector(`.nb-txt[data-tid="${esc(t.id)}"]`);if(el)el.focus()}
 document.addEventListener('input',e=>{const el=e.target.closest&&e.target.closest('.nb-txt');if(!el)return;const pageEl=el.closest('.nb-page'),p=pageOf(pageEl),t=p&&p.texts.find(z=>z.id===el.dataset.tid);if(!t)return;
   const nt={...t,txt:el.innerText.replace(/\n$/,'')};p.texts=p.texts.map(z=>z.id===t.id?nt:z);touch(p)});
 document.addEventListener('focusout',e=>{const el=e.target.closest&&e.target.closest('.nb-txt');if(!el)return;const pageEl=el.closest('.nb-page'),p=pageOf(pageEl);if(!p)return;const t=p.texts.find(z=>z.id===el.dataset.tid);
@@ -384,7 +384,7 @@ async function drawImgs(ctx,p,k){for(const m of p.imgs||[]){const im=await loadI
 async function insertImage(file){if(!file)return;const url=URL.createObjectURL(file),im=await loadImg(url);URL.revokeObjectURL(url);if(!im){say('Couldn’t read that image');return}
   const max=1400,sc=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);c.getContext('2d').drawImage(im,0,0,c.width,c.height);
   const src=c.toDataURL('image/jpeg',.85),p=S.pages[S.cur]||S.pages[0],w=Math.min(600,PW-80),h=w*c.height/c.width;snap(p);
-  const pageEl=$(`.nb-page[data-pid="${p.id}"]`,V),sc2=$('#nbScroll'),r=pageEl.getBoundingClientRect(),s=r.width/PW,vy=Math.max(40,Math.min(HH(p)-h-40,(sc2.getBoundingClientRect().top+sc2.clientHeight/2-r.top)/s-h/2));
+  const pageEl=$(`.nb-page[data-pid="${esc(p.id)}"]`,V),sc2=$('#nbScroll'),r=pageEl.getBoundingClientRect(),s=r.width/PW,vy=Math.max(40,Math.min(HH(p)-h-40,(sc2.getBoundingClientRect().top+sc2.clientHeight/2-r.top)/s-h/2));
   const m={id:uid(),x:(PW-w)/2,y:vy,w,h,src};p.imgs.push(m);touch(p);S.tool='lasso';tools();S.sel={pid:p.id,strokes:[],imgs:[m.id],texts:[]};S.sel.box=selBox(p);paintPage(pageEl);say('Drag to move, corner to resize')}
 
 /* ---------- zoom ---------- */
@@ -537,7 +537,9 @@ window.NOTES={
   close:hide,
   async exportAll(){return{books:await IDB.all('books'),pages:(await IDB.all('pages')).map(strip)}},
   async importAll(d,replace){if(!d||!Array.isArray(d.books))return 0;if(replace){for(const b of await IDB.all('books'))await IDB.rawDel('books',b.id);for(const p of await IDB.all('pages'))await IDB.rawDel('pages',p.id)}
-    for(const p of d.pages||[])await IDB.put('pages',p);for(const b of d.books)await IDB.put('books',b);return d.books.length},
+    /* backups are outside data: only take items whose ids are plain ids (they end up in the page's HTML) */
+    const okId=x=>x&&typeof x==='object'&&typeof x.id==='string'&&/^[\w:.@-]{1,120}$/.test(x.id);
+    const books=d.books.filter(okId);for(const p of (d.pages||[]).filter(okId))await IDB.put('pages',p);for(const b of books)await IDB.put('books',b);return books.length},
   async summary(){const b=await IDB.all('books');return b.sort((x,y)=>(y.u||0)-(x.u||0)).map(x=>({id:x.id,title:x.title,color:x.color,pages:x.pages.length,u:x.u}))},
   IDB,_S:S,
   refresh(){if(!V||V.hidden)return;if(!S.book)library()},

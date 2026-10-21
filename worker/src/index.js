@@ -1,10 +1,10 @@
 // life-sync: single-user backend for the Life home-screen app.
 import {
-  json, err, withCors, corsHeaders, safeEqual, kvGet, kvPut, readJson, HttpError,
-  b64uEncode, randomBytes, DEFAULT_TZ,
+  json, err, withCors, corsHeaders, safeEqual, kvGet, kvPut, readJson, readText, readBody, HttpError,
+  b64uEncode, b64uDecode, randomBytes, DEFAULT_TZ, safeIso, cacheDel, utf8, APP_URL,
 } from './util.js';
 import { getVapid, sendPush } from './webpush.js';
-import { oauthStart, oauthCallback } from './oauth.js';
+import { oauthStart, oauthCallback, safeReturn, disconnect } from './oauth.js';
 import {
   getCalendar, getMail, outlookCalendar, ingestHealth, getHealth, normalizeIcsUrl, tzOf,
 } from './services.js';
@@ -83,6 +83,12 @@ function mergeConfig(cur, body) {
 }
 
 // ---------- schedule / cron ----------
+// E2E reminders carry {iv, ct} (AES-GCM over {title, body}); stored and pushed as-is, never read here.
+function cleanEnc(e) {
+  if (!e || typeof e !== 'object' || typeof e.iv !== 'string' || typeof e.ct !== 'string') return undefined;
+  if (e.iv.length > 64 || e.ct.length > 3000 || !/^[A-Za-z0-9+/=_-]+$/.test(e.iv + e.ct)) return undefined;
+  return { iv: e.iv, ct: e.ct };
+}
 function cleanSchedule(items, now) {
   if (!Array.isArray(items)) throw new HttpError(400, 'items must be an array');
   return items
@@ -93,6 +99,7 @@ function cleanSchedule(items, now) {
       body: String(it?.body ?? '').slice(0, 500),
       url: it?.url ? String(it.url).slice(0, 500) : undefined,
       tag: it?.tag ? String(it.tag).slice(0, 100) : undefined,
+      enc: cleanEnc(it?.enc),
     }))
     .filter((it) => it.id && Number.isFinite(it.at) && it.at > now - DUE_WINDOW)
     .sort((a, b) => a.at - b.at)
@@ -118,61 +125,103 @@ export async function runCron(env, now = Date.now()) {
   const pending = due.filter((it) => !sentObj[sentKey(it)] && !memSent.has(sentKey(it)));
   if (!pending.length) return { sent: 0, wrote: false };
 
+  // Every send is isolated: one bad reminder can't abort the run, and whatever was delivered is
+  // always recorded (finally), so the next minute never repeats it.
   let sent = 0;
-  for (const it of pending) {
-    const r = await sendPush(env, sub, { title: it.title, body: it.body, url: it.url, tag: it.tag || it.id });
-    if (r.status === 404 || r.status === 410) break; // subscription gone (sendPush deleted it)
-    // Mark as done on success or permanent client error; retry next minute on 5xx/429/network.
-    if (r.ok || (r.status >= 400 && r.status < 500 && r.status !== 429)) {
-      sentObj[sentKey(it)] = now;
-      memSent.add(sentKey(it));
-      if (r.ok) sent++;
-    }
-  }
   let wrote = false;
-  if (Object.keys(sentObj).length && pending.some((it) => sentObj[sentKey(it)])) {
-    for (const [k, ts] of Object.entries(sentObj)) if (ts < now - SENT_KEEP) delete sentObj[k];
-    await kvPut(env, 'sent', sentObj);
-    wrote = true;
+  try {
+    for (const it of pending) {
+      let r;
+      try {
+        r = await sendPush(env, sub, { title: it.title, body: it.body, url: it.url, tag: it.tag || it.id, enc: it.enc });
+      } catch (e) {
+        console.error('cron push failed', it.id, e);
+        r = { status: 400, ok: false };   // unexpected: treat as permanent so it can't loop every minute
+      }
+      if (r.status === 404 || r.status === 410) break; // subscription gone (sendPush deleted it)
+      // Mark as done on success or permanent client error; retry next minute on 5xx/429/network.
+      if (r.ok || (r.status >= 400 && r.status < 500 && r.status !== 429)) {
+        sentObj[sentKey(it)] = now;
+        memSent.add(sentKey(it));
+        if (r.ok) sent++;
+      }
+    }
+  } finally {
+    if (pending.some((it) => sentObj[sentKey(it)])) {
+      for (const [k, ts] of Object.entries(sentObj)) if (ts < now - SENT_KEEP) delete sentObj[k];
+      await kvPut(env, 'sent', sentObj);
+      wrote = true;
+    }
   }
   return { sent, wrote };
 }
 
 // ---------- device sync ----------
 // Everything goes through one Durable Object (see hub.js) so all devices see the same version instantly.
-async function hub(env, request, device) {
-  const stub = env.HUB.get(env.HUB.idFromName('main'));
+const hubStub = (env) => env.HUB.get(env.HUB.idFromName('main'));
+const hubCall = (env, path, init) => hubStub(env).fetch(new Request('https://hub' + path, init));
+async function hub(env, request, device, path) {
+  // forward the normalised path (so /sync/ and /sync reach the same handler)
+  const target = new URL(request.url);
+  if (path) target.pathname = path;
   if (request.headers.get('Upgrade') === 'websocket') {   // pass the upgrade through untouched
     const h = new Headers(request.headers);
     if (device) h.set('X-Life-Device', device);
-    return stub.fetch(new Request(request, { headers: h }));
+    return hubStub(env).fetch(new Request(target.toString(), { method: request.method, headers: h }));
   }
-  const body = request.method === 'GET' || request.method === 'HEAD' ? undefined : await request.text();
-  if (body && body.length > MAX_SYNC) throw new HttpError(413, 'body too large');
-  return stub.fetch(new Request(request.url, { method: request.method, headers: request.headers, body }));
+  // byte cap with headroom over the Durable Object's 20M-character limit (non-ASCII text is >1 byte/char)
+  const body = request.method === 'GET' || request.method === 'HEAD' ? undefined : await readText(request, MAX_SYNC_BYTES);
+  return hubStub(env).fetch(new Request(target.toString(), { method: request.method, headers: request.headers, body }));
 }
 // The whole Life database is one document with a version number. A device sends the version it built on;
 // if someone else saved in between it gets 409 and merges first (merging happens on the device).
 const MAX_SYNC = 20 * 1024 * 1024;
-// Notebooks sync item by item (pages can be big): an index of {id: updated} plus one key per book/page.
+const MAX_SYNC_BYTES = 28 * 1024 * 1024;
+// Notebooks sync item by item (pages can be big): an index of {id: updated} in the Durable Object plus the
+// content in KV. Content is written under a per-version key (nb:pages:ID@U) BEFORE the index moves, so a
+// device told about a change can always fetch exactly that version, and two devices saving the same item
+// can't leave older content behind newer metadata (a KV key is written once and never overwritten).
+const nbKind = (it) => (it.kind === 'book' ? 'books' : 'pages');
+async function inBatches(list, n, fn) { for (let i = 0; i < list.length; i += n) await Promise.all(list.slice(i, i + n).map(fn)); }
 async function putNotes(request, env) {
   const body = await readJson(request, MAX_SYNC);
-  const items = (Array.isArray(body.items) ? body.items.slice(0, 200) : []).filter((it) => it && typeof it.id === 'string' && it.id.length <= 64 && (it.kind === 'book' || it.kind === 'page'));
-  const r = await hub(env, new Request('https://hub/sync/notes/apply', { method: 'POST', body: JSON.stringify({ items: items.map(({ kind, id, u, deleted }) => ({ kind, id, u, deleted })) }) }));
-  const res = await r.json();
-  const ok = new Set(res.accepted || []);
-  for (const it of items) {
-    if (!ok.has(it.id)) continue;
-    const key = `nb:${it.kind === 'book' ? 'books' : 'pages'}:${it.id}`;
-    if (it.deleted) await env.LIFE.delete(key);
-    else await env.LIFE.put(key, JSON.stringify(it.data));
+  const items = [], rejected = [];
+  for (const it of Array.isArray(body.items) ? body.items.slice(0, 200) : []) {
+    if (!(it && typeof it.id === 'string' && it.id && it.id.length <= 64 && (it.kind === 'book' || it.kind === 'page'))) continue;
+    if (!it.deleted && it.data == null) { rejected.push(it.id); continue; }   // a page with no content can't be accepted
+    items.push({ kind: it.kind, id: it.id, u: Number(it.u) || Date.now(), deleted: !!it.deleted, data: it.data });
   }
-  return json({ ok: true, index: res.index });
+  const meta = items.map(({ kind, id, u, deleted }) => ({ kind, id, u, deleted }));
+  const chk = items.length ? await (await hubCall(env, '/sync/notes/check', { method: 'POST', body: JSON.stringify({ items: meta }) })).json() : { ok: [] };
+  const newer = new Set(chk.ok || []);
+  const ck = (it) => `${nbKind(it)}:${it.id}`;
+  const todo = items.filter((it) => newer.has(ck(it)));
+  // 1) content first
+  await inBatches(todo.filter((it) => !it.deleted), 10, (it) => env.LIFE.put(`nb:${ck(it)}@${it.u}`, JSON.stringify(it.data)));
+  // 2) then the index (this is what tells other devices)
+  const r = await hubCall(env, '/sync/notes/apply', { method: 'POST', body: JSON.stringify({ items: todo.map(({ kind, id, u, deleted }) => ({ kind, id, u, deleted, v: deleted ? 0 : 1 })) }) });
+  const res = await r.json();
+  const prev = res.prev || {};
+  // 3) tidy up: replaced versions and the old unversioned key go; content of a save that lost a race goes
+  const dels = [];
+  for (const it of todo) {
+    const k = ck(it);
+    if (k in prev) {
+      const p = prev[k];
+      if (p && !p.d && !p.v) dels.push(`nb:${k}`);
+      if (p && p.v && p.u !== it.u) dels.push(`nb:${k}@${p.u}`);
+    } else if (!it.deleted && res.index?.[nbKind(it)]?.[it.id]?.u !== it.u) dels.push(`nb:${k}@${it.u}`);
+  }
+  await inBatches(dels, 10, (k) => env.LIFE.delete(k));
+  return json({ ok: true, index: res.index, ...(rejected.length ? { rejected } : {}) });
 }
 async function getNotesItem(env, url) {
   const kind = url.searchParams.get('kind') === 'book' ? 'books' : 'pages';
   const id = url.searchParams.get('id') || '';
-  const v = await env.LIFE.get(`nb:${kind}:${id}`);
+  if (!id || id.length > 64) return err(404, 'not found');
+  const { entry } = await (await hubCall(env, `/sync/notes/meta?kind=${kind}&id=${encodeURIComponent(id)}`)).json();
+  if (entry?.d) return err(404, 'not found');
+  const v = await env.LIFE.get(entry?.v ? `nb:${kind}:${id}@${entry.u}` : `nb:${kind}:${id}`);
   if (v == null) return err(404, 'not found');
   return new Response(v, { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
 }
@@ -184,7 +233,7 @@ async function postInbox(request, env) {
   const ct = request.headers.get('Content-Type') || '';
   let text = '';
   if (ct.includes('json')) { const b = await readJson(request, 20000); text = b.text ?? b.input ?? ''; }
-  else text = (await request.text()).slice(0, 20000);
+  else text = (await readText(request, 20000)).slice(0, 20000);
   text = String(text).replace(/\s+/g, ' ').trim().slice(0, 2000);
   if (!text) throw new HttpError(400, 'text required');
   const list = (await kvGet(env, 'inbox')) || [];
@@ -203,11 +252,13 @@ async function deleteInbox(request, env) {
 
 // ---------- backup ----------
 async function putBackup(request, env) {
-  const len = Number(request.headers.get('Content-Length') || 0);
-  if (len > MAX_BACKUP) throw new HttpError(413, 'backup too large (max 20 MB)');
-  const text = await request.text();
-  const size = new TextEncoder().encode(text).length;
-  if (size > MAX_BACKUP) throw new HttpError(413, 'backup too large (max 20 MB)');
+  let bytes;
+  try { bytes = await readBody(request, MAX_BACKUP); } catch (e) {
+    if (e instanceof HttpError && e.status === 413) throw new HttpError(413, 'backup too large (max 20 MB)');
+    throw e;
+  }
+  const text = new TextDecoder().decode(bytes);
+  const size = bytes.length;
   if (!size) throw new HttpError(400, 'empty backup');
   const meta = (await kvGet(env, 'backup:meta')) || [];
   const slot = meta.length ? (meta[0].slot + 1) % BACKUP_SLOTS : 0;
@@ -230,6 +281,71 @@ async function getBackup(env, url) {
   });
 }
 
+// ---------- rate limits ----------
+// Per key, generous for one person (a fast voice conversation is ~3 AI calls a turn), but enough to stop a
+// leaked key from draining the free Workers AI / Gemini allowance.
+const LIMITS = {
+  ai: [{ win: 60e3, limit: 60 }, { win: 864e5, limit: 1500 }],
+  voice: [{ win: 60e3, limit: 120 }, { win: 864e5, limit: 3000 }],
+  cmd: [{ win: 60e3, limit: 60 }, { win: 864e5, limit: 2000 }],
+};
+function limitGroup(method, path) {
+  if (method === 'POST' && (/^\/ai\/(food|stt|test)$/.test(path) || path === '/jarvis/ask' || path === '/jarvis/tts' || path === '/reels')) return 'ai';
+  if (path === '/jarvis/voice' && (method === 'GET' || method === 'POST')) return 'voice';
+  if (method === 'POST' && path === '/jarvis/cmd') return 'cmd';
+  return null;
+}
+async function keyTag(key) {
+  return b64uEncode(new Uint8Array(await crypto.subtle.digest('SHA-256', utf8(key))).slice(0, 9));
+}
+async function rateLimit(env, key, group) {
+  try {
+    const tag = await keyTag(key);
+    const rules = LIMITS[group].map((r) => ({ b: `${group}:${tag}`, ...r }));
+    const r = await (await hubCall(env, '/_/rl', { method: 'POST', body: JSON.stringify({ rules }) })).json();
+    if (r.ok === false) return err(429, 'too many requests, try again shortly', {}, { 'Retry-After': String(r.retry || 60) });
+  } catch (e) { console.error('rate limit check failed', e); }   // fail open: never lock the owner out
+  return null;
+}
+
+// ---------- time zone (X-Life-TZ from the app) ----------
+const tzSaved = new Map(); // per-isolate: tz already written, so KV isn't rewritten on every request
+async function applyTz(env, cfg, hdr) {
+  if (!hdr || !isValidTz(hdr) || cfg.tz === hdr) return cfg;
+  const next = { ...cfg, tz: hdr };
+  if (tzSaved.get('tz') !== hdr) {
+    tzSaved.set('tz', hdr);
+    await kvPut(env, 'config', next);
+  }
+  return next;
+}
+
+// ---------- Gmail previews: no one-time codes or links stored on the server ----------
+const SECRETY = /\b(code|otp|passcode|password|verif\w*|sign[\s-]?in|log[\s-]?in|reset|2fa|one[\s-]?time|security|authenticat\w*|pin)\b/i;
+export function redactPreview(t) {
+  let s = String(t ?? '').replace(/https?:\/\/\S+/gi, '[link]');
+  if (SECRETY.test(s) || SECRETY.test(String(t ?? ''))) s = s.replace(/\b(?=[A-Z0-9-]*\d)[A-Z0-9][A-Z0-9-]{3,11}\b/gi, '••••');
+  return s;
+}
+
+// ---------- OAuth start without the key in the URL ----------
+const OAUTH_TOKEN_TTL = 600;
+async function oauthBegin(request, env, url, provider) {
+  const b = await readJson(request, 4000);
+  const token = b64uEncode(randomBytes(24));
+  await env.LIFE.put(`oauths:${token}`, JSON.stringify({ p: provider, r: safeReturn(b.return || APP_URL), t: Date.now() }), { expirationTtl: OAUTH_TOKEN_TTL });
+  return json({ url: `${url.origin}/oauth/${provider}/start?s=${token}` });
+}
+async function takeOauthToken(env, token, provider) {
+  if (!token || token.length > 64) return null;
+  const k = `oauths:${token}`;
+  const v = await kvGet(env, k);
+  if (!v) return null;
+  await env.LIFE.delete(k);   // single use
+  if (v.p !== provider || Date.now() - v.t > OAUTH_TOKEN_TTL * 1000) return null;
+  return v;
+}
+
 // ---------- router ----------
 async function route(request, env, url) {
   const method = request.method;
@@ -238,17 +354,20 @@ async function route(request, env, url) {
   // Public routes
   if (path === '/' && method === 'GET') return json({ ok: true, name: 'life-sync' });
   if (path === '/pair' && method === 'POST') {
+    // Optional extra lock for fresh deploys: set PAIR_SECRET and send it as X-Pair-Secret.
+    if (env.PAIR_SECRET && !safeEqual(request.headers.get('X-Pair-Secret') || '', env.PAIR_SECRET)) return err(403, 'pairing secret required');
     if (await env.LIFE.get('key')) return err(409, 'already paired');
-    const key = b64uEncode(randomBytes(32));
-    await env.LIFE.put('key', key);
-    return json({ key });
+    // The Durable Object decides, one request at a time, so only the first caller ever gets a key.
+    const r = await hubCall(env, '/_/pair', { method: 'POST', body: JSON.stringify({ key: b64uEncode(randomBytes(32)) }) });
+    const d = await r.json();
+    return r.ok ? json({ key: d.key }) : err(r.status, d.error || 'pairing failed');
   }
   if (path === '/vapid' && method === 'GET') {
     const v = await getVapid(env);
     return json({ publicKey: v.publicKey });
   }
 
-  // OAuth: start uses ?k=, callback is authenticated by the signed state.
+  // OAuth: start uses a one-time ?s= token (or the old ?k= key), callback is authenticated by the signed state.
   const oauth = /^\/oauth\/(ms|google)\/(start|callback)$/.exec(path);
   if (oauth && method === 'GET') {
     const [, provider, step] = oauth;
@@ -256,6 +375,12 @@ async function route(request, env, url) {
     if (!lifeKey) return err(401, 'not paired');
     const config = (await kvGet(env, 'config')) || {};
     if (step === 'start') {
+      const s = url.searchParams.get('s');
+      if (s) {
+        const t = await takeOauthToken(env, s, provider);
+        if (!t) return err(401, 'link expired, start again from the app');
+        return oauthStart(provider, request, env, lifeKey, config, t.r);
+      }
       if (!(await authorize(request, env, url, true))) return err(401, 'unauthorized');
       return oauthStart(provider, request, env, lifeKey, config);
     }
@@ -267,18 +392,30 @@ async function route(request, env, url) {
     const key = await env.LIFE.get('key');
     if (!key || !protos.some((p) => safeEqual(p, key))) return err(401, 'unauthorized');
     const device = (url.searchParams.get('d') || '').slice(0, 40);
-    return hub(env, request, device);
+    return hub(env, request, device, path);
   }
   const allowQuery = path === '/widget' && method === 'GET';
-  if (!(await authorize(request, env, url, allowQuery))) return err(401, 'unauthorized');
+  const authKey = await authorize(request, env, url, allowQuery);
+  if (!authKey) return err(401, 'unauthorized');
 
   // Replace a leaked key. The device that asks gets the new key; every other place must be updated by hand.
+  // Live connections opened with the old key are closed (devices reconnect with whatever key they hold).
   if (path === '/key/rotate' && method === 'POST') {
     const key = b64uEncode(randomBytes(32));
     await env.LIFE.put('key', key);
+    try { await hubCall(env, '/_/close', { method: 'POST' }); } catch (e) { console.error('closing sockets failed', e); }
     return json({ key });
   }
-  const config = async () => (await kvGet(env, 'config')) || {};
+  const oauthB = /^\/oauth\/(ms|google)\/begin$/.exec(path);
+  if (oauthB && method === 'POST') return oauthBegin(request, env, url, oauthB[1]);
+
+  const group = limitGroup(method, path);
+  if (group) { const limited = await rateLimit(env, authKey, group); if (limited) return limited; }
+
+  const tzHdr = request.headers.get('X-Life-TZ');
+  let cfgP = null;
+  const config = () => (cfgP ||= (async () => applyTz(env, (await kvGet(env, 'config')) || {}, tzHdr))());
+  if (tzHdr) await config();
 
   switch (`${method} ${path}`) {
     case 'GET /status': {
@@ -315,6 +452,7 @@ async function route(request, env, url) {
         return err(400, 'subscription must include endpoint and keys.p256dh/auth');
       }
       if (!/^https:\/\//.test(subscription.endpoint)) return err(400, 'endpoint must be https');
+      if (!validSubKeys(subscription.keys)) return err(400, 'subscription keys are not valid');
       await kvPut(env, 'sub', { endpoint: subscription.endpoint, keys: { p256dh: subscription.keys.p256dh, auth: subscription.keys.auth } });
       return json({ ok: true });
     }
@@ -359,12 +497,12 @@ async function route(request, env, url) {
     case 'POST /ingest/gmail': {
       const body = await readJson(request);
       if (!Array.isArray(body.items)) return err(400, 'items must be an array');
-      const items = body.items.slice(0, 50).map((m) => ({
+      const items = body.items.slice(0, 50).filter((m) => m && typeof m === 'object').map((m) => ({
         id: String(m.id ?? ''),
         from: String(m.from ?? '').slice(0, 200),
         subject: String(m.subject ?? '').slice(0, 300),
-        preview: String(m.preview ?? '').slice(0, 300),
-        date: m.date ? new Date(m.date).toISOString() : new Date().toISOString(),
+        preview: redactPreview(String(m.preview ?? '').slice(0, 300)),
+        date: safeIso(m.date, new Date().toISOString()),
         link: String(m.link ?? ''),
       })).filter((m) => m.id);
       await kvPut(env, 'gmail', { items, updated: Date.now() });
@@ -390,7 +528,10 @@ async function route(request, env, url) {
       const bc = Array.isArray(w.summary?.busCfg) ? w.summary.busCfg[0] : null;
       if (bc && bc.route && bc.stop) {
         try {
-          const r = await getBus(new URL(`https://x/bus?route=${encodeURIComponent(bc.route)}&stop=${encodeURIComponent(bc.stop)}`));
+          const r = await Promise.race([
+            getBus(new URL(`https://x/bus?route=${encodeURIComponent(bc.route)}&stop=${encodeURIComponent(bc.stop)}`)),
+            new Promise((_, no) => setTimeout(() => no(new Error('bus timeout')), 5000)),
+          ]);
           const b = await r.json();
           bus = { route: b.route, stop: b.stop, name: bc.name || b.stopName || '', deps: (b.deps || []).filter((t) => Date.parse(t) > Date.now() - 30000).slice(0, 3) };
         } catch { /* bus is optional */ }
@@ -430,15 +571,18 @@ async function route(request, env, url) {
     case 'GET /jobs':
       return listJobs(env);
     case 'POST /screen':
-      return logScreen(request, env);
+      return logScreen(request, env, tzOf(await config()));
     case 'GET /screen':
       return getScreen(env);
     case 'POST /jarvis/voice': {
       // the laptop's spoken reply (MP3, same voice as on the laptop) so the phone can play it
       const id = (url.searchParams.get('id') || '').replace(/[^a-z0-9]/gi, '').slice(0, 40);
-      const buf = await request.arrayBuffer();
+      let buf;
+      try { buf = await readBody(request, 4_000_000); } catch (e) {
+        if (e instanceof HttpError && e.status === 413) return err(413, 'audio too large');
+        throw e;
+      }
       if (!id || !buf.byteLength) return err(400, 'id and audio required');
-      if (buf.byteLength > 4_000_000) return err(413, 'audio too large');
       await env.LIFE.put(`jvoice:${id}`, buf, { expirationTtl: 3600 });
       return json({ ok: true });
     }
@@ -456,9 +600,8 @@ async function route(request, env, url) {
     case 'GET /jarvis/voice': {
       const id = (url.searchParams.get('id') || '').replace(/[^a-z0-9]/gi, '').slice(0, 40);
       const a = id && await env.LIFE.get(`jvoice:${id}`, 'arrayBuffer');
-      if (!a) return err(404, 'no audio');
-      const riff = new Uint8Array(a, 0, 4);
-      const type = String.fromCharCode(...riff) === 'RIFF' ? 'audio/wav' : 'audio/mpeg';
+      if (!a || !a.byteLength) return err(404, 'no audio');
+      const type = a.byteLength >= 4 && String.fromCharCode(...new Uint8Array(a, 0, 4)) === 'RIFF' ? 'audio/wav' : 'audio/mpeg';
       return new Response(a, { headers: { 'Content-Type': type, 'Cache-Control': 'private, max-age=3600' } });
     }
     case 'POST /jarvis/cmd':
@@ -468,12 +611,12 @@ async function route(request, env, url) {
     case 'POST /jarvis/wake':
     case 'POST /jarvis/step':
     case 'GET /jarvis/wake':
-      return hub(env, request);
+      return hub(env, request, '', path);
     case 'GET /sync':
     case 'PUT /sync':
     case 'GET /sync/notes':
     case 'GET /sync/status':
-      return hub(env, request);
+      return hub(env, request, '', path);
     case 'PUT /sync/notes':
       return putNotes(request, env);
     case 'GET /sync/notes/item':
@@ -485,10 +628,11 @@ async function route(request, env, url) {
     case 'GET /backup/list':
       return json((await kvGet(env, 'backup:meta')) || []);
     case 'DELETE /oauth/ms':
-      await env.LIFE.delete('ms_token');
+      await disconnect('ms', env, await config());
+      await cacheDel('mail:outlook');
       return json({ ok: true });
     case 'DELETE /oauth/google':
-      await env.LIFE.delete('g_token');
+      await disconnect('google', env, await config());
       return json({ ok: true });
     default:
       return err(404, 'not found');
@@ -505,7 +649,12 @@ export default {
       resp = await route(request, env, url);
       if (resp.status === 101) return resp;
     } catch (e) {
-      resp = e instanceof HttpError ? err(e.status, e.message) : err(500, 'internal error', { message: String(e?.message || e) });
+      if (e instanceof HttpError) resp = err(e.status, e.message);
+      else {
+        // details stay in the logs; the client only learns that something failed
+        console.error('unhandled error', request.method, url.pathname, e?.stack || e);
+        resp = err(500, 'internal error');
+      }
     }
     return withCors(resp, origin);
   },
@@ -514,5 +663,13 @@ export default {
     ctx.waitUntil(runCron(env, event.scheduledTime || Date.now()));
   },
 };
+
+// p256dh: uncompressed P-256 point (65 bytes, 0x04 first); auth: 16 bytes.
+function validSubKeys(k) {
+  try {
+    const p = b64uDecode(String(k.p256dh)), a = b64uDecode(String(k.auth));
+    return p.length === 65 && p[0] === 4 && a.length === 16;
+  } catch { return false; }
+}
 
 export { mergeConfig, cleanSchedule, SyncHub };
