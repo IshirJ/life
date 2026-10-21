@@ -1966,7 +1966,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='174';
+const APP_VER='175';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -3246,7 +3246,7 @@ function openConn(){
       :`<label class="fld" for="srvUrl"><span>Server address</span><input id="srvUrl" type="url" inputmode="url" placeholder="https://life-sync.yourname.workers.dev" autocomplete="off"></label>
         <label class="fld" for="srvKey"><span>Key (only if this server is already paired)</span><input id="srvKey" autocomplete="off" placeholder="Leave empty the first time"></label>
         <div class="sh-actions" style="margin-top:0"><button class="primary" id="srvGo" style="flex:1">${ic('link')}Connect</button></div>`}
-    ${syncOn()?`<div class="sh-actions" style="margin-top:14px"><button class="primary" id="diagGo" style="flex:1">Check everything</button></div>`:''}
+    ${syncOn()?`<div class="sh-actions" style="margin-top:20px"><button class="primary" id="diagGo" style="flex:1">Check everything</button></div>`:''}
     <div class="set-grp">What it powers</div>
     ${syncOn()?trow('id="syncTg"',SYNC.syncOn!==false,'Sync across devices',syncStatusText()):''}
     ${syncOn()?connRow('syncstat','cloud','Sync status','See what this device and the server each have',LIVE.state==='live'):''}
@@ -4139,7 +4139,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=174';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=175';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -6919,7 +6919,16 @@ afterSplash(()=>setTimeout(loadFoods,1500));
 </script>
 
 <script>
-if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(()=>{}))}
+if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(reg=>{
+  /* look for a new version every time the app comes back to the front, not only on a cold start */
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')reg.update().catch(()=>{})});
+}).catch(()=>{}));
+  /* a new version took over: reload straight away if nothing is open, otherwise the next time the app is brought back */
+  let had=!!navigator.serviceWorker.controller,pend=false;
+  const go=()=>{const a=document.activeElement;if(document.querySelector('#wrap:not([hidden])')||document.getElementById('jvHud')||(a&&/INPUT|TEXTAREA/.test(a.tagName)))pend=true;else location.reload()};
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had)go();had=true});
+  document.addEventListener('visibilitychange',()=>{if(pend&&document.visibilityState==='visible'){pend=false;location.reload()}});
+}
 </script>
 </body>
 </html>
