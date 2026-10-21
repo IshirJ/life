@@ -139,3 +139,11 @@ test('jarvis busy poll does not hand over the next command', async () => {
   assert.deepEqual(await (await call(env, req('/jarvis/next?busy=1', { key }))).json(), {});
   assert.equal((await (await call(env, req('/jarvis/next', { key }))).json()).text, 'one');
 });
+
+test('key rotate: old key stops working, new one works', async () => {
+  const { env, key } = await paired();
+  const { key: nk } = await (await call(env, req('/key/rotate', { method: 'POST', key, body: {} }))).json();
+  assert.ok(nk && nk !== key);
+  assert.equal((await call(env, req('/jarvis/log', { key }))).status, 401);
+  assert.equal((await call(env, req('/jarvis/log', { key: nk }))).status, 200);
+});

@@ -271,6 +271,12 @@ async function route(request, env, url) {
   const allowQuery = path === '/widget' && method === 'GET';
   if (!(await authorize(request, env, url, allowQuery))) return err(401, 'unauthorized');
 
+  // Replace a leaked key. The device that asks gets the new key; every other place must be updated by hand.
+  if (path === '/key/rotate' && method === 'POST') {
+    const key = b64uEncode(randomBytes(32));
+    await env.LIFE.put('key', key);
+    return json({ key });
+  }
   const config = async () => (await kvGet(env, 'config')) || {};
 
   switch (`${method} ${path}`) {

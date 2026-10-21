@@ -1929,7 +1929,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='119';
+const APP_VER='120';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -3113,7 +3113,7 @@ function openConn(){
     ${connRow('food','food','Food search','USDA + Open Food Facts as you type',false)}
     ${connRow('quick','bolt','Quick capture','Siri, Action button and the share sheet',false)}
     ${connRow('widget','today','Home-screen widget',SYNC.widgetOn?'On · Scriptable':'Calories left, next class, tasks due',!!SYNC.widgetOn)}
-    ${syncOn()?`<div class="set-grp">This phone’s key</div><div class="trow" style="cursor:default"><span style="font-family:var(--mono);font-size:12px;word-break:break-all">${esc(SYNC.key)}</span><button class="link" data-copy="${esc(SYNC.key)}">Copy</button></div><p class="small">Treat the key like a password. Your Gmail script, Shortcut and widget use it.</p>`:''}`);
+    ${syncOn()?`<div class="set-grp">This phone’s key</div><div class="trow" style="cursor:default"><span style="font-family:var(--mono);font-size:12px;word-break:break-all">${esc(SYNC.key)}</span><button class="link" data-copy="${esc(SYNC.key)}">Copy</button></div><p class="small">Treat the key like a password. Your Gmail script, Shortcut, widget and JARVIS use it.</p><button class="link" id="keyNew" style="color:var(--late)">Make a new key (if this one leaked)</button>`:''}`);
   if(syncOn()&&!SV.status)refreshStatus().then(()=>{if($('#srvOff'))openConn()});
 }
 function needSrv(){return syncOn()?'':`<div class="notice">Connect your server first (Settings → Connections).</div>`}
@@ -3985,7 +3985,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=119';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=120';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -5781,6 +5781,14 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-pane
     <p class="small">Apple doesn’t let Home-Screen web apps block other apps, so this uses Apple’s own Shortcuts. It’s free and runs on your phone.</p>`);return}
 },true);
 async function loadCfg(){try{SV.cfg=await api('/config')}catch(e){}}
+
+/* ---------- replace a leaked key: two taps, then this device switches over; the rest are updated by hand ---------- */
+document.addEventListener('click',async e=>{const b=e.target.closest('#keyNew');if(!b)return;e.preventDefault();e.stopImmediatePropagation();
+  if(!b.dataset.arm){b.dataset.arm='1';b.textContent='Tap again to replace the key everywhere';setTimeout(()=>{if(b.isConnected){delete b.dataset.arm;b.textContent='Make a new key (if this one leaked)'}},5000);return}
+  b.disabled=true;b.textContent='Replacing…';
+  try{const r=await api('/key/rotate',{method:'POST',body:'{}'});if(!r.key)throw new Error('no key');SYNC.key=r.key;saveSync();
+    toast('New key saved on this device. Update your other devices, Gmail script, widget and JARVIS.');setTimeout(()=>location.reload(),2200)}
+  catch(x){toast('Couldn’t replace it: '+x.message);b.disabled=false;delete b.dataset.arm;b.textContent='Make a new key (if this one leaked)'}},true);
 
 /* ===================== boot ===================== */
 load();
