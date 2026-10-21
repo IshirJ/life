@@ -187,3 +187,10 @@ test('ai stt: audio goes to Gemini and text comes back; jarvis voice saved in co
   const c = await (await call(env, req('/config', { key }))).json();
   assert.equal(c.jarvisVoice, 'en-US-AndrewMultilingualNeural');
 });
+
+test('ai stt prefers Workers AI whisper when bound', async () => {
+  const { env, key } = await paired();
+  env.AI = { run: async (m, inp) => { assert.match(m, /whisper/); assert.equal(inp.audio, 'UklGRg=='); return { text: ' close whatsapp ' }; } };
+  const r = await (await call(env, req('/ai/stt', { method: 'POST', key, body: { audio: 'data:audio/wav;base64,UklGRg==' } }))).json();
+  assert.equal(r.text, 'close whatsapp');
+});

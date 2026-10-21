@@ -402,7 +402,7 @@ async function route(request, env, url) {
     case 'GET /bus/stops':
       return getBusStops(url);
     case 'POST /ai/stt':
-      return aiStt(request, await config());
+      return aiStt(request, await config(), env);
     case 'POST /ai/test':
       return aiTest(await config());
     case 'POST /ai/food':
@@ -429,6 +429,17 @@ async function route(request, env, url) {
       if (buf.byteLength > 1_500_000) return err(413, 'audio too large');
       await env.LIFE.put(`jvoice:${id}`, buf, { expirationTtl: 3600 });
       return json({ ok: true });
+    }
+    case 'POST /jarvis/tts': {
+      // server-side voice (Cloudflare Workers AI, free allowance) for replies the laptop didn't voice
+      if (!env.AI) return err(501, 'voice not available');
+      const b = await readJson(request, 20_000);
+      const text = String(b.text || '').trim().slice(0, 600);
+      if (!text) return err(400, 'text required');
+      const female = /Ava|Sonia|Jenny|Aria|female/i.test(String(b.voice || ''));
+      const out = await env.AI.run('@cf/deepgram/aura-1', { text, speaker: female ? 'luna' : 'helios' }, { returnRawResponse: true });
+      const buf = out instanceof Response ? await out.arrayBuffer() : out instanceof ReadableStream ? await new Response(out).arrayBuffer() : out;
+      return new Response(buf, { headers: { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'no-store' } });
     }
     case 'GET /jarvis/voice': {
       const id = (url.searchParams.get('id') || '').replace(/[^a-z0-9]/gi, '').slice(0, 40);

@@ -1931,7 +1931,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='164';
+const APP_VER='165';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -3998,7 +3998,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=164';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=165';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -6262,10 +6262,12 @@ jvSay=function(text){try{if(typeof speechSynthesis==='undefined'||!text)return;i
 
 /* replay a reply, stop speaking, and say why if the phone can't play the voice */
 async function jvSpeak2(text,id){
-  JH.why="";if(id&&syncOn()){for(let k=0;k<14;k++){try{const r=await fetch(SYNC.url.replace(/\/+$/,'')+'/jarvis/voice?id='+encodeURIComponent(id),{headers:{'X-Life-Key':SYNC.key}});
+  JH.why="";if(id&&syncOn()){for(let k=0;k<6;k++){try{const r=await fetch(SYNC.url.replace(/\/+$/,'')+'/jarvis/voice?id='+encodeURIComponent(id),{headers:{'X-Life-Key':SYNC.key}});
       if(r.ok){const b=await r.blob();if(b.size>200){if(JA.dataset.u)URL.revokeObjectURL(JA.dataset.u);const u=URL.createObjectURL(b);JA.dataset.u=u;JA.src=u;try{await JA.play();return}catch(e){JH.why='This app is blocking sound until you tap somewhere in JARVIS.'}}}
       else JH.why=r.status===404?'The laptop didn’t send its voice for this reply (restart JARVIS on the laptop).':'Voice download failed ('+r.status+').'}catch(e){JH.why='Couldn’t download the voice.'}
     if(JH.why&&!/didn’t send/.test(JH.why))break;await new Promise(r=>setTimeout(r,1800))}}
+  if(syncOn()){try{const r=await fetch(SYNC.url.replace(/\/+$/,'')+'/jarvis/tts',{method:'POST',headers:{'X-Life-Key':SYNC.key,'Content-Type':'application/json'},body:JSON.stringify({text:String(text).slice(0,600),voice:(SV.cfg&&SV.cfg.jarvisVoice)||''})});
+    if(r.ok){const b=await r.blob();if(b.size>200){if(JA.dataset.u)URL.revokeObjectURL(JA.dataset.u);const u=URL.createObjectURL(b);JA.dataset.u=u;JA.src=u;try{await JA.play();return}catch(e){}}}}catch(e){}}
   if(typeof speechSynthesis==='undefined'){toast(JH.why||'This browser has no voice to speak with.');return}
   jvSay(text);setTimeout(()=>{try{if(!speechSynthesis.speaking&&!JH.playing&&JH.why)toast(JH.why)}catch(e){}},1500)}
 jvSpeak=jvSpeak2;
