@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none'">
+<meta name="theme-color" content="#0E1A14">
+<meta name="referrer" content="no-referrer">
+<title>Pause · Life</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700;800&family=Newsreader:ital,opsz,wght@1,6..72,500&display=swap">
+<style>
+:root{--bg:#0E1A14;--ink:#EEF2EA;--muted:#9FB3A5;--accent:#F06D44;--sage:#86CFA0}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:radial-gradient(120% 80% at 50% 20%,#1E3A2B 0%,#0E1A14 60%,#080F0B 100%);color:var(--ink);font:500 16px/1.45 Figtree,system-ui,-apple-system,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:max(24px,env(safe-area-inset-top)) 24px max(24px,env(safe-area-inset-bottom));overflow:hidden;-webkit-font-smoothing:antialiased;text-align:center}
+.cap{font:600 12px Figtree;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+h1{font:italic 500 clamp(30px,8vw,40px)/1.15 Newsreader,Georgia,serif;margin:10px 0 0}
+h1 b{font-style:normal;color:var(--accent);font-weight:500}
+.stage{position:relative;width:min(78vw,320px);aspect-ratio:1;margin:34px 0 26px;display:grid;place-items:center}
+.halo,.core,.ring{position:absolute;border-radius:50%}
+.halo{inset:0;background:radial-gradient(circle,rgb(134 207 160 / .35),transparent 65%);filter:blur(12px);transform:scale(.55);transition:transform var(--t,4s) cubic-bezier(.45,0,.55,1)}
+.ring{inset:6%;border:1.5px solid rgb(238 242 234 / .16)}
+.core{inset:22%;background:radial-gradient(circle at 35% 30%,rgb(255 255 255 / .55),rgb(134 207 160 / .55) 35%,rgb(46 106 71 / .9));box-shadow:0 0 60px rgb(134 207 160 / .45),inset 0 1px 0 rgb(255 255 255 / .4);transform:scale(.55);transition:transform var(--t,4s) cubic-bezier(.45,0,.55,1)}
+.big .core,.big .halo{transform:scale(1)}
+.word{position:relative;font:700 20px Figtree;letter-spacing:.02em;text-shadow:0 1px 10px rgb(0 0 0 / .4)}
+.count{display:block;font:500 13px Figtree;color:rgb(238 242 234 / .75);margin-top:4px}
+.dots{display:flex;gap:8px;justify-content:center;margin-top:6px}
+.dots i{width:7px;height:7px;border-radius:50%;background:rgb(238 242 234 / .2);transition:background .4s}
+.dots i.on{background:var(--sage)}
+.acts{display:flex;flex-direction:column;gap:10px;width:min(100%,360px);margin-top:28px;opacity:0;transform:translateY(10px);transition:opacity .6s,transform .6s;pointer-events:none}
+.acts.on{opacity:1;transform:none;pointer-events:auto}
+.btn{display:block;height:54px;line-height:54px;border-radius:27px;font:800 16px Figtree;text-decoration:none;border:0;cursor:pointer}
+.btn.pri{background:var(--ink);color:#0E1A14}
+.btn.sec{background:rgb(238 242 234 / .1);color:var(--ink);box-shadow:inset 0 0 0 1px rgb(238 242 234 / .16)}
+.note{font-size:13.5px;color:var(--muted);margin-top:14px;min-height:1.4em}
+.skip{position:fixed;top:max(16px,env(safe-area-inset-top));right:18px;font:600 13px Figtree;color:var(--muted);background:none;border:0}
+@media (prefers-reduced-motion:reduce){.core,.halo{transition:none}}
+</style>
+</head>
+<body>
+<button class="skip" id="skip">Skip</button>
+<div class="cap" id="app">Before you open it</div>
+<h1>Take three <b>slow</b> breaths.</h1>
+<div class="stage" id="stage"><div class="halo"></div><div class="ring"></div><div class="core"></div><div class="word"><span id="word">Get ready</span><span class="count" id="count"></span></div></div>
+<div class="dots" id="dots"><i></i><i></i><i></i></div>
+<div class="acts" id="acts">
+  <button class="btn pri" id="done">I’m good, not now</button>
+  <a class="btn sec" id="go" href="#">Open it for 10 minutes</a>
+</div>
+<p class="note" id="note"></p>
+<script>
+(function(){
+  var q=new URLSearchParams(location.search),app=(q.get('app')||'it').replace(/[^\w .&-]/g,'').slice(0,24)||'it';
+  document.getElementById('app').textContent='Before you open '+app;
+  document.getElementById('go').textContent='Open '+app+' for 10 minutes';
+  document.getElementById('go').href='shortcuts://run-shortcut?name='+encodeURIComponent('Life Allow')+'&input=text&text='+encodeURIComponent(app);
+  var stage=document.getElementById('stage'),word=document.getElementById('word'),count=document.getElementById('count'),dots=document.querySelectorAll('#dots i');
+  /* 4 in · 2 hold · 6 out, three times (about 36 seconds): a longer out-breath slows the heart down */
+  var steps=[['Breathe in',4,true],['Hold',2,true],['Breathe out',6,false]],round=0,timer=null,left=0;
+  function show(){document.getElementById('acts').classList.add('on');word.textContent='Nice';count.textContent='';stage.classList.remove('big')}
+  function run(i){
+    if(i>=steps.length){round++;if(dots[round-1])dots[round-1].classList.add('on');if(round>=3)return show();i=0}
+    var s=steps[i];stage.style.setProperty('--t',s[1]+'s');stage.classList.toggle('big',s[2]);word.textContent=s[0];left=s[1];count.textContent=left;
+    clearInterval(timer);timer=setInterval(function(){left--;if(left>0)count.textContent=left;else{clearInterval(timer);run(i+1)}},1000);
+  }
+  setTimeout(function(){run(0)},900);
+  document.getElementById('skip').onclick=function(){clearInterval(timer);show()};
+  document.getElementById('done').onclick=function(){document.getElementById('note').textContent='Good call. Swipe up to leave '+app+'.';this.disabled=true};
+})();
+</script>
+</body>
+</html>

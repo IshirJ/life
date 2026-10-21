@@ -86,7 +86,7 @@ export class SyncHub {
       if (text.length > MAX_DOC) return Response.json({ error: 'body too large' }, { status: 413 });
       let body;
       try { body = JSON.parse(text); } catch { return Response.json({ error: 'invalid JSON' }, { status: 400 }); }
-      if (!body.doc || typeof body.doc !== 'object' || !Array.isArray(body.doc.entries)) return Response.json({ error: 'doc with entries required' }, { status: 400 });
+      if (!body.doc || typeof body.doc !== 'object' || !(Array.isArray(body.doc.entries) || (body.doc.e2e === 1 && typeof body.doc.ct === 'string'))) return Response.json({ error: 'doc with entries required' }, { status: 400 });
       const m = await this.ensure();
       if (Number(body.base || 0) !== m.ver) return Response.json({ error: 'conflict', ver: m.ver }, { status: 409 });
       const next = { ver: m.ver + 1, ts: Date.now(), n: m.n };
@@ -124,8 +124,47 @@ export class SyncHub {
       const m = await this.ensure();
       const doc = await this.readDoc(m);
       let entries = 0, tombs = 0;
-      try { const d = JSON.parse(doc || 'null'); entries = d?.entries?.length || 0; tombs = Object.keys(d?.tomb || {}).length; } catch { /* ignore */ }
-      return Response.json({ ver: m.ver, ts: m.ts, entries, tombs, bytes: (doc || '').length, devices: this.ctx.getWebSockets().length });
+      let encd = false;
+      try { const d = JSON.parse(doc || 'null'); encd = d?.e2e === 1; entries = d?.entries?.length || 0; tombs = Object.keys(d?.tomb || {}).length; } catch { /* ignore */ }
+      return Response.json({ ver: m.ver, ts: m.ts, entries, tombs, encrypted: encd, bytes: (doc || '').length, devices: this.ctx.getWebSockets().length });
+    }
+
+    // JARVIS relay: the app queues a typed command, the laptop picks it up and posts the reply.
+    if (path === '/jarvis/cmd' && method === 'POST') {
+      const { text } = await request.json().catch(() => ({}));
+      const t = String(text || '').replace(/\s+/g, ' ').trim().slice(0, 500);
+      if (!t) return Response.json({ error: 'text required' }, { status: 400 });
+      const j = (await this.ctx.storage.get('jarvis')) || { q: [], log: [], seen: 0 };
+      const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+      j.q.push({ id, text: t, at: Date.now() }); j.q = j.q.slice(-20);
+      j.log.push({ id, text: t, at: Date.now(), state: 'queued' }); j.log = j.log.slice(-40);
+      await this.ctx.storage.put('jarvis', j);
+      this.broadcast({ t: 'jarvis' }, null);
+      return Response.json({ ok: true, id });
+    }
+    if (path === '/jarvis/next' && method === 'GET') {
+      const j = (await this.ctx.storage.get('jarvis')) || { q: [], log: [], seen: 0 };
+      const first = Date.now() - j.seen > 60000;
+      j.seen = Date.now();
+      const next = j.q.shift() || null;
+      if (next) { const l = j.log.find((x) => x.id === next.id); if (l) l.state = 'running'; }
+      if (next || first) { await this.ctx.storage.put('jarvis', j); this.broadcast({ t: 'jarvis' }, null); }
+      else this.seenMem = Date.now();
+      return Response.json(next || {});
+    }
+    if (path === '/jarvis/reply' && method === 'POST') {
+      const b = await request.json().catch(() => ({}));
+      const j = (await this.ctx.storage.get('jarvis')) || { q: [], log: [], seen: 0 };
+      const l = j.log.find((x) => x.id === String(b.id || ''));
+      if (l) { l.reply = String(b.reply || '').slice(0, 1500); l.state = b.state === 'error' ? 'error' : 'done'; l.done = Date.now(); }
+      j.seen = Date.now();
+      await this.ctx.storage.put('jarvis', j);
+      this.broadcast({ t: 'jarvis' }, null);
+      return Response.json({ ok: true });
+    }
+    if (path === '/jarvis/log' && method === 'GET') {
+      const j = (await this.ctx.storage.get('jarvis')) || { q: [], log: [], seen: 0 };
+      return Response.json({ log: j.log, seen: Math.max(j.seen || 0, this.seenMem || 0), queued: j.q.length });
     }
 
     return Response.json({ error: 'not found' }, { status: 404 });

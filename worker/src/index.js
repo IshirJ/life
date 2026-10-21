@@ -11,6 +11,7 @@ import {
 import { isValidTz, parseYmd } from './tz.js';
 import { searchFood } from './food.js';
 import { SyncHub } from './hub.js';
+import { getImages, imageUsed, getBus, getBusStops, aiFood, postReel, listReels, deleteReels, ingestJobs, listJobs, logScreen, getScreen } from './extras.js';
 
 const MIN = 60 * 1000;
 const DUE_WINDOW = 30 * MIN;
@@ -32,6 +33,7 @@ function maskConfig(c) {
   const out = JSON.parse(JSON.stringify(c || {}));
   for (const p of ['ms', 'google']) if (out[p]?.clientSecret) out[p].clientSecret = MASK;
   if (out.fdcKey) out.fdcKey = MASK;
+  for (const k of ['unsplashKey', 'geminiKey']) if (out[k]) out[k] = MASK;
   out.tz ||= DEFAULT_TZ;
   out.calendars ||= [];
   return out;
@@ -69,6 +71,11 @@ function mergeConfig(cur, body) {
   if (body.fdcKey != null && body.fdcKey !== MASK) {
     const k = String(body.fdcKey).trim().slice(0, 100);
     if (k) next.fdcKey = k; else delete next.fdcKey;
+  }
+  for (const k of ['unsplashKey', 'geminiKey', 'geminiModel']) {
+    if (body[k] == null || body[k] === MASK) continue;
+    const v = String(body[k]).trim().slice(0, 120);
+    if (v) next[k] = v; else delete next[k];
   }
   if (body.healthPrefer === 'apple' || body.healthPrefer === 'google') next.healthPrefer = body.healthPrefer;
   return next;
@@ -379,6 +386,35 @@ async function route(request, env, url) {
       return json((await kvGet(env, 'inbox')) || []);
     case 'DELETE /inbox':
       return deleteInbox(request, env);
+    case 'GET /img':
+      return getImages(env, await config(), url);
+    case 'POST /img/used':
+      return imageUsed(request, env, await config());
+    case 'GET /bus':
+      return getBus(url);
+    case 'GET /bus/stops':
+      return getBusStops(url);
+    case 'POST /ai/food':
+      return aiFood(request, await config());
+    case 'POST /reels':
+      return postReel(request, env, await config());
+    case 'GET /reels':
+      return listReels(env);
+    case 'DELETE /reels':
+      return deleteReels(request, env);
+    case 'POST /ingest/jobs':
+      return ingestJobs(request, env);
+    case 'GET /jobs':
+      return listJobs(env);
+    case 'POST /screen':
+      return logScreen(request, env);
+    case 'GET /screen':
+      return getScreen(env);
+    case 'POST /jarvis/cmd':
+    case 'GET /jarvis/next':
+    case 'POST /jarvis/reply':
+    case 'GET /jarvis/log':
+      return hub(env, request);
     case 'GET /sync':
     case 'PUT /sync':
     case 'GET /sync/notes':

@@ -1,0 +1,100 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { makeEnv, mockFetch, req } from './helpers.js';
+import worker from '../src/index.js';
+import { cacheClear } from '../src/util.js';
+const call = (env, r) => worker.fetch(r, env);
+async function paired() { const env = makeEnv(); const { key } = await (await call(env, req('/pair', { method: 'POST' }))).json(); return { env, key }; }
+
+test('config keeps unsplash/gemini keys masked', async () => {
+  const { env, key } = await paired();
+  let c = await (await call(env, req('/config', { method: 'PUT', key, body: { unsplashKey: 'abc', geminiKey: 'g1', geminiModel: 'gemini-x' } }))).json();
+  assert.equal(c.unsplashKey, '********'); assert.equal(c.geminiKey, '********'); assert.equal(c.geminiModel, 'gemini-x');
+  c = await (await call(env, req('/config', { method: 'PUT', key, body: { unsplashKey: '********' } }))).json();
+  assert.equal(env.LIFE.json('config').unsplashKey, 'abc');
+});
+
+test('bus departures parsed from BT XML and cached', async () => {
+  cacheClear();
+  const { env, key } = await paired();
+  let n = 0;
+  const f = mockFetch((url) => { n++; assert.match(url, /GetNextDepartures\?routeShortName=NMG&stopCode=1411/);
+    return new Response('<DocumentElement><NextDepartures><StopName>Main/Red Maple Nbnd</StopName><AdjustedDepartureTime>2026-10-20T22:25:00-04:00</AdjustedDepartureTime></NextDepartures></DocumentElement>'); });
+  try {
+    const b = await (await call(env, req('/bus?route=nmg&stop=1411', { key }))).json();
+    assert.equal(b.deps[0], '2026-10-21T02:25:00.000Z'); assert.equal(b.stopName, 'Main/Red Maple Nbnd');
+    await call(env, req('/bus?route=NMG&stop=1411', { key }));
+    assert.equal(n, 1);
+  } finally { f.restore(); }
+});
+
+test('images: no key → empty with error, key → searched once then cached', async () => {
+  cacheClear();
+  const { env, key } = await paired();
+  let b = await (await call(env, req('/img?q=forest', { key }))).json();
+  assert.equal(b.error, 'no_key');
+  await call(env, req('/config', { method: 'PUT', key, body: { unsplashKey: 'K' } }));
+  let n = 0;
+  const f = mockFetch((url, init) => { n++; assert.equal(init.headers.Authorization, 'Client-ID K');
+    return Response.json({ results: [{ id: 'p1', urls: { raw: 'https://images.unsplash.com/x?ixid=1' }, user: { name: 'A', links: { html: 'u' } }, links: { html: 'l', download_location: 'https://api.unsplash.com/photos/p1/download' } }] }); });
+  try {
+    b = await (await call(env, req('/img?q=Forest', { key }))).json();
+    assert.equal(b.photos[0].id, 'p1');
+    b = await (await call(env, req('/img?q=forest', { key }))).json();
+    assert.equal(b.cached, true); assert.equal(n, 1);
+  } finally { f.restore(); }
+});
+
+test('ai food: Gemini JSON mapped to items', async () => {
+  const { env, key } = await paired();
+  await call(env, req('/config', { method: 'PUT', key, body: { geminiKey: 'G' } }));
+  const f = mockFetch((url, init) => {
+    assert.match(url, /generativelanguage\.googleapis\.com\/v1beta\/models\/gemini-flash-latest:generateContent/);
+    assert.equal(init.headers['x-goog-api-key'], 'G');
+    const body = JSON.parse(init.body); assert.ok(body.contents[0].parts.some((p) => p.inline_data));
+    return Response.json({ candidates: [{ content: { parts: [{ text: JSON.stringify({ items: [{ name: 'Dal', grams: 200, kcal: 230.4, protein: 12.33, fat: 6, carbs: 30 }] }) }] } }] });
+  });
+  try {
+    const b = await (await call(env, req('/ai/food', { method: 'POST', key, body: { image: 'data:image/jpeg;base64,AAAA', text: 'lunch' } }))).json();
+    assert.deepEqual(b.items[0], { name: 'Dal', grams: 200, kcal: 230, protein: 12.3, fat: 6, carbs: 30, confidence: '' });
+  } finally { f.restore(); }
+});
+
+test('jobs ingest merges by thread id', async () => {
+  const { env, key } = await paired();
+  await call(env, req('/ingest/jobs', { method: 'POST', key, body: { items: [{ id: 't1', from: 'Amazon', subject: 'Thanks for applying', date: '2026-10-01T00:00:00Z', label: 'Job applications' }] } }));
+  const r = await (await call(env, req('/ingest/jobs', { method: 'POST', key, body: { items: [{ id: 't1', from: 'Amazon', subject: 'Interview', date: '2026-10-02T00:00:00Z', label: 'Assessments & Interviews' }, { id: 't2', subject: 'x' }] } }))).json();
+  assert.equal(r.added, 1); assert.equal(r.total, 2);
+  const j = await (await call(env, req('/jobs', { key }))).json();
+  assert.equal(j.items.find((x) => x.id === 't1').label, 'Assessments & Interviews');
+});
+
+test('jarvis relay: queue → laptop picks up → reply in log', async () => {
+  const { env, key } = await paired();
+  const { id } = await (await call(env, req('/jarvis/cmd', { method: 'POST', key, body: { text: '  open   excel ' } }))).json();
+  const next = await (await call(env, req('/jarvis/next', { key }))).json();
+  assert.equal(next.text, 'open excel');
+  assert.deepEqual(await (await call(env, req('/jarvis/next', { key }))).json(), {});
+  await call(env, req('/jarvis/reply', { method: 'POST', key, body: { id, reply: 'Excel is open.' } }));
+  const log = await (await call(env, req('/jarvis/log', { key }))).json();
+  assert.equal(log.log[0].reply, 'Excel is open.'); assert.equal(log.log[0].state, 'done'); assert.ok(log.seen > 0);
+});
+
+test('sync accepts an end-to-end encrypted document', async () => {
+  const { env, key } = await paired();
+  const r = await call(env, req('/sync', { method: 'PUT', key, body: { base: 0, doc: { e2e: 1, v: 1, iv: 'x', ct: 'y' } } }));
+  assert.equal(r.status, 200);
+  const g = await (await call(env, req('/sync', { key }))).json();
+  assert.equal(g.doc.e2e, 1);
+  const s = await (await call(env, req('/sync/status', { key }))).json();
+  assert.equal(s.encrypted, true);
+});
+
+test('screen pauses counted per day', async () => {
+  const { env, key } = await paired();
+  await call(env, req('/screen', { method: 'POST', key, body: { app: 'Instagram', event: 'paused' } }));
+  await call(env, req('/screen', { method: 'POST', key, body: { app: 'Instagram', event: 'paused' } }));
+  const s = await (await call(env, req('/screen', { key }))).json();
+  const day = Object.values(s.days)[0];
+  assert.equal(day['instagram:paused'], 2);
+});
