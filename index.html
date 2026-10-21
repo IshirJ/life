@@ -1963,7 +1963,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='172';
+const APP_VER='173';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -4136,7 +4136,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=172';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=173';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -6141,8 +6141,9 @@ async function e2eStoreKey(raw){
   if(typeof e2eSetKey==='function')return e2eSetKey(raw);
   await e2eUse(raw);localStorage.setItem('ishiros.e2e',e2eB64(raw))}
 async function e2eClear(){try{if(typeof e2eForget==='function')await e2eForget()}catch(x){}try{localStorage.removeItem('ishiros.e2e')}catch(x){}E2E.key=null;E2E.on=false}
+const E2EFRESH={pass:''};
 const e2eSay=(t,bad)=>{const m=$('#e2eMsg');if(m){m.innerHTML=bad?`<b style="color:var(--late)">${esc(t)}</b>`:esc(t)}};
-document.addEventListener('click',async e=>{const b=e.target.closest('[data-panel="e2e"],[data-panel="photos"],[data-panel="ai"],[data-panel="jarvis"],[data-panel="jobs"],[data-panel="reels"],[data-panel="stopper"],#e2eOn,#e2eForget,#e2eCheck,#aiSave,#aiTest,#jobsNow');if(!b)return;e.preventDefault();e.stopImmediatePropagation();
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-panel="e2e"],[data-panel="photos"],[data-panel="ai"],[data-panel="jarvis"],[data-panel="jobs"],[data-panel="reels"],[data-panel="stopper"],#e2eOn,#e2eForget,#e2eCheck,#e2eFresh,#aiSave,#aiTest,#jobsNow');if(!b)return;e.preventDefault();e.stopImmediatePropagation();
   const p=b.dataset.panel;
   if(p==='e2e')return openE2E();
   if(b.id==='e2eForget'){arm(b,'Tap again — this device stops syncing until you enter it again',async()=>{await e2eClear();openE2E()});return}
@@ -6156,6 +6157,16 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-pane
       else e2eSay(`No, that isn’t the passphrase this device uses (also tried ${f.tries-1} common variations).`,true)}
     catch(x){e2eSay('Couldn’t check: '+x.message,true)}
     b.disabled=false;b.innerHTML=lbl;return}
+  if(b.id==='e2eFresh'){const pass=E2EFRESH.pass;if(!pass){openE2E();return}
+    arm(b,'Tap again to replace the server copy',async()=>{b.disabled=true;b.textContent='Encrypting…';
+      try{const raw=await e2eDeriveForm(pass.trim(),WURL(),'NFKC');E2E.key=null;await e2eStoreKey(raw);
+        const cur=await api('/sync');
+        const p=await api('/sync',{method:'PUT',headers:{'X-Life-Device':DEVICE},body:JSON.stringify({base:cur.ver,doc:await e2eSeal(docForPush(db))})});
+        SYNCST.ver=p.ver;SYNCST.keyBad=false;SYNCST.err='';E2EFRESH.pass='';
+        try{await syncNotes(true)}catch(x){}cloudBackup(true);
+        toast('Done. Your server now holds this device’s data. Use the same passphrase on your other devices.');openE2E()}
+      catch(x){await e2eClear();e2eSay('Couldn’t start fresh, nothing was replaced: '+x.message,true);b.disabled=false;b.textContent='Start fresh with this device’s data'}});
+    return}
   if(b.id==='e2eOn'){const a=$('#e2eP1').value,c=$('#e2eP2').value;if(a.trim().length<8){e2eSay('Use at least 8 characters.',true);return}if(a!==c){e2eSay('The two passphrases don’t match each other. Type them again.',true);return}
     b.disabled=true;const lbl=b.innerHTML;const reset=()=>{b.disabled=false;b.innerHTML=lbl};b.textContent='Checking…';
     /* 1) what's on the server now (another device may have turned encryption on first) */
@@ -6164,7 +6175,9 @@ document.addEventListener('click',async e=>{const b=e.target.closest('[data-pane
     try{
       if(box){/* 2) derive locally and test-open the server copy; the key is not used anywhere until this passes */
         const f=await e2eFindKey(a,WURL(),k=>e2eOpens(k,box),(i,n)=>{e2eSay(i?`Checking variations of what you typed… ${i+1} of ${n}`:'Checking your passphrase…')});
-        if(!f.raw){await e2eClear();e2eSay(`The passphrase is wrong: it doesn’t open the data your other device encrypted (also tried ${f.tries-1} common variations: spaces, first-letter case, smart quotes). On a device where encryption is on, use “Check passphrase” to confirm the right one.`,true);reset();return}
+        if(!f.raw){await e2eClear();e2eSay(`The passphrase is wrong: it doesn’t open the data your other device encrypted (also tried ${f.tries-1} common variations: spaces, first-letter case, smart quotes). On a device where encryption is on, use “Check passphrase” to confirm the right one.`,true);
+          E2EFRESH.pass=a;const m=$('#e2eMsg');if(m)m.insertAdjacentHTML('beforeend',`<div class="notice" style="margin-top:10px">Nobody has the old passphrase any more? Start fresh: this device’s data replaces the locked copy on your server, encrypted with the passphrase you just typed. Then type that same passphrase on your other devices; their data merges back in.</div><div class="sh-actions"><button class="secondary" id="e2eFresh" style="flex:1">Start fresh with this device’s data</button></div>`);
+          reset();return}
         raw=f.raw;why=f.why}
       else{e2eSay('Making your key…');raw=await e2eDeriveForm(a.trim(),WURL(),'NFKC')}}
     catch(x){await e2eClear();e2eSay('Couldn’t make the key on this device: '+x.message,true);reset();return}
