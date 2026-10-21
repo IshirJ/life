@@ -147,3 +147,10 @@ test('key rotate: old key stops working, new one works', async () => {
   assert.equal((await call(env, req('/jarvis/log', { key }))).status, 401);
   assert.equal((await call(env, req('/jarvis/log', { key: nk }))).status, 200);
 });
+
+test('jarvis restart reaches a running JARVIS through next', async () => {
+  const { env, key } = await paired();
+  await call(env, req('/jarvis/wake', { method: 'POST', key, body: { mode: 'restart' } }));
+  assert.deepEqual(await (await call(env, req('/jarvis/next?v=2', { key }))).json(), { restart: true });
+  assert.deepEqual(await (await call(env, req('/jarvis/wake', { key }))).json(), {});
+});

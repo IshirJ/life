@@ -146,6 +146,8 @@ export class SyncHub {
       const j = (await this.ctx.storage.get('jarvis')) || { q: [], log: [], seen: 0 };
       const first = Date.now() - j.seen > 60000;
       j.seen = Date.now();
+      // a running JARVIS can restart itself too (in case the laptop's launcher isn't running)
+      if (url.searchParams.get('v') === '2' && j.wake && j.wake.mode === 'restart' && Date.now() - j.wake.at < 120000) { delete j.wake; await this.ctx.storage.put('jarvis', j); this.broadcast({ t: 'jarvis' }, null); return Response.json({ restart: true }); }
       const stop = j.stop && Date.now() - j.stop < 60000;
       if (j.stop) { delete j.stop; j.q = []; }
       const busy = url.searchParams.get('busy') === '1';   // laptop still working: only hand over a stop
