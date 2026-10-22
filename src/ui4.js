@@ -1911,3 +1911,35 @@ function headFont(){const k=document.documentElement.dataset.head,f=HEAD_FONTS[k
   const l=document.createElement('link');l.id='hf-'+k;l.rel='stylesheet';l.href=`https://fonts.googleapis.com/css2?family=${f}&display=swap`;
   l.onload=()=>{try{(document.fonts?document.fonts.ready:Promise.resolve()).then(()=>{if(typeof fitHello==='function')fitHello()})}catch(e){}};document.head.appendChild(l)}
 headFont();new MutationObserver(headFont).observe(document.documentElement,{attributes:true,attributeFilter:['data-head']});
+
+/* ===================== type themes by area (Headlines → "By area", the default) =====================
+   Today = Michroma (wide/futuristic) · Week = Pixelify Sans (pixel) · Work = Tektur (technical)
+   Health = Gloock (editorial) · Ideas = Shrikhand (groovy). Page title, greeting, section titles and the
+   big card's watermark word take the area's face; body text, numbers and panels stay as they are. */
+HEAD_FONTS.areas='Michroma&family=Pixelify+Sans:wght@500;700&family=Tektur:wght@500;700&family=Gloock&family=Shrikhand';
+(function(){try{const g=db.settings;if(!g._areaType){g._areaType=1;if(!g.head||g.head==='serif'){g.head='areas';save();try{applyLook()}catch(e){}}}}catch(e){}})();
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="areacss">
+:root[data-head="areas"][data-area="today"] :is(#top,#view){--serif:'Michroma','Geist',sans-serif;--areaf:'Michroma','Geist',sans-serif}
+:root[data-head="areas"][data-area="plan"] :is(#top,#view){--serif:'Pixelify Sans','Geist',sans-serif;--areaf:'Pixelify Sans','Geist',sans-serif}
+:root[data-head="areas"][data-area="work"] :is(#top,#view){--serif:'Tektur','Geist',sans-serif;--areaf:'Tektur','Geist',sans-serif}
+:root[data-head="areas"][data-area="health"] :is(#top,#view){--serif:'Gloock',Georgia,serif;--areaf:'Gloock',Georgia,serif}
+:root[data-head="areas"][data-area="mind"] :is(#top,#view){--serif:'Shrikhand','Geist',serif;--areaf:'Shrikhand','Geist',serif}
+:root[data-head="areas"] :is(#top,#view) :is(h1,h2,h3) em{font-style:normal}
+:root[data-head="areas"] .hart .hw{font-family:var(--areaf,var(--ui))}
+/* per-face tuning so every area sits at the same visual size */
+:root[data-head="areas"][data-area="today"] :is(#top,#view) :is(h1,h2){font-weight:400;letter-spacing:-.045em}
+:root[data-head="areas"][data-area="today"] #view h2{font-size:17px}
+:root[data-head="areas"][data-area="today"] .hello h1{font-size:clamp(17px,5vw,21px)}
+:root[data-head="areas"][data-area="plan"] :is(#top,#view) :is(h1,h2){font-weight:600;letter-spacing:.01em}
+:root[data-head="areas"][data-area="work"] :is(#top,#view) :is(h1,h2){font-weight:700;letter-spacing:.005em}
+:root[data-head="areas"][data-area="work"] #view h2{font-size:21px}
+:root[data-head="areas"][data-area="health"] :is(#top,#view) :is(h1,h2){font-weight:400}
+:root[data-head="areas"][data-area="mind"] :is(#top,#view) :is(h1,h2){font-weight:400;letter-spacing:.005em}
+:root[data-head="areas"][data-area="mind"] #view h2{font-size:21px}
+:root[data-head="areas"][data-area="today"] .hart .hw{letter-spacing:-.06em;font-size:34px;font-weight:400}
+:root[data-head="areas"][data-area="mind"] .hart .hw{font-weight:400;letter-spacing:0}
+:root[data-head="areas"][data-area="health"] .hart .hw{font-weight:400}
+:root[data-head="areas"][data-area="plan"] .hart .hw{font-weight:700}
+</style>`);
+const _renderArea=render;render=function(a,f,d){document.documentElement.dataset.area=state.tab;_renderArea(a,f,d)};
+document.documentElement.dataset.area=state.tab;headFont();
