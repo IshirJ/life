@@ -1659,6 +1659,10 @@ function moveInd(instant){
   if(instant||noMotion()||from===x)return;
   try{ind.animate([{transform:`translateX(${from}px)`},{transform:`translateX(${x}px)`}],{duration:460,easing:'cubic-bezier(.3,1.25,.5,1)'})}catch(e){}
 }
+/* switching the small tabs at the top of a page: the tab row stays still, only the content below settles in softly.
+   It never starts from invisible, so tapping fast can't make the page strobe. */
+function subIn(){if(noMotion())return;const v=$('#view .pane')||$('#view');
+  [...v.children].forEach(c=>{if(c.matches('.chips[role=tablist]'))return;try{c.animate([{opacity:.6,transform:'translateY(3px)'},{opacity:1,transform:'none'}],{duration:220,easing:'cubic-bezier(.22,1,.36,1)'})}catch(e){}})}
 function playIn(first,dir){
   const v=$('#view .pane')||$('#view');
   if(dir!==undefined&&!first){ /* tab switch: one cheap composited slide, nothing else */
@@ -2161,7 +2165,7 @@ document.addEventListener('click',ev=>{
     const pane=$('#dayPane');pane.innerHTML=dayPane();
     [...pane.querySelectorAll('.tli,.sec-h,.list,.empty')].forEach((x,i)=>anim(x,{x:[24,0],opacity:[.001,1]},{duration:.45,delay:i*.04}));
     anim(el,{scale:[.9,1]},{spring:true,k:500,d:18});return}
-  if(d.sub){state.sub[state.tab]=d.sub;state.folder=null;render(true);return}
+  if(d.sub){if(state.sub[state.tab]===d.sub&&!state.folder)return;state.sub[state.tab]=d.sub;state.folder=null;render(false);subIn();return}
   if(d.range){state.heatRange=Number(d.range);const id=el.closest('.heat').id.slice(5);
     render(false);const hm=$(`#heat-${id} .hm`);if(hm)rippleHeat(hm);return}
   if(d.heat){showTip(el);return}

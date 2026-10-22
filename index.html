@@ -1720,6 +1720,10 @@ function moveInd(instant){
   if(instant||noMotion()||from===x)return;
   try{ind.animate([{transform:`translateX(${from}px)`},{transform:`translateX(${x}px)`}],{duration:460,easing:'cubic-bezier(.3,1.25,.5,1)'})}catch(e){}
 }
+/* switching the small tabs at the top of a page: the tab row stays still, only the content below settles in softly.
+   It never starts from invisible, so tapping fast can't make the page strobe. */
+function subIn(){if(noMotion())return;const v=$('#view .pane')||$('#view');
+  [...v.children].forEach(c=>{if(c.matches('.chips[role=tablist]'))return;try{c.animate([{opacity:.6,transform:'translateY(3px)'},{opacity:1,transform:'none'}],{duration:220,easing:'cubic-bezier(.22,1,.36,1)'})}catch(e){}})}
 function playIn(first,dir){
   const v=$('#view .pane')||$('#view');
   if(dir!==undefined&&!first){ /* tab switch: one cheap composited slide, nothing else */
@@ -1968,7 +1972,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='186';
+const APP_VER='187';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -2222,7 +2226,7 @@ document.addEventListener('click',ev=>{
     const pane=$('#dayPane');pane.innerHTML=dayPane();
     [...pane.querySelectorAll('.tli,.sec-h,.list,.empty')].forEach((x,i)=>anim(x,{x:[24,0],opacity:[.001,1]},{duration:.45,delay:i*.04}));
     anim(el,{scale:[.9,1]},{spring:true,k:500,d:18});return}
-  if(d.sub){state.sub[state.tab]=d.sub;state.folder=null;render(true);return}
+  if(d.sub){if(state.sub[state.tab]===d.sub&&!state.folder)return;state.sub[state.tab]=d.sub;state.folder=null;render(false);subIn();return}
   if(d.range){state.heatRange=Number(d.range);const id=el.closest('.heat').id.slice(5);
     render(false);const hm=$(`#heat-${id} .hm`);if(hm)rippleHeat(hm);return}
   if(d.heat){showTip(el);return}
@@ -4143,7 +4147,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=186';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=187';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -7331,6 +7335,11 @@ document.addEventListener('keydown',ev=>{if(ev.key!=='Enter')return;
   /* the greeting fit runs on resize / class change; it can no longer move layout, and it is capped so nothing can make it loop */
   const _fit=fitHello;let n=0,t0=0;fitHello=function(){const now=performance.now();if(now-t0>1000){t0=now;n=0}if(++n>6)return;return _fit()};
 })();
+
+/* Notebooks strip: keep showing the last strip while it refreshes, so the page never collapses and jumps on re-render */
+(function(){if(typeof notebookStrip!=='function')return;const _nb=notebookStrip;let last='';
+  notebookStrip=async function(){const el=$('#nbStrip');if(el&&last&&!el.querySelector('.nbs'))el.innerHTML=last;
+    await _nb();const e2=$('#nbStrip');if(e2&&e2.querySelector('.nbs'))last=e2.innerHTML}})();
 
 /* ===================== boot ===================== */
 load();

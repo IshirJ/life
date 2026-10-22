@@ -1742,3 +1742,8 @@ document.addEventListener('keydown',ev=>{if(ev.key!=='Enter')return;
   /* the greeting fit runs on resize / class change; it can no longer move layout, and it is capped so nothing can make it loop */
   const _fit=fitHello;let n=0,t0=0;fitHello=function(){const now=performance.now();if(now-t0>1000){t0=now;n=0}if(++n>6)return;return _fit()};
 })();
+
+/* Notebooks strip: keep showing the last strip while it refreshes, so the page never collapses and jumps on re-render */
+(function(){if(typeof notebookStrip!=='function')return;const _nb=notebookStrip;let last='';
+  notebookStrip=async function(){const el=$('#nbStrip');if(el&&last&&!el.querySelector('.nbs'))el.innerHTML=last;
+    await _nb();const e2=$('#nbStrip');if(e2&&e2.querySelector('.nbs'))last=e2.innerHTML}})();
