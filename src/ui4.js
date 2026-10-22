@@ -452,7 +452,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden){importRee
 
 /* ---------- JARVIS on your laptop, from here ---------- */
 let JV={log:[],seen:0,launcher:0,waking:null,t:0,local:[],since:Date.now(),open:new Set(),restartAt:0};
-async function jvLoad(){try{const r=await api('/jarvis/log');JV.log=Array.isArray(r.log)?r.log:[];jvApplyStop();JV.seen=r.seen||0;JV.launcher=r.launcher||0;JV.waking=r.waking||null;jvPaint()}catch(e){}}
+async function jvLoad(){try{const r=await api('/jarvis/log');JV.log=Array.isArray(r.log)?r.log:[];jvApplyStop();JV.seen=r.seen||0;JV.launcher=r.launcher||0;const wa=r.wakeAt||JV.wakeAt||0;JV.waking=r.waking&&wa&&Date.now()-wa<120000&&!(r.seen&&r.seen>wa)?r.waking:null;jvPaint()}catch(e){}}
 /* questions the app can answer itself, instantly, without the laptop */
 function jvTime(e){const t=e.allDay?'':(e.type==='meeting'?e.time:e.start)||'';const hm=t.length>5?t.slice(11,16):t;return hm?fmtT(hm):'All day'}
 /* text as typed or heard, lower-case, straight apostrophes, no "Jarvis," / "please" in front, no end punctuation */
@@ -474,7 +474,7 @@ function jvApplyStop(){if(!JV.stopAt)return;JV.log.forEach(x=>{if(x&&!x.reply&&(
 function jvState(){const now=Date.now(),on=now-JV.seen<20000,lau=now-JV.launcher<60000;return{on,lau}}
 function jvPaint(){const L=$('#jvLog');if(!L)return;const{on,lau}=jvState();
   const st=$('#jvSt');if(st){st.className='jv-st'+(on?' on':'');
-    const txt=on?'Laptop online':JV.waking?'Starting JARVIS on your laptop…':JV.seen?`JARVIS off · last seen ${esc(ago(JV.seen))}`:'JARVIS hasn’t checked in yet';
+    const txt=on?'Laptop online':JV.waking?'Starting JARVIS on your laptop…':JV.wakeFail&&Date.now()-JV.wakeFail<6e5&&!(JV.seen>JV.wakeFail-120000)?'Didn’t start: your laptop didn’t answer':JV.seen?`JARVIS off · last seen ${esc(ago(JV.seen))}`:'JARVIS hasn’t checked in yet';
     const rs=JV.restartAt&&Date.now()-JV.restartAt<45000&&JV.seen<JV.restartAt+3000;const act=on||rs?`<button class="jv-act${rs?' busy':''}" data-jvwake="restart" ${rs?'disabled':''}>${ic('refresh')}${rs?'Restarting…':'Restart'}</button>`:`<button class="jv-act pri" data-jvwake="start" ${JV.waking?'disabled':''}>${ic('play')}${JV.waking?'Starting…':'Start JARVIS'}</button>`;
     st.innerHTML=`<i></i><span>${txt}</span>${act}`}
   const nt=$('#jvNote');if(nt)nt.innerHTML=!on&&!lau?'Your laptop isn’t answering. It’s asleep, offline, or hasn’t been logged into since the update. Wake it and tap Start.':'';
@@ -493,8 +493,8 @@ function openJarvis(){NAV_DIR=1;FORCE_MODE='m-bottom tall';openSheet(`${sheetHea
 async function jvSend(t){t=(t||'').trim();if(!t)return;const i=$('#jvIn');if(i)i.value='';
   const loc=jvLocal(t);if(loc){JV.local.push({text:t,reply:loc,at:Date.now(),local:true});jvPaint();return}
   JV.log.push({text:t,state:'queued',at:Date.now()});jvPaint();
-  try{await api('/jarvis/cmd',{method:'POST',body:JSON.stringify({text:t})});if(!jvState().on&&!JV.waking)await jvWake('start',true);jvLoad()}catch(e){toast('Couldn’t send: '+e.message)}}
-async function jvWake(mode,quiet){if(mode==='stop'){JV.stopAt=Date.now();JV.log.forEach(x=>{if(!x.reply&&(x.state==='running'||x.state==='queued')){x.state='error';x.reply='Stopped.'}});jvPaint()}if(mode==='restart'){JV.restartAt=Date.now();jvPaint()}try{await api('/jarvis/wake',{method:'POST',body:JSON.stringify({mode})});if(mode!=='stop')JV.waking=mode;jvPaint();if(!quiet)toast(mode==='stop'?'Stopping…':mode==='restart'?'Restarting JARVIS…':'Starting JARVIS…');setTimeout(jvLoad,1500)}catch(e){toast('Couldn’t reach your server: '+e.message)}}
+  try{await api('/jarvis/cmd',{method:'POST',body:JSON.stringify({text:t})});jvLoad()}catch(e){toast('Couldn’t send: '+e.message)}}
+async function jvWake(mode,quiet){if(mode==='stop'){JV.stopAt=Date.now();JV.log.forEach(x=>{if(!x.reply&&(x.state==='running'||x.state==='queued')){x.state='error';x.reply='Stopped.'}});jvPaint()}if(mode==='restart'){JV.restartAt=Date.now();jvPaint()}try{await api('/jarvis/wake',{method:'POST',body:JSON.stringify({mode})});if(mode!=='stop'){JV.waking=mode;JV.wakeAt=Date.now();clearTimeout(JV.wakeT);JV.wakeT=setTimeout(()=>{if(JV.waking&&!jvState().on){JV.waking=null;JV.wakeFail=Date.now();jvPaint()}},120000)}jvPaint();if(!quiet)toast(mode==='stop'?'Stopping…':mode==='restart'?'Restarting JARVIS…':'Starting JARVIS…');setTimeout(jvLoad,1500)}catch(e){toast('Couldn’t reach your server: '+e.message)}}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-jarvis],#jvSend,[data-jvs],[data-jvwake],#jvStop');if(!b)return;e.stopImmediatePropagation();e.preventDefault();
   if(b.dataset.jarvis!==undefined)return openJarvis();if(b.id==='jvSend')return jvSend($('#jvIn').value);
   if(b.dataset.jvwake)return jvWake(b.dataset.jvwake);if(b.id==='jvStop')return jvWake('stop');jvSend(b.dataset.jvs)},true);
@@ -1450,7 +1450,7 @@ jvSend=async function(t){t=(t||'').trim();if(!t)return;const i=$('#jvIn');if(i)i
   const online=jvState().on;
   if(jvIsLife(t)||!online){const tmp={text:t,state:'running',at:Date.now(),local:true,steps:[online?'Life request · handled on your phone':'Laptop offline · answering on your phone']};JV.local.push(tmp);jvPaint();
     try{const a=await jvAsk(t);tmp.reply=a.text;tmp.state='done';jvUndoToast(a.text,a.undo);
-      if(a.needLaptop){tmp.reply+=' I’ve queued it and asked your laptop to start.';await api('/jarvis/cmd',{method:'POST',body:JSON.stringify({text:t})});if(!JV.waking)await jvWake('start',true)}}
+      if(a.needLaptop){tmp.reply+=jvState().on?' Sent to your laptop.':' Queued: it runs when JARVIS is on. Tap Start to turn it on.';await api('/jarvis/cmd',{method:'POST',body:JSON.stringify({text:t})})}}
     catch(e){tmp.reply='I couldn’t answer that: '+e.message;tmp.state='error'}jvPaint();return}
   JV.log.push({text:t,state:'queued',at:Date.now()});jvPaint();
   try{await api('/jarvis/cmd',{method:'POST',body:JSON.stringify({text:t})});jvLoad()}catch(e){toast('Couldn’t send: '+e.message)}};

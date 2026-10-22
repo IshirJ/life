@@ -331,7 +331,7 @@ export class SyncHub {
     }
     if (path === '/jarvis/log' && method === 'GET') {
       const j = (await this.ctx.storage.get('jarvis')) || emptyJarvis();
-      return Response.json({ log: j.log, seen: Math.max(j.seen || 0, this.seenMem || 0), queued: j.q.length, launcher: this.launcherMem || 0, waking: j.wake ? j.wake.mode : null });
+      return Response.json({ log: j.log, seen: Math.max(j.seen || 0, this.seenMem || 0), queued: j.q.length, launcher: this.launcherMem || 0, waking: j.wake && Date.now() - j.wake.at < 120000 ? j.wake.mode : null, wakeAt: j.wake ? j.wake.at : 0 });
     }
 
     return Response.json({ error: 'not found' }, { status: 404 });
