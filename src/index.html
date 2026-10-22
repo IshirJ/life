@@ -1539,7 +1539,7 @@ function viewMind(){
   const k=state.sub.mind;
   const ideas=of('idea').length,notes=of('note').length,fs=of('folder').length;
   let h=chipsSub('mind')+heroBanner('Ideas &amp; notes',`${ideas+notes}`,`saved across <b>${fs}</b> folder${fs===1?'':'s'}`,[['Ideas',ideas],['Notes',notes],['Reminders',of('reminder').filter(e=>!e.done).length]],'#E7B8FF');
-  h+=section('Note<em>books</em>','<div id="nbStrip"><p class="hint">Loading notebooks…</p></div>','<button class="link" data-nbopen="">'+ic('plus')+'Open</button>');
+  if(k==='note')h+=section('Note<em>books</em>','<div id="nbStrip"><p class="hint">Loading notebooks…</p></div>','<button class="link" data-nbopen="">'+ic('plus')+'Open</button>');
   if(k==='idea'||k==='note'){
     const items=of(k).filter(e=>state.folder?e.folder===state.folder:true).sort((x,y)=>y.created-x.created);
     const f=state.folder&&find(state.folder);

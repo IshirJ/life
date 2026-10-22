@@ -1600,7 +1600,7 @@ function viewMind(){
   const k=state.sub.mind;
   const ideas=of('idea').length,notes=of('note').length,fs=of('folder').length;
   let h=chipsSub('mind')+heroBanner('Ideas &amp; notes',`${ideas+notes}`,`saved across <b>${fs}</b> folder${fs===1?'':'s'}`,[['Ideas',ideas],['Notes',notes],['Reminders',of('reminder').filter(e=>!e.done).length]],'#E7B8FF');
-  h+=section('Note<em>books</em>','<div id="nbStrip"><p class="hint">Loading notebooks…</p></div>','<button class="link" data-nbopen="">'+ic('plus')+'Open</button>');
+  if(k==='note')h+=section('Note<em>books</em>','<div id="nbStrip"><p class="hint">Loading notebooks…</p></div>','<button class="link" data-nbopen="">'+ic('plus')+'Open</button>');
   if(k==='idea'||k==='note'){
     const items=of(k).filter(e=>state.folder?e.folder===state.folder:true).sort((x,y)=>y.created-x.created);
     const f=state.folder&&find(state.folder);
@@ -1972,7 +1972,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='187';
+const APP_VER='188';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -4147,7 +4147,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=187';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=188';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -6431,84 +6431,149 @@ function ixPaint(cv,W,H,L,cx,cy){
     x.shadowColor='rgba(134,207,160,.6)';x.fillStyle=r()<.55?'#2E7D52':'#86CFA0';x.beginPath();x.moveTo(0,0);x.bezierCurveTo(5,-7,16,-8,24,0);x.bezierCurveTo(16,8,5,7,0,0);x.fill();x.restore()}
   for(let k=0;k<10;k++){x.shadowColor='rgba(240,109,68,.9)';x.fillStyle=r()<.5?'#F06D44':'#F2A65A';x.beginPath();x.arc(W*r(),H*r(),1.2+r()*2.2,0,7);x.fill()}
 }
+/* ===================== intro v5: glass + splines + pixel art + pixel-wave reveal =====================
+   One clock. Phase A (0..TA): waves draw in over a dark pixel grid, glass panes float up, a pixel-art sprout builds,
+   greeting appears. Phase B (TA..T), everything at once: the dark dissolves as a wave of pixels from the centre
+   (Home shows underneath), the sprout explodes, waves swell and fade, glass panes morph onto Home's cards,
+   greeting flies into the header. Then the glow burst. */
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="ix5css">
+#ix3.ix5{background:none}
+#ix3.ix5 canvas{position:absolute;left:0;top:0;opacity:1}
+#ix3.ix5 .gp{position:absolute;left:0;top:0;border-radius:var(--r-xl);opacity:0;transform-origin:0 0;will-change:transform,opacity;overflow:hidden;
+  background:linear-gradient(135deg,rgb(255 255 255 / .16),rgb(255 255 255 / .04) 55%,rgb(240 109 68 / .06));
+  border:1px solid rgb(255 255 255 / .24);
+  box-shadow:inset 0 1px 0 rgb(255 255 255 / .4),inset 0 -24px 48px rgb(240 109 68 / .12),inset 0 24px 48px rgb(134 207 160 / .08),0 24px 60px rgb(0 0 0 / .5);
+  -webkit-backdrop-filter:blur(18px) saturate(1.9);backdrop-filter:blur(18px) saturate(1.9)}
+#ix3.ix5 .gp i{position:absolute;inset:-40%;background:linear-gradient(115deg,transparent 42%,rgb(255 255 255 / .22) 50%,transparent 58%);animation:ix5sh 2.4s .2s ease-in-out infinite}
+@keyframes ix5sh{0%{transform:translateX(-45%)}60%,100%{transform:translateX(45%)}}
+#ix3.ix5 .wl{z-index:5}
+</style>`);
+const IX_SPRITE=[
+"....ooo....",
+"...oOOOo...",
+"....ooo....",
+".....s.....",
+".gg..s..gg.",
+"gGGg.s.gGGg",
+"gGGGgsgGGGg",
+".gGGgsgGGg.",
+"..ggssgg...",
+".....s.....",
+"...aaaaa...",
+"..aAAAAAa..",
+"...aaaaa..."];
+const IX_COL={o:'#F06D44',O:'#FFB07A',s:'#2E7D52',g:'#3FA36B',G:'#86CFA0',a:'#F2A65A',A:'#FFD08A'};
 function ixRun(preview){
   if($('#ix3'))return;
-  const W=innerWidth,H=innerHeight+140,cx=W/2,cy=innerHeight*.5;
-  /* ONE clock for everything: a short spin-in (0..TA), then vines, greeting, outlines and Home all move together
-     with the same easing and land on the same frame (T). Every target is measured live, never from frame 0. */
-  const TA=680,T=2050,MOVE=T-TA,EZ='cubic-bezier(.65,0,.35,1)';
-  const ez=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
-  const el=document.createElement('div');el.id='ix3';el.setAttribute('aria-hidden','true');
-  el.innerHTML=`<div class="bg"></div><canvas></canvas><canvas></canvas><canvas></canvas><div class="sh"></div><div class="wl">Welcome, <em>${esc(firstName())}</em></div><i class="rg"></i>`;
-  el.style.setProperty('--ixh',(innerHeight/2)+'px');document.body.appendChild(el);
+  const W=innerWidth,H=innerHeight,cx=W/2,cy=H*.47;
+  const TA=850,T=2250,MOVE=T-TA,EZ='cubic-bezier(.65,0,.35,1)';
+  const ez=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2,eo=k=>1-Math.pow(1-k,3),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const el=document.createElement('div');el.id='ix3';el.className='ix5';el.setAttribute('aria-hidden','true');
+  el.innerHTML=`<canvas class="cv"></canvas><div class="gp g3"><i></i></div><div class="gp g2"><i></i></div><div class="gp g1"><i></i></div><canvas class="px"></canvas><div class="wl"></div>`;
+  document.body.appendChild(el);
   document.documentElement.classList.add('ix-on');
   try{splashBg.style.display='none';splash.style.display='none'}catch(e){}
   if(!preview){SC.style.opacity='1';SC.style.transition='none'}
+  const HH=Math.max(H,el.getBoundingClientRect().height||H),dpr=Math.min(2,devicePixelRatio||1);
+  const mk=c=>{c.width=Math.round(W*dpr);c.height=Math.round(HH*dpr);c.style.width=W+'px';c.style.height=HH+'px';const x=c.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);return x};
+  const cv=el.querySelector('.cv'),px=el.querySelector('.px'),X=mk(cv),P=mk(px);
+  /* backdrop: near-black with theme glows and a faint pixel dot grid, painted once */
+  const S=Math.round(cl(W/28,14,26)),cols=Math.ceil(W/S),rows=Math.ceil(HH/S);
+  const bg=document.createElement('canvas');const B=mk(bg);
+  B.fillStyle='#070908';B.fillRect(0,0,W,HH);
+  const rg=(x,y,r,c)=>{const g=B.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,c);g.addColorStop(1,'rgba(0,0,0,0)');B.fillStyle=g;B.fillRect(0,0,W,HH)};
+  rg(W*.15,HH*.12,W*.9,'rgba(240,109,68,.20)');rg(W*.9,HH*.85,W*.95,'rgba(46,125,82,.34)');rg(cx,cy,W*.6,'rgba(242,166,90,.08)');
+  B.fillStyle='rgba(255,255,255,.07)';for(let i=0;i<=cols;i++)for(let j=0;j<=rows;j++)B.fillRect(i*S-.75,j*S-.75,1.5,1.5);
+  /* every pixel cell gets a reveal moment: distance from the centre plus a little noise */
+  const hash=(i,j)=>{let h=(i*374761393+j*668265263)^0x5bd1e995;h=(h^(h>>>13))*1274126177;return((h^(h>>>16))>>>0)/4294967295};
+  const dmax=Math.hypot(Math.max(cx,W-cx),Math.max(cy,HH-cy)),cells=[];
+  for(let i=0;i<cols;i++)for(let j=0;j<rows;j++){const x=i*S,y=j*S,d=Math.hypot(x+S/2-cx,y+S/2-cy)/dmax,n=hash(i,j);cells.push({x,y,rv:cl(d*.86+(n-.5)*.16,0,.98),n})}
+  const TC=['240,109,68','134,207,160','242,166,90','63,163,107','255,176,122','156,214,126'];
+  /* glass panes: centred, measured for the greeting */
+  const g1=el.querySelector('.g1'),g2=el.querySelector('.g2'),g3=el.querySelector('.g3');
+  const pw=Math.min(W-40,340),ph=Math.min(230,H*.3),P1={x:cx-pw/2,y:cy-ph/2,w:pw,h:ph},P2={x:cx-pw*.62,y:cy-ph*.95,w:pw*.62,h:ph*.62},P3={x:cx+pw*.08,y:cy+ph*.28,w:pw*.55,h:ph*.55};
+  const place=(g,r)=>Object.assign(g.style,{left:r.x+'px',top:r.y+'px',width:r.w+'px',height:r.h+'px'});
+  place(g1,P1);place(g2,P2);place(g3,P3);
   const A=(n,k,o)=>{try{return n&&n.animate(k,o)}catch(e){return null}};
-  const box=n=>{const r=n&&n.getBoundingClientRect();return r&&r.width>0&&r.bottom>0&&r.top<innerHeight?r:null};
-  const cvs=[...el.querySelectorAll('canvas')];cvs.forEach((c,i)=>{ixPaint(c,W,H,i,cx,cy);c.style.transformOrigin=`${cx}px ${cy}px`});
-  /* --- phase A: vines spin in, greeting fades in at the centre --- */
-  cvs.forEach((c,i)=>A(c,[{opacity:0,transform:`rotate(${-110-i*30}deg) scale(${1.6+i*.2})`},{opacity:1,transform:`rotate(${-20-i*8}deg) scale(1)`}],{duration:TA,easing:'cubic-bezier(.2,.7,.4,1)',fill:'forwards'}));
-  A(el.querySelector('.sh'),[{opacity:0},{opacity:1}],{duration:TA,fill:'forwards'});
-  /* greeting: exact copy of #hi (same font, size, colours), scaled up in the centre */
+  [[g3,-14,40],[g2,10,-30],[g1,0,0]].forEach(([g,rot,dy],i)=>A(g,[{opacity:0,transform:`perspective(900px) translateY(${50+dy}px) rotateX(28deg) rotate(${rot*1.6}deg) scale(.86)`},
+    {opacity:1,transform:`perspective(900px) translateY(${dy*.1}px) rotateX(0deg) rotate(${rot*.5}deg) scale(1)`}],{duration:TA,delay:i*60,easing:'cubic-bezier(.2,.8,.25,1)',fill:'forwards'}));
+  /* pixel sprite, sitting in the upper part of the front pane */
+  const SP=Math.max(5,Math.round(Math.min(pw,ph)/34)),sw=IX_SPRITE[0].length*SP,sh=IX_SPRITE.length*SP,sx=cx-sw/2,sy=P1.y+ph*.12;
+  const spx=[];IX_SPRITE.forEach((r,j)=>[...r].forEach((c,i)=>{if(IX_COL[c])spx.push({i,j,c:IX_COL[c],x:sx+i*SP,y:sy+j*SP,
+    t0:(IX_SPRITE.length-1-j)/IX_SPRITE.length*.55+hash(i,j)*.12,a:Math.atan2(sy+j*SP-cy,sx+i*SP-cx)+(hash(j,i)-.5)*.9,v:.6+hash(i+7,j)*1.1,r:(hash(i,j+3)-.5)*8})}));
+  /* greeting: exact copy of #hi, centred under the sprite, then flown onto #hi */
   const wl=el.querySelector('.wl'),HI=()=>document.getElementById('hi'),hi0=HI();
   const rng=n=>{const r=document.createRange();r.selectNodeContents(n);return r.getBoundingClientRect()};
   const tvis=n=>{if(!n||!n.textContent.trim())return null;const r=rng(n);return r.width>0&&r.bottom>0&&r.top<innerHeight?r:null};
-  let ox=0,oy=0,w0=1,h0=1,gOK=!!tvis(hi0);
-  if(gOK){
-    const cs=getComputedStyle(hi0),em0=hi0.querySelector('em');
-    wl.innerHTML=hi0.innerHTML;
-    Object.assign(wl.style,{left:'0',top:'0',right:'auto',width:'max-content',whiteSpace:'nowrap',transformOrigin:'0 0',opacity:'0',
-      fontFamily:cs.fontFamily,fontWeight:cs.fontWeight,fontStyle:cs.fontStyle,fontSize:cs.fontSize,lineHeight:cs.lineHeight,letterSpacing:cs.letterSpacing,color:cs.color});
+  let ox=0,oy=0,w0=1,h0=1;const gOK=!!tvis(hi0);
+  if(gOK){const cs=getComputedStyle(hi0),em0=hi0.querySelector('em');wl.innerHTML=hi0.innerHTML;
+    Object.assign(wl.style,{left:'0',top:'0',right:'auto',width:'max-content',whiteSpace:'nowrap',transformOrigin:'0 0',opacity:'0',fontFamily:cs.fontFamily,fontWeight:cs.fontWeight,fontStyle:cs.fontStyle,fontSize:cs.fontSize,lineHeight:cs.lineHeight,letterSpacing:cs.letterSpacing,color:cs.color});
     wl.querySelectorAll('br').forEach(n=>n.remove());wl.querySelectorAll('.gl').forEach(n=>n.style.display='inline-block');
-    const em=wl.querySelector('em');if(em&&em0){const ec=getComputedStyle(em0);em.style.marginLeft=ec.marginLeft;em.style.color=ec.color;em.style.fontStyle=ec.fontStyle}
-  }
+    const em=wl.querySelector('em');if(em&&em0){const ec=getComputedStyle(em0);em.style.marginLeft=ec.marginLeft;em.style.color=ec.color;em.style.fontStyle=ec.fontStyle}}
+  else wl.innerHTML=`Welcome, <em>${esc(firstName())}</em>`;
   const meas=()=>{const tf=wl.style.transform;wl.style.transform='none';const b=wl.getBoundingClientRect(),r=rng(wl);ox=r.left-b.left;oy=r.top-b.top;w0=Math.max(1,r.width);h0=Math.max(1,r.height);wl.style.transform=tf};
   if(gOK){meas();try{document.fonts&&document.fonts.ready.then(()=>{if(el.isConnected)meas()})}catch(e){}}
-  const fs=parseFloat(wl.style.fontSize)||parseFloat(getComputedStyle(wl).fontSize)||28,big=Math.min(40,Math.max(28,W*.085));
-  const centre=s=>({X:(innerWidth-w0*s)/2-ox*s,Y:innerHeight/2-h0*s/2-oy*s});
-  const t0=performance.now();let lastT=null,goB=false;
-  const greet=now=>{
+  const fs=parseFloat(wl.style.fontSize)||28,gy=sy+sh+(P1.y+ph-(sy+sh))/2;
+  let lastT=null,goB=false,glowed=false;
+  /* waves: six glowing splines */
+  const waves=[0,1,2,3,4,5].map(i=>({y:cy+(i-2.5)*H*.055,A:H*(.025+.012*i),k:(1.3+i*.37)/W*Math.PI*2,w:1.2+i*.35,ph:i*1.7,c:TC[i]}));
+  const drawWaves=(t,amp,alpha,reveal)=>{
+    X.save();X.globalCompositeOperation='lighter';X.lineCap='round';
+    const xe=-40+(W+80)*reveal;
+    waves.forEach((v,i)=>{const pts=[];for(let x=-40;x<=xe;x+=16)pts.push([x,v.y+(v.A*amp)*Math.sin(v.k*x+v.w*t/1000*3+v.ph)+(v.A*.45*amp)*Math.sin(v.k*2.3*x-v.w*t/1000*2.1)]);
+      if(pts.length<2)return;
+      const path=()=>{X.beginPath();X.moveTo(pts[0][0],pts[0][1]);for(let q=1;q<pts.length-1;q++){const mx=(pts[q][0]+pts[q+1][0])/2,my=(pts[q][1]+pts[q+1][1])/2;X.quadraticCurveTo(pts[q][0],pts[q][1],mx,my)}X.lineTo(pts[pts.length-1][0],pts[pts.length-1][1])};
+      X.strokeStyle=`rgba(${v.c},${.10*alpha})`;X.lineWidth=14;path();X.stroke();
+      X.strokeStyle=`rgba(${v.c},${.28*alpha})`;X.lineWidth=5;path();X.stroke();
+      X.strokeStyle=`rgba(${v.c},${.95*alpha})`;X.lineWidth=1.6;path();X.stroke()});
+    X.restore()};
+  const t0=performance.now();
+  const frame=now=>{
     if(!el.isConnected){const h=HI();if(h)h.style.opacity='';return}
-    const t=now-t0;if(t>=TA&&!goB){goB=true;phaseB()}
-    const h=HI(),S=gOK?Math.min((innerWidth-32)/w0,Math.max(1.15,big/fs)):1;
-    let {X,Y}=centre(S),s=S,o=1;
-    if(t<TA){const k=t/TA;o=k;s=S*(.94+.06*k);({X,Y}=centre(s));Y+=10*(1-k)}
-    else if(gOK){const r=tvis(h)||lastT;if(r){lastT=r;const st=r.width/w0,e=ez(Math.min(1,(t-TA)/MOVE));
-      X+=(r.left-ox*st-X)*e;Y+=(r.top-oy*st-Y)*e;s+=(st-s)*e}}
-    if(gOK){if(t>T-200){const k=Math.min(1,(t-(T-200))/200);o=1-k;if(h)h.style.opacity=String(k)}else if(h)h.style.opacity='0'}
-    else{o=t<TA?t/TA:Math.max(0,1-(t-TA)/MOVE)}
-    wl.style.opacity=String(o);wl.style.transform=`translate(${X}px,${Y}px) scale(${s})`;
-    if(t<T)requestAnimationFrame(greet);else{wl.style.opacity='0';if(h)h.style.opacity='';window.__ixEnd=t;ixGlowAll();setTimeout(done,150)}
+    const t=now-t0,pa=cl(t/TA,0,1),pb=t<TA?0:cl((t-TA)/MOVE,0,1),eb=ez(pb);
+    if(t>=TA&&!goB){goB=true;phaseB()}
+    /* ---- base canvas: unrevealed dark pixels, glowing front, twinkles, waves ---- */
+    X.clearRect(0,0,W,HH);
+    const rk=cl(pb/.8,0,1),front=(rk<.5?2*rk*rk:1-Math.pow(-2*rk+2,2)/2)*1.06;
+    X.save();X.beginPath();for(const c of cells)if(c.rv>front)X.rect(c.x,c.y,S+.5,S+.5);X.clip();X.drawImage(bg,0,0,W,HH);X.restore();
+    if(pb>0&&front<1.06){for(const c of cells){const d=c.rv-front;if(d>-.05&&d<=.045){const k=1-Math.abs(d+.0025)/.05,col=TC[(c.n*6)|0];X.fillStyle=`rgba(${col},${(.25+.6*k)*(1-pb*.4)})`;X.fillRect(c.x+1,c.y+1,S-2,S-2)}}}
+    if(pb<.9){const bucket=(t/90)|0;for(let q=0;q<26;q++){const h=hash(bucket,q),i=(h*cols)|0,j=(hash(q,bucket)*rows)|0,c=cells[i*rows+j];if(c&&c.rv>front){X.fillStyle=`rgba(${TC[q%6]},${(.10+.25*hash(i,q))*(1-pb)})`;X.fillRect(c.x+2,c.y+2,S-4,S-4)}}}
+    drawWaves(t,1+1.6*eb,pb?1-eb:eo(pa),eo(cl(t/(TA*.9),0,1)));
+    /* ---- sprite: builds in phase A, explodes in phase B ---- */
+    P.clearRect(0,0,W,HH);
+    for(const p of spx){let a=cl((pa-p.t0)/.25,0,1);if(a<=0)continue;let sc=a<1?eo(a)*(1+.25*Math.sin(a*Math.PI)):1,x=p.x,y=p.y,al=1,rot=0;
+      if(pb>0){const f=eo(pb),dist=f*Math.max(W,H)*.7*p.v;x+=Math.cos(p.a)*dist;y+=Math.sin(p.a)*dist;rot=p.r*f;al=1-cl(pb*1.3,0,1);sc*=1+f*.8}
+      if(al<=0)continue;P.save();P.globalAlpha=al;P.translate(x+SP/2,y+SP/2);P.rotate(rot);P.scale(sc,sc);P.shadowColor=p.c;P.shadowBlur=pb?10:6;P.fillStyle=p.c;P.fillRect(-SP/2+.4,-SP/2+.4,SP-.8,SP-.8);P.restore()}
+    /* ---- greeting ---- */
+    const Sg=gOK?Math.min((pw-28)/w0,Math.max(1,Math.min(34,W*.08)/fs)):1;
+    let s=Sg,Xg=cx-w0*s/2-ox*s,Yg=gy-h0*s/2-oy*s,o=1;
+    if(t<TA){const k=eo(cl((t-TA*.35)/(TA*.65),0,1));o=k;Yg+=10*(1-k)}
+    else if(gOK){const r=tvis(HI())||lastT;if(r){lastT=r;const st=r.width/w0;Xg+=(r.left-ox*st-Xg)*eb;Yg+=(r.top-oy*st-Yg)*eb;s+=(st-s)*eb}}
+    else o=1-eb;
+    const h=HI();
+    if(gOK){if(t>T-200){const k=cl((t-(T-200))/200,0,1);o=1-k;if(h)h.style.opacity=String(k)}else if(h)h.style.opacity='0'}
+    wl.style.opacity=String(o);wl.style.transform=`translate(${Xg}px,${Yg}px) scale(${s})`;
+    if(t<T)requestAnimationFrame(frame);
+    else{wl.style.opacity='0';if(h)h.style.opacity='';window.__ixEnd=t;if(!glowed){glowed=true;ixGlowAll()}A(el,[{opacity:1},{opacity:0}],{duration:180,fill:'forwards'});setTimeout(done,190)}
   };
-  /* --- phase B (started by the same frame clock at TA): everything moves together --- */
   function phaseB(){
     if(!el.isConnected)return;window.__ixB=performance.now()-t0;
     document.documentElement.classList.remove('ix-on');
-    /* Home fades in for the whole move, under the flying pieces */
-    [...document.querySelectorAll('#scroller,.dock,#flora,#mesh,#bgcurve')].forEach(n=>A(n,[{opacity:0},{opacity:1}],{duration:MOVE,easing:'ease-out'}));
-    A(el.querySelector('.bg'),[{opacity:1},{opacity:0}],{duration:MOVE,easing:EZ,fill:'forwards'});
-    A(el.querySelector('.sh'),[{opacity:1},{opacity:0}],{duration:MOVE*.7,easing:EZ,fill:'forwards'});
-    /* vines fly into the avatar ring, measured now */
-    const av=document.getElementById('avBtn'),ring=(av&&av.querySelector('.avr'))||av,q=box(ring);
-    const x=q?q.left+q.width/2:44,y=q?q.top+q.height/2:70,rr=q?Math.max(q.width,q.height)/2:30;
-    cvs.forEach((c,i)=>A(c,[{opacity:1,transform:`rotate(${-20-i*8}deg) scale(1)`},{opacity:.9,offset:.7},
-      {opacity:0,transform:`translate(${x-cx}px,${y-cy}px) rotate(${150+i*40}deg) scale(.03)`}],{duration:MOVE,easing:EZ,fill:'forwards'}));
-    const rg=el.querySelector('.rg');Object.assign(rg.style,{left:(x-rr)+'px',top:(y-rr)+'px',width:rr*2+'px',height:rr*2+'px',boxSizing:'border-box'});
-    A(rg,[{opacity:0,transform:'scale(2.2)'},{opacity:1,transform:'scale(1)',offset:.85},{opacity:0,transform:'scale(1.06)'}],{duration:MOVE+160,easing:EZ,fill:'forwards'});
-    /* glowing outlines fly from the centre and land exactly on Home's cards/buttons, same clock */
-    const cols=['#F06D44','#9CD67E','#F2A65A','#86CFA0'];
-    [...document.querySelectorAll('#view .hero,#view .card-s,#view .chip,.top .ib,.dock')].map(n=>[n,box(n)]).filter(([n,r])=>r&&r.width>30).slice(0,9).forEach(([n,r],i)=>{
-      const b=document.createElement('i'),c=cols[i%4];
-      b.style.cssText=`position:absolute;box-sizing:border-box;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;border-radius:${getComputedStyle(n).borderRadius||'24px'};border:1.5px solid ${c};box-shadow:0 0 18px ${c}88,inset 0 0 14px ${c}44;pointer-events:none;opacity:0;will-change:transform,opacity`;
-      el.insertBefore(b,el.querySelector('.sh'));
-      const dx=cx-(r.left+r.width/2),dy=cy-(r.top+r.height/2),rot=(i%2?1:-1)*(120+i*20);
-      A(b,[{opacity:0,transform:`translate(${dx}px,${dy}px) rotate(${rot}deg) scale(.1)`},{opacity:1,offset:.3},{opacity:1,transform:'none',offset:.92},{opacity:0,transform:'none'}],{duration:MOVE+120,easing:EZ,fill:'forwards'});
+    /* glass panes morph exactly onto Home's cards (FLIP), then hand over */
+    const box=n=>{const r=n&&n.getBoundingClientRect();return r&&r.width>30&&r.bottom>0&&r.top<innerHeight?r:null};
+    const tg=[...document.querySelectorAll('#view .hero,#view .qbar,#view .chips,#view .sec .card-s,#view .sec')].map(n=>[n,box(n)]).filter(x=>x[1]);
+    const used=new Set(),pick=()=>{for(const x of tg)if(!used.has(x[0])&&![...used].some(u=>u.contains(x[0])||x[0].contains(u))){used.add(x[0]);return x}return null};
+    [[g1,P1,0],[g2,P2,10],[g3,P3,-14]].forEach(([g,src,rot])=>{
+      g.getAnimations().forEach(a=>a.cancel());
+      const tx=pick();if(!tx){A(g,[{opacity:1},{opacity:0,transform:'scale(.9)'}],{duration:MOVE*.6,easing:EZ,fill:'forwards'});return}
+      const [n,r]=tx;place(g,{x:r.left,y:r.top,w:r.width,h:r.height});g.style.borderRadius=getComputedStyle(n).borderRadius||'24px';g.style.opacity='1';
+      const first=`translate(${src.x-r.left}px,${src.y-r.top}px) scale(${src.w/r.width},${src.h/r.height}) rotate(${rot*.5}deg)`;
+      g.style.webkitBackdropFilter=g.style.backdropFilter='blur(6px) saturate(1.5)';A(g,[{transform:first,opacity:1},{opacity:.85,offset:.3},{opacity:0,offset:.6},{transform:'none',opacity:0}],{duration:MOVE,easing:EZ,fill:'forwards'});
     });
   }
-  requestAnimationFrame(greet);
   const done=()=>{if(!el.isConnected||window.__ixHold)return;el.remove();const h=HI();if(h)h.style.opacity='';if(!preview){SC.style.transition='';endSplash()}};
-  setTimeout(done,T+2500);
+  requestAnimationFrame(frame);
+  setTimeout(()=>{if(!glowed&&el.isConnected){glowed=true;try{ixGlowAll()}catch(e){}}done()},T+2500);
 }
 /* end of intro: a lot of Home lights up at once (one bloom, same moment), then fades.
    Halos are drawn on their own layer so the cards' glass/blur is never touched. */
@@ -7340,6 +7405,35 @@ document.addEventListener('keydown',ev=>{if(ev.key!=='Enter')return;
 (function(){if(typeof notebookStrip!=='function')return;const _nb=notebookStrip;let last='';
   notebookStrip=async function(){const el=$('#nbStrip');if(el&&last&&!el.querySelector('.nbs'))el.innerHTML=last;
     await _nb();const e2=$('#nbStrip');if(e2&&e2.querySelector('.nbs'))last=e2.innerHTML}})();
+
+/* ===================== Home v2 (Oct 21): reminders on Home; schedule, due-this-week and food log live in their own tabs ===================== */
+TODAY_SECS.splice(1,0,['rem','Reminders','Your open reminders, soonest first']);
+(function(){try{const g=db.settings;if(!g._homeV2){const H=new Set(g.todayHide||[]);['due','sched','eaten'].forEach(k=>H.add(k));g.todayHide=[...H];g._homeV2=1;save()}}catch(e){}})();
+function homeReminders(){
+  const rs=of('reminder').filter(e=>!e.done).sort((a,b)=>((a.due||'9999')+(a.time||'')).localeCompare((b.due||'9999')+(b.time||''))).slice(0,6);
+  const n=of('reminder').filter(e=>!e.done).length;
+  return section('Your <em>reminders</em>',list(rs,'No reminders. Add one with the + button.'),`<button class="link" data-goto="mind:reminder">${n>6?'All '+n:'All'}</button>`);
+}
+const _vtHome2=viewToday;viewToday=function(){let h=_vtHome2();const H=new Set(db.settings.todayHide||[]);
+  if(!H.has('rem')){const r=homeReminders(),i=h.indexOf('<section class="sec"><div class="sec-h"><h2>Habits');
+    if(i>=0)h=h.slice(0,i)+r+h.slice(i);else{const c=h.indexOf('<div class="chips"');const e=c>=0?h.indexOf('</div>',c)+6:-1;h=e>5?h.slice(0,e)+r+h.slice(e):h+r}}
+  /* the bus card used to sit in front of "Due this week"; keep it on Home when that section is hidden */
+  {const sp=h.indexOf('<div class="sprig'),ii=h.indexOf('<section class="sec"><div class="sec-h"><h2>Insights');
+    if(sp>=0&&ii>sp){const ie=h.indexOf('</section>',ii)+10,ins=h.slice(ii,ie);h=h.slice(0,ii)+h.slice(ie);const L=h.indexOf('<section class="sec"><div class="sec-h"><h2>Logging'),at=L>=0?L:h.indexOf('<div class="sprig');h=h.slice(0,at)+ins+h.slice(at)}}
+  if(H.has('due')&&typeof busCard==='function'&&!/class="card-s bus"/.test(h)){const b=busCard();if(b){const i=h.indexOf('<section class="sec"><div class="sec-h"><h2>Logging');h=i>=0?h.slice(0,i)+b+h.slice(i):h+b}}
+  return h};
+/* big Home card: each of the four tiles gets its own colour so they read apart at a glance */
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="tsTint">
+.ts-grid>button{--tc:255 255 255;background:linear-gradient(155deg,rgb(var(--tc) / .26),rgb(var(--tc) / .07) 70%)!important;border:1px solid rgb(var(--tc) / .38)!important;box-shadow:inset 0 1px 0 rgb(255 255 255 / .14);position:relative;overflow:hidden}
+.ts-grid>button::before{content:"";position:absolute;left:10px;right:10px;top:0;height:2px;border-radius:0 0 2px 2px;background:rgb(var(--tc))}
+.ts-grid>button svg.i{color:rgb(var(--tc));opacity:1}
+.ts-grid>button small{color:rgb(var(--tc));opacity:.95}
+.ts-grid>button:nth-child(1){--tc:134 207 160}
+.ts-grid>button:nth-child(2){--tc:169 155 255}
+.ts-grid>button:nth-child(3){--tc:240 109 68}
+.ts-grid>button:nth-child(4){--tc:255 196 107}
+:root[data-theme="light"] .ts-grid>button small{filter:brightness(.7)}
+</style>`);
 
 /* ===================== boot ===================== */
 load();
