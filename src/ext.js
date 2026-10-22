@@ -948,13 +948,16 @@ document.addEventListener('click',async e=>{const b=e.target.closest('#fdcSave')
     if(!g||(e&&e.pointerId!==g.id))return;clearTimeout(g.t);const was=g.lens;g=null;
     if(!was)return;
     suppress=true;setTimeout(()=>suppress=false,80);
-    const[lo,hi]=bounds();x=Math.max(lo,Math.min(hi,x));
-    const b=under(x+w/2);cancelAnimationFrame(raf);raf=0;
+    const[lo,hi]=bounds();const fromT=ind.style.transform;
+    /* the tab under your FINGER wins (the lens trails it on a spring), then the lens eases into that tab instead of snapping */
+    const b=under(Math.max(lo,Math.min(hi,tx))+w/2);x=Math.max(lo,Math.min(hi,x));cancelAnimationFrame(raf);raf=0;
     btns().forEach(z=>z.classList.remove('under'));
     ind.style.transform=VERT?`translateY(${x.toFixed(2)}px)`:`translateX(${x.toFixed(2)}px)`;if(VERT)ind.dataset.y=x;else ind.dataset.x=x;
     ind.classList.remove('lens');nav.classList.remove('lensing');const m=mag;mag=null;setTimeout(()=>m?.remove(),260);
     if(b&&b.dataset.tab!==state.tab){const ks=Object.keys(TABS),dir=Math.sign(ks.indexOf(b.dataset.tab)-ks.indexOf(state.tab));state.tab=b.dataset.tab;if(b.dataset.tab!=='mind')state.folder=null;SC.scrollTop=0;render(true,false,dir);tick()}
-    else moveInd(false);
+    else moveInd(true);
+    ind.getAnimations?.().forEach(a=>a.cancel());const toT=ind.style.transform;
+    try{ind.animate([{transform:fromT},{transform:toT}],{duration:440,easing:'cubic-bezier(.22,1.15,.36,1)'})}catch(err){}
   }
   nav.addEventListener('pointerup',end);nav.addEventListener('pointercancel',end);
   nav.addEventListener('click',e=>{if(suppress){e.stopPropagation();e.preventDefault();suppress=false}},true);

@@ -877,7 +877,7 @@ function ixRun(preview){
   const ez=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2,eo=k=>1-Math.pow(1-k,3),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
   const el=document.createElement('div');el.id='ix3';el.className='ix5';el.setAttribute('aria-hidden','true');
   el.innerHTML=`<canvas class="cv"></canvas><canvas class="fx"></canvas><div class="gp g3"><i></i></div><div class="gp g2"><i></i></div><div class="gp g1"><i></i></div><canvas class="px"></canvas><div class="wl"></div>`;
-  document.body.appendChild(el);
+  el.style.background='#070908';document.body.appendChild(el);
   document.documentElement.classList.remove('ix-on');
   try{splashBg.style.display='none';splash.style.display='none'}catch(e){}
   if(!preview){SC.style.opacity='1';SC.style.transition='none'}
@@ -1007,14 +1007,14 @@ function ixRun(preview){
       else{const g=tvis(HI());if(g)WT=waves.map(()=>({x0:g.left,x1:g.right,y:g.bottom+4,c:'240,109,68',lw:2}))}}catch(e){WT=null}
   }
   function phaseB(){
-    if(!el.isConnected)return;window.__ixB=performance.now()-t0;
+    if(!el.isConnected)return;window.__ixB=performance.now()-t0;el.style.background='transparent';
     if(!pre)premeasure();
     /* glass panes morph exactly onto Home's cards (FLIP), then hand over */
     [[g1,P1,0,pre[0]],[g2,P2,10,pre[1]],[g3,P3,-14,pre[2]]].forEach(([g,src,rot,tx])=>{
       g.getAnimations().forEach(a=>a.cancel());if(!tx){A(g,[{opacity:1},{opacity:0,transform:'scale(.9)'}],{duration:MOVE*.6,easing:EZ,fill:'forwards'});return}
       const [n,r,br]=tx;place(g,{x:r.left,y:r.top,w:r.width,h:r.height});g.style.borderRadius=br||'24px';g.style.opacity='1';
       const first=`translate(${src.x-r.left}px,${src.y-r.top}px) scale(${src.w/r.width},${src.h/r.height}) rotate(${rot*.5}deg)`;
-      g.style.webkitBackdropFilter=g.style.backdropFilter='none';g.style.background='linear-gradient(135deg,rgb(255 255 255 / .18),rgb(255 255 255 / .05))';A(g,[{transform:first,opacity:1,boxShadow:'inset 0 1px 0 rgb(255 255 255 / .4),0 24px 60px rgb(0 0 0 / .5)'},{transform:'none',opacity:1,offset:.84,boxShadow:'inset 0 1px 0 rgb(255 255 255 / .4),0 0 0 1.5px rgb(255 214 170 / .9),0 0 26px rgb(240 109 68 / .55)'},{transform:'none',opacity:0,boxShadow:'0 0 0 1.5px rgb(255 214 170 / 0),0 0 26px rgb(240 109 68 / 0)'}],{duration:MOVE,easing:EZ,fill:'forwards'});
+      g.style.webkitBackdropFilter=g.style.backdropFilter='none';g.style.background='linear-gradient(135deg,rgb(255 255 255 / .18),rgb(255 255 255 / .05))';g.style.boxShadow='inset 0 1px 0 rgb(255 255 255 / .4),0 18px 44px rgb(0 0 0 / .45)';g.style.overflow='visible';{const sh=g.querySelector('i');if(sh)sh.remove()}const gl=document.createElement('b');gl.style.cssText='position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;will-change:opacity;box-shadow:0 0 0 1.5px rgb(255 214 170 / .9),0 0 24px rgb(240 109 68 / .55)';g.appendChild(gl);A(g,[{transform:first,opacity:1},{transform:'none',opacity:1,offset:.86},{transform:'none',opacity:0}],{duration:MOVE,easing:EZ,fill:'forwards'});A(gl,[{opacity:0},{opacity:0,offset:.62},{opacity:1,offset:.86},{opacity:0}],{duration:MOVE,fill:'forwards'});
     });
   }
   const done=()=>{if(!el.isConnected||window.__ixHold)return;el.remove();const h=HI();if(h)h.style.opacity='';if(!preview){SC.style.transition='';setTimeout(endSplash,1500)}};
@@ -2050,3 +2050,27 @@ const _vpDue=viewPlan;viewPlan=function(){let h=_vpDue();
   const openN=due.filter(e=>!(e.done||(e.type==='ext'&&typeof isExtDone==='function'&&isExtDone(e)))).length;
   const sec=section('Due <em>this week</em>',list(due,'Nothing due in the next 7 days.'),`<span class="cap">${openN} open</span>`);
   const i=h.indexOf('<section class="sec"><div class="sec-h"><h2>All <em>classes');return i>=0?h.slice(0,i)+sec+h.slice(i):h+sec};
+
+/* ===================== motion pass (Oct 22): natural, never-instant feedback; Apple-style ease-out curves =====================
+   --ease-out: the iOS sheet curve; --spring: a soft overshoot for things that land. Presses dip in ~0.12 s and spring back
+   ~0.4 s; colour/state changes cross-fade instead of flipping. Reduce Motion turns all of it off. */
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="motioncss">
+:root{--ease-out:cubic-bezier(.32,.72,0,1);--spring:cubic-bezier(.34,1.36,.64,1)}
+:where(button,.chip,.pill,.tile,.ts-tile,.card-s,.row,.folder,.habit,.tchip,.ib,.sw,.seg2 button,.link,.ts-grid>button,.ts-leg>button){
+  transition:transform .42s var(--spring),background-color .28s var(--ease-out),color .28s var(--ease-out),border-color .28s var(--ease-out),box-shadow .32s var(--ease-out),opacity .28s var(--ease-out)}
+:where(button,.chip,.pill,.tile,.ts-tile,.folder,.habit,.tchip,.ib,.sw,.seg2 button,.ts-grid>button):active{transform:scale(.955);transition-duration:.14s,.14s,.14s,.14s,.14s,.14s;transition-timing-function:var(--ease-out)}
+:where(.card-s,.row,.ts-leg>button):active{transform:scale(.985);transition-duration:.14s;transition-timing-function:var(--ease-out)}
+.tabs .ind{transition:background-color .3s var(--ease-out),-webkit-backdrop-filter .3s var(--ease-out),backdrop-filter .3s var(--ease-out),box-shadow .3s var(--ease-out)}
+.tabs .ind::before,.tabs .ind::after{transition:opacity .3s var(--ease-out)}
+#tabs button svg,#tabs button span{transition:color .3s var(--ease-out),transform .42s var(--spring),opacity .3s var(--ease-out)}
+.sheet{transition-timing-function:var(--ease-out)!important}
+input,textarea,select{transition:border-color .25s var(--ease-out),box-shadow .25s var(--ease-out),background-color .25s var(--ease-out)}
+/* big cards: the old flat drawing never shows once the 3D art is used (it used to flash over the text), and the 3D art settles in */
+.hero[data-ph] .hero-art,.hero.hasph .hero-art{display:none!important}
+.hart .h3d{animation:h3settle .7s var(--ease-out) both}
+.hart .hw{animation:hwIn .6s var(--ease-out) both}
+@keyframes h3settle{from{opacity:0;transform:perspective(520px) rotateX(55deg) rotateZ(-40deg) translateZ(-24px) scale(.9)}to{opacity:1;transform:perspective(520px) rotateX(55deg) rotateZ(-40deg)}}
+@keyframes hwIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){:where(button,.chip,.pill,.tile,.card-s,.row,.folder,.habit,.tchip,.ib,.sw){transition:none!important}.hart .h3d,.hart .hw{animation:none!important}}
+html[data-motion="off"] .hart .h3d,html[data-motion="off"] .hart .hw{animation:none!important}
+</style>`);
