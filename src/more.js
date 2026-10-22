@@ -304,7 +304,7 @@ const _dayItemsM=dayItems;dayItems=function(d){const base=_dayItemsM(d);const bl
   return bl.length?[...base,...bl].sort((a,b)=>((a.start||a.time||'')).localeCompare(b.start||b.time||'')):base};
 const _calCardM=calCard;calCard=function(){const h=_calCardM();if(calView()!=='day')return h;const d=anchor(),open=of('task').filter(e=>!e.done&&!(e.block&&e.block.date===d)).sort(byDue).slice(0,14);
   if(!open.length)return h;
-  return`<div class="tray card-s"><div class="tray-h"><b>Plan this day</b><small>Hold a task and drag it onto a time</small></div><div class="tray-l">${open.map(e=>`<button class="tchip" data-tdrag="${esc(e.id)}">${esc(e.title)}${e.due?`<small>${esc(relDue(e.due))}</small>`:''}</button>`).join('')}</div></div>`+h};
+  return`<div class="tray card-s"><div class="tray-h"><b>Plan this day</b><small>Hold a task and drag it onto a time</small></div><div class="tray-l">${open.map(e=>`<button class="tchip" data-tdrag="${esc(e.id)}"><span class="tt">${esc(e.title)}</span>${e.due?`<small>${esc(relDue(e.due))}</small>`:''}</button>`).join('')}</div></div>`+h};
 (function(){ /* drag from the tray (or move an existing block) onto the day grid, snapping to 15 minutes */
   let dr=null;
   const slotAt=(x,y)=>{const sc=$('.day-scroll'),body=sc&&sc.querySelector('.wk-body');if(!sc||!body)return null;const r=body.getBoundingClientRect(),sr=sc.getBoundingClientRect();if(x<sr.left||x>sr.right||y<sr.top-20||y>sr.bottom+20)return null;

@@ -1170,7 +1170,7 @@ function seed(){
     s({type:'scrap',notes:'Look into faster-whisper for reel transcripts'})
   ];
 }
-function load(){
+function load(){LOADED=true;
   try{const r=localStorage.getItem(KEY);if(r){const d=JSON.parse(r);if(d&&d.enc){LOCKED_BLOB=d;return}if(Array.isArray(d.entries)){db=d;db.entries=cleanEntries(db.entries);db.settings=cleanSettings(db.settings);return}}}catch(e){}
   db.entries=seed();
 }
@@ -1184,8 +1184,9 @@ const CACHE_KEYS=['ishiros.cache.cal','ishiros.cache.mail','ishiros.cache.health
 function lsWrite(k,v){try{localStorage.setItem(k,v);return true}catch(e){}
   for(const c of CACHE_KEYS)if(c!==k){try{localStorage.removeItem(c)}catch(e){}}
   try{localStorage.setItem(k,v);return true}catch(e){return false}}
+let LOADED=false;
 function save(){
-  if(isLocked()||FROZEN)return;   /* never write the empty placeholder over the encrypted data */
+  if(!LOADED||isLocked()||FROZEN)return;   /* before load() runs, db is an empty placeholder: never write it */   /* never write the empty placeholder over the encrypted data */
   DATA_VER++;if(typeof afterSave==='function')afterSave();if(typeof LOCK!=='undefined'&&LOCK.key){LOCK.saveEnc();return}
   if(lsWrite(KEY,JSON.stringify(db))){if(typeof storageOk==='function')storageOk()}else if(typeof storageFail==='function')storageFail()}
 /* fast lookups: one pass builds an index by type and id; it rebuilds only when the data changes (DATA_VER) */
@@ -1935,13 +1936,9 @@ function lookPanel(){
     <div class="lookset"><span class="cap">Accent colour</span><div class="swatches">${sw(ACCENTS,'accent',g.accent)}</div></div>
     <div class="lookset"><span class="cap">Big card colour</span><div class="swatches">${sw(HEROS,'hero',g.hero)}</div></div>
     <div class="lookset"><span class="cap">Theme</span>${seg('theme',[['system','Auto'],['light','Light'],['dark','Dark']],g.theme)}</div>
-    <div class="lookset"><span class="cap">Headlines</span>${seg('head',[['areas','By area'],['serif','Serif'],['sans','Sans'],['rounded','Rounded'],['tech','Tech'],['wide','Wide'],['pixel','Pixel'],['groovy','Groovy'],['flare','Flare']],g.head)}</div>
-    <div class="lookset"><span class="cap">Corners</span>${seg('corners',[['round','Round'],['tight','Tight']],g.corners)}</div>
-    <div class="lookset"><span class="cap">Icons</span>${seg('icons',[['color','Colour'],['mono','Plain']],g.icons)}</div>
     <div class="lookset"><span class="cap">Animations</span>${seg('motion',[['1','On'],['0','Off']],g.motion?'1':'0')}</div>
-    <div class="lookset"><span class="cap">Opening animation</span>${seg('intro',[['orbit','Vines'],['classic','Classic']],g.intro||'orbit')}${(g.intro||'orbit')==='orbit'?'<button class="link" data-introplay style="margin-top:8px">Play it now</button>':''}</div>
+    <div class="lookset"><span class="cap">Opening animation</span><button class="link" data-introplay style="margin-top:8px">Play it now</button></div>
     <div class="lookset"><span class="cap">Tick sound when you finish a task</span><div class="seg2"><button data-snd="1" aria-pressed="${!!g.sound}">On</button><button data-snd="0" aria-pressed="${!g.sound}">Off</button></div></div>
-    <label class="lookset" for="lkGlass"><span class="cap">Glass blur · <span id="glassVal">${g.glass}</span></span><input id="lkGlass" type="range" min="0" max="50" value="${g.glass}" style="--p:${g.glass*2}%" data-look="glass"></label>
     <div class="sh-actions"><button class="secondary" data-look="reset">Reset to default</button></div>`;
 }
 function setLook(key,val){
@@ -2552,7 +2549,8 @@ document.addEventListener('click',e=>{const a=e.target.closest('a[href^="http"]'
 
 /*@@EXT@@*/
 /* ===================== boot ===================== */
-load();
+load();try{if(!LOCKED_BLOB&&typeof syncBase==='function')syncBase()}catch(e){}
+try{(window.AFTER_LOAD||[]).forEach(f=>{try{f()}catch(e){}})}catch(e){}
 const splash=document.getElementById('splash'),splashBg=document.getElementById('splashBg');
 if(!LOCKED_BLOB&&(db.settings.intro||'orbit')!=='classic')document.documentElement.classList.add('ix-boot');else document.documentElement.classList.add('ix-classic');
 let NOINTRO=false;try{NOINTRO=sessionStorage.getItem('lifeNoIntro')==='1';sessionStorage.removeItem('lifeNoIntro')}catch(e){}

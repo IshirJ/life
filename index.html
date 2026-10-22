@@ -1231,7 +1231,7 @@ function seed(){
     s({type:'scrap',notes:'Look into faster-whisper for reel transcripts'})
   ];
 }
-function load(){
+function load(){LOADED=true;
   try{const r=localStorage.getItem(KEY);if(r){const d=JSON.parse(r);if(d&&d.enc){LOCKED_BLOB=d;return}if(Array.isArray(d.entries)){db=d;db.entries=cleanEntries(db.entries);db.settings=cleanSettings(db.settings);return}}}catch(e){}
   db.entries=seed();
 }
@@ -1245,8 +1245,9 @@ const CACHE_KEYS=['ishiros.cache.cal','ishiros.cache.mail','ishiros.cache.health
 function lsWrite(k,v){try{localStorage.setItem(k,v);return true}catch(e){}
   for(const c of CACHE_KEYS)if(c!==k){try{localStorage.removeItem(c)}catch(e){}}
   try{localStorage.setItem(k,v);return true}catch(e){return false}}
+let LOADED=false;
 function save(){
-  if(isLocked()||FROZEN)return;   /* never write the empty placeholder over the encrypted data */
+  if(!LOADED||isLocked()||FROZEN)return;   /* before load() runs, db is an empty placeholder: never write it */   /* never write the empty placeholder over the encrypted data */
   DATA_VER++;if(typeof afterSave==='function')afterSave();if(typeof LOCK!=='undefined'&&LOCK.key){LOCK.saveEnc();return}
   if(lsWrite(KEY,JSON.stringify(db))){if(typeof storageOk==='function')storageOk()}else if(typeof storageFail==='function')storageFail()}
 /* fast lookups: one pass builds an index by type and id; it rebuilds only when the data changes (DATA_VER) */
@@ -1972,7 +1973,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='191';
+const APP_VER='192';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -1996,13 +1997,9 @@ function lookPanel(){
     <div class="lookset"><span class="cap">Accent colour</span><div class="swatches">${sw(ACCENTS,'accent',g.accent)}</div></div>
     <div class="lookset"><span class="cap">Big card colour</span><div class="swatches">${sw(HEROS,'hero',g.hero)}</div></div>
     <div class="lookset"><span class="cap">Theme</span>${seg('theme',[['system','Auto'],['light','Light'],['dark','Dark']],g.theme)}</div>
-    <div class="lookset"><span class="cap">Headlines</span>${seg('head',[['areas','By area'],['serif','Serif'],['sans','Sans'],['rounded','Rounded'],['tech','Tech'],['wide','Wide'],['pixel','Pixel'],['groovy','Groovy'],['flare','Flare']],g.head)}</div>
-    <div class="lookset"><span class="cap">Corners</span>${seg('corners',[['round','Round'],['tight','Tight']],g.corners)}</div>
-    <div class="lookset"><span class="cap">Icons</span>${seg('icons',[['color','Colour'],['mono','Plain']],g.icons)}</div>
     <div class="lookset"><span class="cap">Animations</span>${seg('motion',[['1','On'],['0','Off']],g.motion?'1':'0')}</div>
-    <div class="lookset"><span class="cap">Opening animation</span>${seg('intro',[['orbit','Vines'],['classic','Classic']],g.intro||'orbit')}${(g.intro||'orbit')==='orbit'?'<button class="link" data-introplay style="margin-top:8px">Play it now</button>':''}</div>
+    <div class="lookset"><span class="cap">Opening animation</span><button class="link" data-introplay style="margin-top:8px">Play it now</button></div>
     <div class="lookset"><span class="cap">Tick sound when you finish a task</span><div class="seg2"><button data-snd="1" aria-pressed="${!!g.sound}">On</button><button data-snd="0" aria-pressed="${!g.sound}">Off</button></div></div>
-    <label class="lookset" for="lkGlass"><span class="cap">Glass blur · <span id="glassVal">${g.glass}</span></span><input id="lkGlass" type="range" min="0" max="50" value="${g.glass}" style="--p:${g.glass*2}%" data-look="glass"></label>
     <div class="sh-actions"><button class="secondary" data-look="reset">Reset to default</button></div>`;
 }
 function setLook(key,val){
@@ -4147,7 +4144,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=191';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=192';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -4644,7 +4641,7 @@ const _dayItemsM=dayItems;dayItems=function(d){const base=_dayItemsM(d);const bl
   return bl.length?[...base,...bl].sort((a,b)=>((a.start||a.time||'')).localeCompare(b.start||b.time||'')):base};
 const _calCardM=calCard;calCard=function(){const h=_calCardM();if(calView()!=='day')return h;const d=anchor(),open=of('task').filter(e=>!e.done&&!(e.block&&e.block.date===d)).sort(byDue).slice(0,14);
   if(!open.length)return h;
-  return`<div class="tray card-s"><div class="tray-h"><b>Plan this day</b><small>Hold a task and drag it onto a time</small></div><div class="tray-l">${open.map(e=>`<button class="tchip" data-tdrag="${esc(e.id)}">${esc(e.title)}${e.due?`<small>${esc(relDue(e.due))}</small>`:''}</button>`).join('')}</div></div>`+h};
+  return`<div class="tray card-s"><div class="tray-h"><b>Plan this day</b><small>Hold a task and drag it onto a time</small></div><div class="tray-l">${open.map(e=>`<button class="tchip" data-tdrag="${esc(e.id)}"><span class="tt">${esc(e.title)}</span>${e.due?`<small>${esc(relDue(e.due))}</small>`:''}</button>`).join('')}</div></div>`+h};
 (function(){ /* drag from the tray (or move an existing block) onto the day grid, snapping to 15 minutes */
   let dr=null;
   const slotAt=(x,y)=>{const sc=$('.day-scroll'),body=sc&&sc.querySelector('.wk-body');if(!sc||!body)return null;const r=body.getBoundingClientRect(),sr=sc.getBoundingClientRect();if(x<sr.left||x>sr.right||y<sr.top-20||y>sr.bottom+20)return null;
@@ -7420,7 +7417,7 @@ document.addEventListener('keydown',ev=>{if(ev.key!=='Enter')return;
 
 /* ===================== Home v2 (Oct 21): reminders on Home; schedule, due-this-week and food log live in their own tabs ===================== */
 TODAY_SECS.splice(1,0,['rem','Reminders','Your open reminders, soonest first']);
-(function(){try{const g=db.settings;if(!g._homeV2){const H=new Set(g.todayHide||[]);['due','sched','eaten'].forEach(k=>H.add(k));g.todayHide=[...H];g._homeV2=1;save()}}catch(e){}})();
+/* (old one-time Home setup removed: it ran before data loaded) */
 function homeReminders(){
   const rs=of('reminder').filter(e=>!e.done).sort((a,b)=>((a.due||'9999')+(a.time||'')).localeCompare((b.due||'9999')+(b.time||''))).slice(0,6);
   const n=of('reminder').filter(e=>!e.done).length;
@@ -7510,7 +7507,7 @@ headFont();new MutationObserver(headFont).observe(document.documentElement,{attr
    Health = Gloock (editorial) · Ideas = Shrikhand (groovy). Page title, greeting, section titles and the
    big card's watermark word take the area's face; body text, numbers and panels stay as they are. */
 HEAD_FONTS.areas='Michroma&family=Pixelify+Sans:wght@500;700&family=Tektur:wght@500;700&family=Gloock&family=Shrikhand';
-(function(){try{const g=db.settings;if(!g._areaType){g._areaType=1;if(!g.head||g.head==='serif'){g.head='areas';save();try{applyLook()}catch(e){}}}}catch(e){}})();
+
 (document.body||document.head).insertAdjacentHTML('beforeend',`<style id="areacss">
 :root[data-head="areas"][data-area="today"] :is(#top,#view){--serif:'Michroma','Geist',sans-serif;--areaf:'Michroma','Geist',sans-serif}
 :root[data-head="areas"][data-area="plan"] :is(#top,#view){--serif:'Pixelify Sans','Geist',sans-serif;--areaf:'Pixelify Sans','Geist',sans-serif}
@@ -7537,8 +7534,87 @@ HEAD_FONTS.areas='Michroma&family=Pixelify+Sans:wght@500;700&family=Tektur:wght@
 const _renderArea=render;render=function(a,f,d){document.documentElement.dataset.area=state.tab;_renderArea(a,f,d)};
 document.documentElement.dataset.area=state.tab;headFont();
 
+/* ===================== sync: merge settings, habit ticks and other plain objects FIELD BY FIELD =====================
+   Before: an object like settings or the habit log synced as one block, so the last device to touch ANY field
+   replaced every field (a font choice or a habit tick could vanish). Now each field (two levels deep, e.g.
+   hlog → day → habit) carries its own change time in db._fu, and the newer side wins per field.
+   Older copies without _fu fall back to the block's time, so mixed app versions still merge sensibly. */
+(function(){
+  if(typeof mergeDocs!=='function'||typeof SYNC_SKIP==='undefined')return;
+  SYNC_SKIP.add('_fu');
+  const isPO=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
+  const FU_SKIP=new Set(['entries','tomb','_ku','_fu','_loc']);
+  const poKeys=d=>Object.keys(d||{}).filter(k=>!FU_SKIP.has(k)&&isPO(d[k]));
+  const SEP='\u0001';
+  const flat=o=>{const m={};for(const a of Object.keys(o||{})){const v=o[a];if(isPO(v)&&Object.keys(v).length){for(const b of Object.keys(v))m[a+SEP+b]=JSON.stringify(v[b])}else m[a]=JSON.stringify(v===undefined?null:v)}return m};
+  const unflat=m=>{const o={};const ps=Object.keys(m).sort();
+    for(const p of ps)if(p.indexOf(SEP)<0){try{o[p]=JSON.parse(m[p])}catch(e){}}
+    for(const p of ps){const i=p.indexOf(SEP);if(i<0)continue;const a=p.slice(0,i),b=p.slice(i+1);if(!isPO(o[a]))o[a]={};try{o[a][b]=JSON.parse(m[p])}catch(e){}}
+    return o};
+  const sortDeep=v=>Array.isArray(v)?v.map(sortDeep):isPO(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,sortDeep(v[k])])):v;
+  const FLAT={};
+  const _sb=syncBase;syncBase=function(){_sb();for(const k of Object.keys(FLAT))delete FLAT[k];for(const k of poKeys(db))FLAT[k]=flat(db[k])};
+  const _st=stampSync;stampSync=function(){const had=!!SH.map;_st();if(!had)return;
+    const now=Date.now();let ch=false;db._fu=db._fu||{};
+    const keys=new Set([...poKeys(db),...Object.keys(FLAT)]);
+    for(const k of keys){const cur=isPO(db[k])?flat(db[k]):{},old=FLAT[k]||{},fu=db._fu[k]||(db._fu[k]={});
+      for(const p of new Set([...Object.keys(cur),...Object.keys(old)]))if(cur[p]!==old[p]){fu[p]=now;ch=true}
+      FLAT[k]=cur}
+    if(ch){SYNCST.dirty=true;SYNCST.gen++}};
+  const _md=mergeDocs;mergeDocs=function(L,R){const out=_md(L,R);
+    const lk=L._ku||{},rk=R._ku||{},lf=L._fu||{},rf=R._fu||{};out._fu={};
+    for(const k of new Set([...Object.keys(lf),...Object.keys(rf)]))out._fu[k]={...(rf[k]||{})};
+    for(const k of new Set([...poKeys(L),...poKeys(R)])){
+      if((L[k]!=null&&!isPO(L[k]))||(R[k]!=null&&!isPO(R[k])))continue;
+      const a=L[k]?flat(L[k]):{},b=R[k]?flat(R[k]):{},fa=lf[k]||{},fb=rf[k]||{},res={},fu={};
+      for(const p of new Set([...Object.keys(a),...Object.keys(b),...Object.keys(fa),...Object.keys(fb)])){
+        const ta=fa[p]!=null?fa[p]:(p in a?(lk[k]||0):0),tb=fb[p]!=null?fb[p]:(p in b?(rk[k]||0):0);
+        const src=ta>=tb?a:b;if(p in src)res[p]=src[p];fu[p]=Math.max(ta,tb)}
+      out[k]=unflat(res);out._fu[k]=fu}
+    if(out.settings)out.settings=cleanSettings(out.settings);
+    return out};
+  /* compare copies by content, not by key order, so two devices never ping-pong uploads */
+  const _cn=canon;canon=function(d){if(!d)return'';const o={...d};for(const k of [...poKeys(d),'_fu'])if(o[k])o[k]=sortDeep(o[k]);return _cn(o)};
+})();
+
+/* ===================== fixed type system (Oct 22): no font picker; every face has a job =====================
+   Gloock (Flare)  → headlines: page titles, greeting, section titles, panel titles
+   Tektur          → numbers and data labels (everything that used the mono face)
+   Michroma        → small caps labels (dates, "KCAL LEFT", stat captions)
+   Pixelify Sans   → the big faded word on each tab's main card
+   Shrikhand       → Ideas only: its page title and card word (the creative corner)
+   Geist stays the body font; Doto stays on the big dial number. */
+HEAD_FONTS.type='Gloock&family=Tektur:wght@400;500;600;700;800&family=Michroma&family=Pixelify+Sans:wght@500;700&family=Shrikhand';
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="typecss">
+:root[data-head="type"]{--serif:'Gloock',Georgia,serif;--mono:'Tektur','Space Mono',ui-monospace,monospace}
+:root[data-head="type"] :is(h1,h2,h3){font-weight:400;letter-spacing:-.005em}
+:root[data-head="type"] :is(h1,h2,h3) em{font-style:normal;color:var(--accent)}
+:root[data-head="type"] .cap{font-family:'Michroma','Geist',sans-serif;font-size:9.5px;letter-spacing:.06em;font-weight:400}
+:root[data-head="type"] .hart .hw{font-family:'Pixelify Sans','Geist',sans-serif;font-weight:700;letter-spacing:0}
+:root[data-head="type"][data-area="mind"] #top h1,:root[data-head="type"][data-area="mind"] .hart .hw{font-family:'Shrikhand','Geist',serif;font-weight:400}
+:root[data-head="type"] :is(.ts-grid b,.ts-leg .tv b,.num,b.num){font-variant-numeric:tabular-nums}
+/* more weight where the eye needs it */
+:root[data-head="type"] :is(.ts-leg .tl,.ts-grid small,.chip,.pill,.habit,.habit b,.habit span,.link,.trow b,.fld>span,.seg2 button,.folder b,.ts-pill,.ts-pill b,.qbar input,.tab span,#tabs button){font-weight:700}
+:root[data-head="type"] .ts-leg .tv small{font-weight:600}
+</style>`);
+(function(){const _al=applyLook;applyLook=function(){const g=db.settings;g.head='type';g.corners='round';g.icons='color';g.intro='orbit';_al();headFont()}})();
+document.documentElement.dataset.head='type';headFont();
+/* "Plan this day": each task card has a fixed width; the title wraps to two lines, then ends in … — never spills out */
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="tchipfix">
+.tray-l .tchip{flex:none;width:clamp(140px,42vw,210px);max-width:none!important;min-width:0;white-space:normal;overflow:hidden;box-sizing:border-box}
+.tray-l .tchip .tt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;width:100%;line-height:1.25;word-break:break-word}
+.tray-l .tchip small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+</style>`);
+/* Week: the full "Due this week" list (tasks, reminders and Canvas/calendar due items) now lives here */
+const _vpDue=viewPlan;viewPlan=function(){let h=_vpDue();
+  const due=[...db.entries.filter(e=>(e.type==='task'||e.type==='reminder')&&!e.done&&e.due&&dayDiff(e.due)<=7),...(typeof extDue==='function'?extDue(0,7):[])].sort(byDue);
+  const openN=due.filter(e=>!(e.done||(e.type==='ext'&&typeof isExtDone==='function'&&isExtDone(e)))).length;
+  const sec=section('Due <em>this week</em>',list(due,'Nothing due in the next 7 days.'),`<span class="cap">${openN} open</span>`);
+  const i=h.indexOf('<section class="sec"><div class="sec-h"><h2>All <em>classes');return i>=0?h.slice(0,i)+sec+h.slice(i):h+sec};
+
 /* ===================== boot ===================== */
-load();
+load();try{if(!LOCKED_BLOB&&typeof syncBase==='function')syncBase()}catch(e){}
+try{(window.AFTER_LOAD||[]).forEach(f=>{try{f()}catch(e){}})}catch(e){}
 const splash=document.getElementById('splash'),splashBg=document.getElementById('splashBg');
 if(!LOCKED_BLOB&&(db.settings.intro||'orbit')!=='classic')document.documentElement.classList.add('ix-boot');else document.documentElement.classList.add('ix-classic');
 let NOINTRO=false;try{NOINTRO=sessionStorage.getItem('lifeNoIntro')==='1';sessionStorage.removeItem('lifeNoIntro')}catch(e){}
