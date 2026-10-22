@@ -2558,7 +2558,7 @@ SPLASHING=!(noMotion()||LOCKED_BLOB||NOINTRO);
 if(!LOCKED_BLOB&&db.settings.startTab&&TABS[db.settings.startTab])state.tab=db.settings.startTab;
 if(LOCKED_BLOB){db.settings={...DEF,lockMin:LOCKED_BLOB.lockMin||5};showLock('unlock')}
 else{applyLay(false);applyLook();render(false)}
-function endSplash(){document.documentElement.classList.add('rings-on');document.documentElement.classList.remove('ix-boot');if(!splash.isConnected&&!SPLASHING)return;splash.remove();splashBg.remove();const h=$('#hi');if(h)h.style.visibility='';flushAfterSplash()}
+function endSplash(){document.documentElement.classList.add('rings-on','booted');document.documentElement.classList.remove('ix-boot');if(!splash.isConnected&&!SPLASHING)return;splash.remove();splashBg.remove();const h=$('#hi');if(h)h.style.visibility='';flushAfterSplash()}
 if(noMotion()||LOCKED_BLOB||NOINTRO){endSplash()}
 else runSplash();
 handleHash();

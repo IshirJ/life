@@ -111,6 +111,44 @@ function cleanSchedule(items, now) {
 const sentKey = (it) => `${it.id}|${it.at}`;
 const memSent = new Set(); // per-isolate guard against KV read-after-write lag
 
+/* Leave-for-class alerts, worked out live every minute from real NMG departures at your stop:
+   get ready (bus − 45 min), finish packing (bus − 15 min), leave now (bus − walk − 1 min).
+   Each alert uses the latest prediction at the moment it's sent, so a late bus moves the later alerts. */
+const leaveSent = new Set();
+export async function runLeave(env, now = Date.now()) {
+  const plan = await kvGet(env, 'leave');
+  if (!plan || !plan.on || !Array.isArray(plan.classes)) return { sent: 0 };
+  const soon = plan.classes.filter((t) => t > now && t - now < 110 * 60000);
+  if (!soon.length) return { sent: 0 };
+  const sub = await kvGet(env, 'sub');
+  if (!sub) return { sent: 0 };
+  let deps = [];
+  try { const r = await getBus(new URL(`https://x/bus?route=${encodeURIComponent(plan.route)}&stop=${encodeURIComponent(plan.stop)}`)); const b = await r.json(); deps = (b.deps || []).map((x) => Date.parse(x)).filter(Number.isFinite); } catch { deps = []; }
+  const fmt = (t) => new Date(t).toLocaleTimeString('en-US', { timeZone: plan.tz, hour: 'numeric', minute: '2-digit' });
+  const sentObj = (await kvGet(env, 'leaveSent')) || {};
+  let sent = 0, dirty = false;
+  for (const cls of soon) {
+    const latest = cls - (plan.ride + plan.buffer) * 60000;
+    const ok = deps.filter((d) => d <= latest && d > now);
+    const live = ok.length > 0, bus = live ? Math.max(...ok) : latest;
+    const leave = bus - (plan.walk + 1) * 60000;
+    const route = plan.route, est = live ? '' : ' (estimated: no live time yet)';
+    const kinds = [
+      ['ready', bus - 45 * 60000, 'Start getting ready', `${route} at ${fmt(bus)}${est} for your ${fmt(cls)} class. Leave by ${fmt(leave)}.`],
+      ['pack', bus - 15 * 60000, 'Finish packing', `Leave in ${Math.max(1, Math.round((leave - now) / 60000))} min (${fmt(leave)}) for the ${fmt(bus)} ${route}.`],
+      ['walk', leave, 'Leave now', `${route} at ${fmt(bus)} from ${plan.stopName || 'your stop'}. ${plan.walk} min walk.`],
+    ];
+    for (const [k, at, title, body] of kinds) {
+      const key = `${cls}:${k}`;
+      if (now < at || now > at + 4 * 60000 || sentObj[key] || leaveSent.has(key)) continue;
+      if (k === 'walk' && !live && deps.length) continue;   // wait for a real prediction for the one that matters most
+      try { const r = await sendPush(env, sub, { title, body, tag: `leave-${cls}`, url: '/life/' }); if (r.ok || (r.status >= 400 && r.status < 500 && r.status !== 429)) { sentObj[key] = now; leaveSent.add(key); dirty = true; if (r.ok) sent++; } } catch (e) { console.error('leave push', e); }
+    }
+  }
+  if (dirty) { for (const [k, ts] of Object.entries(sentObj)) if (ts < now - 2 * 864e5) delete sentObj[k]; await kvPut(env, 'leaveSent', sentObj); }
+  return { sent };
+}
+
 export async function runCron(env, now = Date.now()) {
   const schedule = await kvGet(env, 'schedule');
   const items = schedule?.items || [];
@@ -471,6 +509,17 @@ async function route(request, env, url) {
       await kvPut(env, 'schedule', { items, updated: Date.now() });
       return json({ ok: true, count: items.length });
     }
+    case 'PUT /leave': {
+      // leave-for-class alerts: class START TIMES only (no titles) + bus/walk settings
+      const b = await readJson(request, 20000);
+      const n = (v, lo, hi, d) => { const x = Number(v); return Number.isFinite(x) ? Math.min(hi, Math.max(lo, x)) : d; };
+      const plan = { on: b.on !== false, route: String(b.route || 'NMG').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8), stop: String(b.stop || '1411').replace(/\D/g, '').slice(0, 8),
+        stopName: String(b.stopName || '').replace(/[\u0000-\u001f<>]/g, '').slice(0, 40), walk: n(b.walk, 1, 30, 7), ride: n(b.ride, 1, 60, 12), buffer: n(b.buffer, 0, 20, 3),
+        tz: /^[A-Za-z_\/+-]{1,40}$/.test(b.tz || '') ? b.tz : 'America/New_York',
+        classes: (Array.isArray(b.classes) ? b.classes : []).map(Number).filter((t) => Number.isFinite(t) && t > Date.now() - 36e5 && t < Date.now() + 8 * 864e5).sort((x, y) => x - y).slice(0, 60) };
+      await kvPut(env, 'leave', plan);
+      return json({ ok: true, classes: plan.classes.length });
+    }
     case 'GET /schedule':
       return json((await kvGet(env, 'schedule')) || { items: [] });
     case 'GET /calendar':
@@ -661,6 +710,7 @@ export default {
 
   async scheduled(event, env, ctx) {
     ctx.waitUntil(runCron(env, event.scheduledTime || Date.now()));
+    ctx.waitUntil(runLeave(env, event.scheduledTime || Date.now()).catch((e) => console.error('leave', e)));
   },
 };
 

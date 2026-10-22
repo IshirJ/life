@@ -475,7 +475,7 @@ function jvState(){const now=Date.now(),on=now-JV.seen<20000,lau=now-JV.launcher
 function jvPaint(){const L=$('#jvLog');if(!L)return;const{on,lau}=jvState();
   const st=$('#jvSt');if(st){st.className='jv-st'+(on?' on':'');
     const txt=on?'Laptop online':JV.waking?'Starting JARVIS on your laptop…':JV.wakeFail&&Date.now()-JV.wakeFail<6e5&&!(JV.seen>JV.wakeFail-120000)?'Didn’t start: your laptop didn’t answer':JV.seen?`JARVIS off · last seen ${esc(ago(JV.seen))}`:'JARVIS hasn’t checked in yet';
-    const rs=JV.restartAt&&Date.now()-JV.restartAt<45000&&JV.seen<JV.restartAt+3000;const act=on||rs?`<button class="jv-act${rs?' busy':''}" data-jvwake="restart" ${rs?'disabled':''}>${ic('refresh')}${rs?'Restarting…':'Restart'}</button>`:`<button class="jv-act pri" data-jvwake="start" ${JV.waking?'disabled':''}>${ic('play')}${JV.waking?'Starting…':'Start JARVIS'}</button>`;
+    const rs=JV.restartAt&&Date.now()-JV.restartAt<45000&&JV.seen<JV.restartAt+3000;const act=on||rs?`<button class="jv-act" data-jvwake="stop">${ic('close')}Stop</button><button class="jv-act${rs?' busy':''}" data-jvwake="restart" ${rs?'disabled':''}>${ic('refresh')}${rs?'Restarting…':'Restart'}</button>`:JV.waking?`<button class="jv-act pri busy" disabled>${ic('play')}Starting…</button><button class="jv-act" data-jvwake="cancel">${ic('close')}Cancel</button>`:`<button class="jv-act pri" data-jvwake="start">${ic('play')}Start JARVIS</button>`;
     st.innerHTML=`<i></i><span>${txt}</span>${act}`}
   const nt=$('#jvNote');if(nt)nt.innerHTML=!on&&!lau?'Your laptop isn’t answering. It’s asleep, offline, or hasn’t been logged into since the update. Wake it and tap Start.':'';
   const all=[...JV.log.map(x=>({...x})),...JV.local].sort((a,b)=>(a.at||0)-(b.at||0)).slice(-30);
@@ -494,7 +494,7 @@ async function jvSend(t){t=(t||'').trim();if(!t)return;const i=$('#jvIn');if(i)i
   const loc=jvLocal(t);if(loc){JV.local.push({text:t,reply:loc,at:Date.now(),local:true});jvPaint();return}
   JV.log.push({text:t,state:'queued',at:Date.now()});jvPaint();
   try{await api('/jarvis/cmd',{method:'POST',body:JSON.stringify({text:t})});jvLoad()}catch(e){toast('Couldn’t send: '+e.message)}}
-async function jvWake(mode,quiet){if(mode==='stop'){JV.stopAt=Date.now();JV.log.forEach(x=>{if(!x.reply&&(x.state==='running'||x.state==='queued')){x.state='error';x.reply='Stopped.'}});jvPaint()}if(mode==='restart'){JV.restartAt=Date.now();jvPaint()}try{await api('/jarvis/wake',{method:'POST',body:JSON.stringify({mode})});if(mode!=='stop'){JV.waking=mode;JV.wakeAt=Date.now();clearTimeout(JV.wakeT);JV.wakeT=setTimeout(()=>{if(JV.waking&&!jvState().on){JV.waking=null;JV.wakeFail=Date.now();jvPaint()}},120000)}jvPaint();if(!quiet)toast(mode==='stop'?'Stopping…':mode==='restart'?'Restarting JARVIS…':'Starting JARVIS…');setTimeout(jvLoad,1500)}catch(e){toast('Couldn’t reach your server: '+e.message)}}
+async function jvWake(mode,quiet){if(mode==='stop'){JV.stopAt=Date.now();JV.log.forEach(x=>{if(!x.reply&&(x.state==='running'||x.state==='queued')){x.state='error';x.reply='Stopped.'}});jvPaint()}if(mode==='restart'){JV.restartAt=Date.now();jvPaint()}try{await api('/jarvis/wake',{method:'POST',body:JSON.stringify({mode})});if(mode==='cancel'){JV.waking=null;JV.wakeAt=0;clearTimeout(JV.wakeT);jvPaint()}else if(mode!=='stop'){JV.waking=mode;JV.wakeAt=Date.now();clearTimeout(JV.wakeT);JV.wakeT=setTimeout(()=>{if(JV.waking&&!jvState().on){JV.waking=null;JV.wakeFail=Date.now();jvPaint()}},120000)}jvPaint();if(!quiet)toast(mode==='stop'?'Stopping…':mode==='restart'?'Restarting JARVIS…':'Starting JARVIS…');setTimeout(jvLoad,1500)}catch(e){toast('Couldn’t reach your server: '+e.message)}}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-jarvis],#jvSend,[data-jvs],[data-jvwake],#jvStop');if(!b)return;e.stopImmediatePropagation();e.preventDefault();
   if(b.dataset.jarvis!==undefined)return openJarvis();if(b.id==='jvSend')return jvSend($('#jvIn').value);
   if(b.dataset.jvwake)return jvWake(b.dataset.jvwake);if(b.id==='jvStop')return jvWake('stop');jvSend(b.dataset.jvs)},true);
@@ -873,12 +873,12 @@ const IX_COL={o:'#F06D44',O:'#FFB07A',s:'#2E7D52',g:'#3FA36B',G:'#86CFA0',a:'#F2
 function ixRun(preview){
   if($('#ix3'))return;
   const W=innerWidth,H=innerHeight,cx=W/2,cy=H*.47;
-  const TA=800,T=2700,MOVE=T-TA,EZ='cubic-bezier(.65,0,.35,1)';
+  const TA=700,T=2300,MOVE=T-TA,EZ='cubic-bezier(.65,0,.35,1)';
   const ez=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2,eo=k=>1-Math.pow(1-k,3),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
   const el=document.createElement('div');el.id='ix3';el.className='ix5';el.setAttribute('aria-hidden','true');
   el.innerHTML=`<canvas class="cv"></canvas><canvas class="fx"></canvas><div class="gp g3"><i></i></div><div class="gp g2"><i></i></div><div class="gp g1"><i></i></div><div class="wl"></div>`;
   el.style.background='#070908';document.body.appendChild(el);
-  document.documentElement.classList.remove('ix-on');
+  document.documentElement.classList.remove('ix-on');document.documentElement.classList.add('ix-run');window.__ixLive=true;
   try{splashBg.style.display='none';splash.style.display='none'}catch(e){}
   if(!preview){SC.style.opacity='1';SC.style.transition='none'}
   const HH=Math.max(H,el.getBoundingClientRect().height||H),dpr0=devicePixelRatio||1;
@@ -904,7 +904,7 @@ function ixRun(preview){
   place(g1,P1);place(g2,P2);place(g3,P3);
   const A=(n,k,o)=>{try{return n&&n.animate(k,o)}catch(e){return null}};
   [[g3,-14,40],[g2,10,-30],[g1,0,0]].forEach(([g,rot,dy],i)=>A(g,[{opacity:0,transform:`perspective(900px) translateY(${50+dy}px) rotateX(28deg) rotate(${rot*1.6}deg) scale(.86)`},
-    {opacity:1,transform:`perspective(900px) translateY(${dy*.1}px) rotateX(0deg) rotate(${rot*.5}deg) scale(1)`}],{duration:TA,delay:i*60,easing:'cubic-bezier(.2,.8,.25,1)',fill:'forwards'}));
+    {opacity:1,transform:`perspective(900px) translateY(${dy*.1}px) rotateX(0deg) rotate(${rot*.5}deg) scale(1)`}],{duration:TA,delay:i*60,easing:'cubic-bezier(.2,.8,.25,1)',fill:'both'}));
   /* pixel sprite, sitting in the upper part of the front pane */
   const SP=Math.max(5,Math.round(Math.min(pw,ph)/34)),STAMP={};
   Object.entries(IX_COL).forEach(([k,c])=>{const z=document.createElement('canvas'),q=SP*3,d=Math.min(2,dpr0);z.width=z.height=Math.round(q*d);const g=z.getContext('2d');g.scale(d,d);g.shadowColor=c;g.shadowBlur=SP*.9;g.fillStyle=c;g.fillRect(SP+.4,SP+.4,SP-.8,SP-.8);g.shadowBlur=0;g.fillRect(SP+.4,SP+.4,SP-.8,SP-.8);STAMP[c]=z});
@@ -1009,7 +1009,7 @@ function ixRun(preview){
       else{const g=tvis(HI());if(g)WT=waves.map(()=>({x0:g.left,x1:g.right,y:g.bottom+4,c:'240,109,68',lw:2}))}}catch(e){WT=null}
   }
   function phaseB(){
-    if(!el.isConnected)return;window.__ixB=performance.now()-t0;el.style.background='transparent';
+    if(!el.isConnected)return;window.__ixB=performance.now()-t0;el.style.background='transparent';document.documentElement.classList.remove('ix-run');
     if(!pre)premeasure();
     /* glass panes morph exactly onto Home's cards (FLIP), then hand over */
     [[g1,P1,0,pre[0]],[g2,P2,10,pre[1]],[g3,P3,-14,pre[2]]].forEach(([g,src,rot,tx])=>{
@@ -1019,7 +1019,7 @@ function ixRun(preview){
       g.style.webkitBackdropFilter=g.style.backdropFilter='none';g.style.background='linear-gradient(135deg,rgb(255 255 255 / .18),rgb(255 255 255 / .05))';g.style.boxShadow='inset 0 1px 0 rgb(255 255 255 / .4),0 18px 44px rgb(0 0 0 / .45)';g.style.overflow='visible';{const sh=g.querySelector('i');if(sh)sh.remove()}const gl=document.createElement('b');gl.style.cssText='position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;will-change:opacity;box-shadow:0 0 0 1.5px rgb(255 214 170 / .9),0 0 24px rgb(240 109 68 / .55)';g.appendChild(gl);A(g,[{transform:first,opacity:1},{transform:'none',opacity:1,offset:.86},{transform:'none',opacity:0}],{duration:MOVE,easing:EZ,fill:'forwards'});A(gl,[{opacity:0},{opacity:0,offset:.62},{opacity:1,offset:.86},{opacity:0}],{duration:MOVE,fill:'forwards'});
     });
   }
-  const done=()=>{if(!el.isConnected||window.__ixHold)return;el.remove();const h=HI();if(h)h.style.opacity='';if(!preview){SC.style.transition='';setTimeout(endSplash,1500)}};
+  const done=()=>{if(!el.isConnected||window.__ixHold)return;el.remove();document.documentElement.classList.remove('ix-run');window.__ixLive=false;if(window.__ixPend){window.__ixPend=false;setTimeout(()=>render(false),60)}const h=HI();if(h)h.style.opacity='';if(!preview){SC.style.transition='';setTimeout(endSplash,1500)}};
   /* let Home and the overlay paint first (the expensive frame), then start every animation on one clock */
   const pre0=el.getAnimations({subtree:true});pre0.forEach(x=>x.pause());
   requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!el.isConnected)return;t0=performance.now();pre0.forEach(x=>x.play());requestAnimationFrame(frame)}));
@@ -1249,7 +1249,7 @@ jvSpeak=jvSpeak2;
 function jvHush(){try{JA.pause();JA.currentTime=0}catch(e){}try{speechSynthesis.cancel()}catch(e){}JH.playing=false;jvHudState()}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-jvplay],#jvhHush');if(!b)return;e.preventDefault();e.stopImmediatePropagation();
   if(b.id==='jvhHush')return jvHush();jvHush();jvSpeak(b.dataset.jvtext,b.dataset.jvplay||null)},true);
-setInterval(()=>{const h=$('#jvhHush');if(!h)return;const on=JH.playing||(typeof speechSynthesis!=='undefined'&&speechSynthesis.speaking);if(h.hidden===on)h.hidden=!on},250);
+setInterval(()=>{const h=$('#jvhHush');if(!h)return;const on=(JH.playing&&!JA.paused&&!JA.ended)||(typeof speechSynthesis!=='undefined'&&speechSynthesis.speaking);if(h.hidden===on)h.hidden=!on},250);
 (document.body||document.head).insertAdjacentHTML('beforeend',`<style id="jvfix3">
 #jvHud .jvh-stage{overflow:hidden;min-height:0}
 #jvHud .jvh-sub{-webkit-line-clamp:2;font-size:clamp(15px,4.4vw,19px);min-height:0;max-height:2.8em;margin-bottom:4px}
@@ -2094,6 +2094,7 @@ html[data-motion="off"] .hart .h3d,html[data-motion="off"] .hart .hw{animation:n
 @media (prefers-reduced-motion:reduce){.hero .a3d{animation:none}}
 html[data-motion="off"] .hero .a3d{animation:none}
 </style>`);
+const A3D_SEEN={};
 function art3d(t){
   let inner='',vb='0 0 200 156',cls='';
   if(typeof ARTS!=='undefined'&&ARTS[t])inner=ARTS[t];
@@ -2105,7 +2106,7 @@ function art3d(t){
 }
 (function(){const _hp=hydratePhotos;hydratePhotos=function(){_hp();
   for(const h of $$('#view .hero[data-ph].hasph')){h.querySelectorAll('.h3d').forEach(x=>x.remove());if(h.querySelector(':scope>.a3d'))continue;const t=h.dataset.ph;if(!HWORD[t])continue;
-    h.querySelectorAll(':scope>.hero-art,.h3d').forEach(x=>x.remove());const a=art3d(t);if(a)h.insertAdjacentHTML('afterbegin',a)}}})();
+    h.querySelectorAll(':scope>.hero-art,.h3d').forEach(x=>x.remove());const a=art3d(t);if(a){h.insertAdjacentHTML('afterbegin',a);const k=state.tab+':'+t,now=Date.now();if(now-(A3D_SEEN[k]||0)<4000)h.querySelector(':scope>.a3d').style.animation='none';A3D_SEEN[k]=now}}}})();
 
 /* ===================== every pop-up grows out of the button that opened it, and goes back into it =====================
    Panels: scale up from the tapped button (or the last touch point) with the iOS ease-out curve; closing — by X, tapping
@@ -2138,3 +2139,44 @@ document.addEventListener('pointerdown',e=>{if(!e.target.closest||e.target.close
 .menu.hide{transform:scale(.3) translateY(-10px)!important}
 .menu.up.hide{transform:scale(.3) translateY(10px)!important}
 </style>`);
+
+
+/* ===================== Oct 22 fixes =====================
+   1. "Stop speaking" really hides when JARVIS is quiet (its display style was overriding [hidden]).
+   2. Card watermark word: room for descenders (the g in "Grades" was clipped into a b).
+   3. Today: the quick-add bar is gone.
+   4. Ideas tabs in your order: Ideas, Reminders, Notes, Trips, Cards, Scrap. */
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="fix22">
+.jvh-hush[hidden]{display:none!important}
+.hart .hw{line-height:1.22!important;padding-bottom:.1em;top:6px!important;overflow:visible!important}
+</style>`);
+for(let i=TODAY_SECS.length-1;i>=0;i--)if(TODAY_SECS[i][0]==='quick')TODAY_SECS.splice(i,1);
+{const _vtQ=viewToday;viewToday=function(){return _vtQ().replace(/<form class="qbar"[\s\S]*?<\/form>/,'')}}
+{const ORD=['idea','reminder','note','trip','cards','scrap'];TABS.mind.subs.sort((a,b)=>{const x=ORD.indexOf(a[0]),y=ORD.indexOf(b[0]);return(x<0?99:x)-(y<0?99:y)})}
+
+/* 5. pop-ups grow from the button you actually touched: the element under your finger at touch-down wins over
+      the last "trigger" the app remembered (that one could be stale and send the animation to the wrong place). */
+let POPEL=null,POPAT=0;
+document.addEventListener('pointerdown',e=>{if(!e.target.closest||e.target.closest('.sheet'))return;POPEL=e.target.closest('button,a,[role=button],.chip,.tile,.row,.card-s,.habit,.folder,.ib,.fab,[data-add],[data-open]');POPAT=Date.now()},true);
+{const _o=openSheet;openSheet=function(){const keep=typeof lastTrigger!=='undefined'?lastTrigger:null;
+  if(POPEL&&POPEL.isConnected&&Date.now()-POPAT<2500){try{lastTrigger=POPEL}catch(e){}}
+  return _o.apply(this,arguments)}}
+
+/* 6. Leave-for-class alerts. The server watches live NMG times every minute and pings you: start getting ready
+      (bus − 45), finish packing (bus − 15), leave now (bus − walk − 1). Works with the phone locked and the laptop off.
+      Only class START TIMES go to the server (no names). Settings: db.settings.leave = {on, walk, ride, buffer}. */
+function leavePlan(){
+  const g=db.settings.leave||{},b=(typeof busCfg==='function'?busCfg():[])[0]||{route:'NMG',stop:'1411',name:'Red Maple'};
+  const classes=[];for(let i=0;i<7;i++){const d=addDays(i);of('class').filter(e=>(e.days||[]).includes(wdOf(d))&&e.start).forEach(e=>{const t=+atLocal(d,e.start);if(t>Date.now())classes.push(t)})}
+  return{on:g.on!==false,route:b.route,stop:b.stop,stopName:b.name||'',walk:g.walk||7,ride:g.ride||12,buffer:g.buffer??3,tz:Intl.DateTimeFormat().resolvedOptions().timeZone,classes:[...new Set(classes)].sort((a,b)=>a-b)}}
+let LEAVE_T=0;
+async function leaveSync(force){try{if(typeof syncOn!=='function'||!syncOn())return;const p=leavePlan(),k=JSON.stringify(p);
+  if(!force&&lsGet('ishiros.leave')===k&&Date.now()-(+lsGet('ishiros.leaveAt')||0)<6*36e5)return;
+  await api('/leave',{method:'PUT',body:k});lsSet('ishiros.leave',k);lsSet('ishiros.leaveAt',String(Date.now()))}catch(e){}}
+afterSplash(()=>setTimeout(()=>leaveSync(),4000));
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){clearTimeout(LEAVE_T);LEAVE_T=setTimeout(()=>leaveSync(),3000)}});
+{const _as=afterSave;afterSave=function(){_as.apply(this,arguments);clearTimeout(LEAVE_T);LEAVE_T=setTimeout(()=>leaveSync(),5000)}}
+
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="ixrun">html.ix-run .dock,html.ix-run nav.tabs{visibility:hidden!important}</style>`);
+/* while the intro plays, background updates (sync, bus, calendar) don't rebuild Home under it; one render happens right after */
+{const _rI=render;render=function(a,f,d){if(window.__ixLive&&!a&&!f){window.__ixPend=true;return}return _rI.apply(this,arguments)}}

@@ -16,7 +16,7 @@ head=f'''<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="color-scheme" content="dark">
-<style>html,body{{background:#080A09}}</style>
+<style>html,body{{background:#080A09}}html:not(.booted),html:not(.booted) body{{background:#080A09!important}}</style>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="{csp}">
 <script>/* once a server is connected, a second policy narrows connect-src from any *.workers.dev to exactly that server

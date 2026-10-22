@@ -275,6 +275,11 @@ export class SyncHub {
         await this.ctx.storage.put('jarvis', j); this.broadcast({ t: 'jarvis' }, null);
         return Response.json({ stop: true });
       }
+      // Commands that waited while the laptop was offline are NOT run when it reconnects: they expire after 2 minutes.
+      { const cut = Date.now() - 120000, old = new Set(j.q.filter((x) => (x.at || 0) < cut).map((x) => x.id));
+        if (old.size) { j.q = j.q.filter((x) => !old.has(x.id));
+          for (const l of j.log) if (old.has(l.id) && l.state === 'queued') { l.state = 'error'; l.reply = 'Not run: your laptop was offline when you sent this. Send it again if you still want it.'; l.done = Date.now(); }
+          await this.ctx.storage.put('jarvis', j); this.broadcast({ t: 'jarvis' }, null); } }
       const busy = url.searchParams.get('busy') === '1';   // laptop still working: only hand over a stop
       const next = busy ? null : (j.q.shift() || null);
       if (next) { const l = j.log.find((x) => x.id === next.id); if (l) l.state = 'running'; }
@@ -296,13 +301,14 @@ export class SyncHub {
     // tiny) picks up wake; the running bridge picks up stop with its next poll.
     if (path === '/jarvis/wake' && method === 'POST') {
       const b = await body(request);
-      const mode = ['start', 'restart', 'stop'].includes(b.mode) ? b.mode : 'start';
+      const mode = ['start', 'restart', 'stop', 'cancel'].includes(b.mode) ? b.mode : 'start';
       const j = (await this.ctx.storage.get('jarvis')) || emptyJarvis();
       if (mode === 'stop') {
         j.stop = Date.now(); j.q = [];
         // the phone sees it stopped right away, even if the laptop is asleep
         for (const l of j.log) if (l.state === 'running' || l.state === 'queued') { l.state = 'error'; l.reply = 'Stopped.'; l.done = Date.now(); }
-      } else j.wake = { mode, at: Date.now() };
+      } else if (mode === 'cancel') delete j.wake;
+      else j.wake = { mode, at: Date.now() };
       await this.ctx.storage.put('jarvis', j);
       this.broadcast({ t: 'jarvis' }, null);
       return Response.json({ ok: true });
