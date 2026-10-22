@@ -878,7 +878,7 @@ function ixRun(preview){
   const el=document.createElement('div');el.id='ix3';el.className='ix5';el.setAttribute('aria-hidden','true');
   el.innerHTML=`<canvas class="cv"></canvas><canvas class="fx"></canvas><div class="gp g3"><i></i></div><div class="gp g2"><i></i></div><div class="gp g1"><i></i></div><canvas class="px"></canvas><div class="wl"></div>`;
   document.body.appendChild(el);
-  document.documentElement.classList.add('ix-on');
+  document.documentElement.classList.remove('ix-on');
   try{splashBg.style.display='none';splash.style.display='none'}catch(e){}
   if(!preview){SC.style.opacity='1';SC.style.transition='none'}
   const HH=Math.max(H,el.getBoundingClientRect().height||H),dpr0=devicePixelRatio||1;
@@ -936,14 +936,13 @@ function ixRun(preview){
       X.strokeStyle=`rgba(${v.c},${.20*alpha})`;X.lineWidth=7;path();X.stroke();
       X.strokeStyle=`rgba(${v.c},${.95*alpha})`;X.lineWidth=1.6;path();X.stroke()});
     X.restore()};
-  const t0=performance.now();
+  let t0=performance.now();
   const frame=now=>{const _c0=performance.now();try{frame0(now)}finally{if(window.__ixProf)window.__ixProf.push([now-t0,performance.now()-_c0])}};
   const frame0=now=>{
     if(!el.isConnected){const h=HI();if(h)h.style.opacity='';return}
     const t=now-t0,pa=cl(t/TA,0,1),pb=t<TA?0:cl((t-TA)/MOVE,0,1),eb=ez(pb);
     if(t>=TA&&!goB){goB=true;phaseB()}
     /* ---- base canvas: unrevealed dark pixels, glowing front, twinkles, waves ---- */
-    if(!homeOn&&t>120){homeOn=true;document.documentElement.classList.remove('ix-on')}
     if(!pre&&t>=TA-200)premeasure();
     X.clearRect(0,0,W,HH);
     const rk=cl(pb/.8,0,1),front=(rk<.5?2*rk*rk:1-Math.pow(-2*rk+2,2)/2)*1.06;
@@ -990,8 +989,10 @@ function ixRun(preview){
       g.style.webkitBackdropFilter=g.style.backdropFilter='none';g.style.background='linear-gradient(135deg,rgb(255 255 255 / .18),rgb(255 255 255 / .05))';A(g,[{transform:first,opacity:1},{opacity:.85,offset:.3},{opacity:0,offset:.6},{transform:'none',opacity:0}],{duration:MOVE,easing:EZ,fill:'forwards'});
     });
   }
-  const done=()=>{if(!el.isConnected||window.__ixHold)return;el.remove();const h=HI();if(h)h.style.opacity='';if(!preview){SC.style.transition='';endSplash()}};
-  requestAnimationFrame(frame);
+  const done=()=>{if(!el.isConnected||window.__ixHold)return;el.remove();const h=HI();if(h)h.style.opacity='';if(!preview){SC.style.transition='';setTimeout(endSplash,1500)}};
+  /* let Home and the overlay paint first (the expensive frame), then start every animation on one clock */
+  const pre0=el.getAnimations({subtree:true});pre0.forEach(x=>x.pause());
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!el.isConnected)return;t0=performance.now();pre0.forEach(x=>x.play());requestAnimationFrame(frame)}));
   setTimeout(()=>{if(!glowed&&el.isConnected){glowed=true;try{ixGlowAll()}catch(e){}}done()},T+2500);
 }
 /* end of intro: a lot of Home lights up at once (one bloom, same moment), then fades.
@@ -1014,16 +1015,16 @@ function ixGlowAll(){
     document.querySelectorAll(sel).forEach(n=>{if(seen.has(n)||n.closest('#ix3,#ixGlo'))return;seen.add(n);const r=vis(n);if(!r)return;const br=parseFloat(getComputedStyle(n).borderTopLeftRadius)||0;if(br<6)return;if(!n.matches('.dock,.dock *,#view .hero,#view .card-s')){const t=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);if(!t||!(n===t||n.contains(t)))return}items.push([n,r])});
     const lay=document.createElement('div');lay.id='ixGlo';lay.setAttribute('aria-hidden','true');
     const C=['240 109 68','134 207 160','242 166 90','99 196 133'];
-    items.slice(0,60).forEach(([n,r],i)=>{
+    items.slice(0,16).forEach(([n,r],i)=>{
       const c=C[i%4],big=r.width*r.height>40000,b=document.createElement('i');
-      b.style.cssText=`left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;border-radius:${getComputedStyle(n).borderRadius||'16px'};`+
+      b.style.cssText=`will-change:opacity;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;border-radius:${getComputedStyle(n).borderRadius||'16px'};`+
         `border:2px solid rgb(${c} / 1);box-shadow:0 0 ${big?26:16}px rgb(${c} / .8),0 0 ${big?60:34}px rgb(${c} / .45),inset 0 0 ${big?24:12}px rgb(${c} / .45)`;
       lay.appendChild(b);
-      try{b.animate([{opacity:0,transform:'scale(1)'},{opacity:1,transform:'scale(1.012)',offset:.2},{opacity:.85,offset:.45},{opacity:0,transform:'scale(1)'}],{duration:2000,easing:'cubic-bezier(.22,1,.36,1)',fill:'forwards'})}catch(e){}
+      try{b.animate([{opacity:0},{opacity:1,offset:.2},{opacity:.85,offset:.45},{opacity:0}],{duration:2000,easing:'cubic-bezier(.22,1,.36,1)',fill:'forwards'})}catch(e){}
     });
     document.body.appendChild(lay);setTimeout(()=>lay.remove(),2100);
-    const tx=[...document.querySelectorAll('#hi,#view .big,#view .hero h2,#view .hero b,#view .sec-h h2,.dock .tab.on')].filter(vis);
-    const sv=[...document.querySelectorAll('#avBtn .avr,#view .ring svg,#view .ts-dial svg')].filter(vis);
+    const tx=[...document.querySelectorAll('#hi')].filter(vis);
+    const sv=[];
     tx.forEach(n=>{n.classList.remove('ixtg');void n.offsetWidth;n.classList.add('ixtg')});
     sv.forEach(n=>{n.classList.remove('ixsg');void n.offsetWidth;n.classList.add('ixsg')});
     setTimeout(()=>{tx.forEach(n=>n.classList.remove('ixtg'));sv.forEach(n=>n.classList.remove('ixsg'))},1900);
