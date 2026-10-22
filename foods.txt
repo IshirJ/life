@@ -75131,3 +75131,98 @@ Spicy Southwest Salad (no chicken) by Chick-fil-A	168	4.1	7.4	13.9	RC	component 
 Cobb Salad (no chicken) by Chick-fil-A	176	4.9	5.3	14.8	RC	component ingredient build your own salad base Chick-fil-A	284|1 salad
 Fruit Cup (medium) by Chick-fil-A	56	0.8	12.8	0.0	RC	component ingredient build your own side fruit Chick-fil-A	125|1 cup
 Toasted Marshmallow Whipped Topping by Chick-fil-A	261	4.3	30.4	13.0	RC	component ingredient build your own topping dessert Chick-fil-A	23|1 serving
+White Steamed Rice by Panda Express	168	3.2	37.9	0	RC	panda express white rice steamed side base	340|1 side (12 oz)
+The Original Orange Chicken by Panda Express	318	10.8	35.8	14.2	RC	panda express orange chicken entree	176|1 entree (6.2 oz)
+Kung Pao Chicken by Panda Express	142	10.5	8.4	7.4	RC	panda express kung pao chicken entree peanuts	190|1 entree (6.7 oz)
+Vegetable Spring Roll by Panda Express	242	4	24.2	14.1	RC	panda express vegetable veggie spring roll appetizer	99|2 rolls (3.5 oz)
+Chicken Potsticker by Panda Express	170	6.4	21.3	6.4	RC	panda express chicken potsticker potstickers dumplings appetizer	94|3 pieces (3.3 oz)
+Deluxe Chicken Sandwich by Chick-fil-A	213	13.9	18.7	9.6	RC	chick fil a chickfila cfa chick-fil-a deluxe chicken sandwich lettuce tomato cheese	230|1 sandwich (American cheese)
+Grilled Nuggets 8 ct by Chick-fil-A	115	22.1	0.9	2.7	RC	chick fil a chickfila cfa chick-fil-a grilled nuggets 8 count	113|8 count
+Chick-n-Strips 3 ct by Chick-fil-A	242	22.7	12.5	10.9	RC	chick fil a chickfila cfa chick-fil-a n strips chicken tenders 3 count	128|3 count
+Waffle Potato Fries Medium by Chick-fil-A	336	4	36	19.2	RC	chick fil a chickfila cfa chick-fil-a waffle fries potato medium side	125|1 medium
+Mac & Cheese Medium by Chick-fil-A	198	8.8	12.3	12.8	RC	chick fil a chickfila cfa chick-fil-a mac and cheese macaroni medium side	227|1 medium
+Chick-n-Minis 4 ct by Chick-fil-A	245	13.6	27.9	8.8	RC	chick fil a chickfila cfa chick-fil-a n minis breakfast	147|4 count
+Hash Browns Small by Chick-fil-A	318	3.5	27.1	21.2	RC	chick fil a chickfila cfa chick-fil-a hash browns breakfast side	85|1 small
+#1 Pepe 8-inch by Jimmy John's	235	11.4	19.6	11.4	RC	jimmy johns john jj junk pepe ham sub sandwich number 1	255|8-inch French bread (weight est.)
+#2 Big John 8-inch by Jimmy John's	189	9.8	17.7	7.9	RC	jimmy johns john jj junk big roast beef sub sandwich number 2	265|8-inch French bread (weight est.)
+#3 Totally Tuna 8-inch by Jimmy John's	189	7.8	18.9	8.1	RC	jimmy johns john jj junk totally tuna sub sandwich number 3	270|8-inch French bread (weight est.)
+#4 Turkey Tom 8-inch by Jimmy John's	181	8.7	18.1	7.2	RC	jimmy johns john jj junk turkey tom sub sandwich number 4	265|8-inch French bread (weight est.)
+#5 Vito 8-inch by Jimmy John's	237	13.1	21.2	10.6	RC	jimmy johns john jj junk vito italian salami capicola sub sandwich number 5	245|8-inch French bread (weight est.)
+#6 The Veggie 8-inch by Jimmy John's	231	9.3	17.2	13.1	RC	jimmy johns john jj junk veggie vegetarian avocado sub sandwich number 6	290|8-inch French bread (weight est.)
+J.J.B.L.T. 8-inch by Jimmy John's	284	11.2	28	13.2	RC	jimmy johns john jj junk jjblt blt bacon sub sandwich	250|8-inch French bread (weight est.)
+#9 Italian Night Club 8-inch by Jimmy John's	274	14.1	22.6	13.5	RC	jimmy johns john jj junk italian night club sub sandwich number 9	340|8-inch French bread (weight est.)
+Billy Club 8-inch by Jimmy John's	245	15.2	22.1	9.7	RC	jimmy johns john jj junk billy club roast beef ham sub sandwich	330|8-inch French bread (weight est.)
+Hunters Club 8-inch by Jimmy John's	244	16.2	20.6	10	RC	jimmy johns john jj junk hunters club roast beef sub sandwich	340|8-inch French bread (weight est.)
+Beach Club 8-inch by Jimmy John's	250	13.2	22.1	11.5	RC	jimmy johns john jj junk beach club turkey avocado sub sandwich	340|8-inch French bread (weight est.)
+J.J. Gargantuan 8-inch by Jimmy John's	251	18.1	18.1	11.4	RC	jimmy johns john jj junk gargantuan sub sandwich	430|8-inch French bread (weight est.)
+#9 Italian Night Club Unwich by Jimmy John's	252	15.2	4.8	19.1	RC	jimmy johns john jj junk unwich lettuce wrap low carb italian night club	230|lettuce wrap (weight est.)
+Jimmy Chips Regular by Jimmy John's	526	5.3	57.9	31.6	RC	jimmy johns john jj junk chips regular sea salt	57|1 bag (2 oz)
+Oven-Roasted Turkey 6-inch by Subway	213	11.6	18.7	10.2	RC	subway sub turkey oven roasted 6 inch	225|6-inch sub as built (weight est.)
+Subway Club 6-inch by Subway	208	12.9	17.9	10	RC	subway sub club turkey ham roast beef 6 inch	240|6-inch sub as built (weight est.)
+Italian B.M.T. 6-inch by Subway	271	12	19.6	16	RC	subway sub bmt italian salami pepperoni ham 6 inch	225|6-inch sub as built (weight est.)
+Spicy Italian 6-inch by Subway	309	12.3	20	20	RC	subway sub spicy italian pepperoni salami 6 inch	220|6-inch sub as built (weight est.)
+Black Forest Ham 6-inch by Subway	218	11.1	19.6	10.2	RC	subway sub ham black forest 6 inch	225|6-inch sub as built (weight est.)
+Cold Cut Combo 6-inch by Subway	236	11.1	19.1	12.9	RC	subway sub cold cut combo 6 inch	225|6-inch sub as built (weight est.)
+Tuna 6-inch by Subway	248	11.7	18.3	14.3	RC	subway sub tuna 6 inch	230|6-inch sub as built (weight est.)
+Meatball Marinara 6-inch by Subway	219	10.4	20.4	10.8	RC	subway sub meatball marinara 6 inch	260|6-inch sub as built (weight est.)
+Philly Steak & Cheese 6-inch by Subway	212	11.7	17.9	10.4	RC	subway sub steak and cheese philly cheesesteak 6 inch	240|6-inch sub as built (weight est.)
+Sweet Onion Teriyaki Chicken 6-inch by Subway	172	11.6	22	4.4	RC	subway sub sweet onion chicken teriyaki 6 inch	250|6-inch sub as built (weight est.)
+Grilled Chicken 6-inch by Subway	222	13.5	18.7	10.4	RC	subway sub grilled chicken 6 inch	230|6-inch sub as built (weight est.)
+Buffalo Chicken 6-inch by Subway	212	12.9	22.9	7.9	RC	subway sub buffalo chicken 6 inch	240|6-inch sub as built (weight est.)
+Roast Beef 6-inch by Subway	213	13.2	18.7	9.8	RC	subway sub roast beef 6 inch	235|6-inch sub as built (weight est.)
+B.L.T. 6-inch by Subway	253	9.5	22.1	13.7	RC	subway sub blt bacon lettuce tomato 6 inch	190|6-inch sub as built (weight est.)
+Veggie Delite 6-inch by Subway	178	9.4	22.8	5.6	RC	subway sub veggie delite vegetarian 6 inch	180|6-inch sub as built (weight est.)
+Artisan Italian Bread 6-inch by Subway	280	10.7	52	2.7	RC	subway sub italian white bread 6 inch component build your own	75|6-inch bread (weight est.)
+Hearty Multigrain Bread 6-inch by Subway	267	12	48	4	RC	subway sub multigrain wheat bread 6 inch component build your own	75|6-inch bread (weight est.)
+Jalapeno Cheddar Bread 6-inch by Subway	300	11.2	48.8	6.2	RC	subway sub jalapeno cheddar bread 6 inch component build your own	80|6-inch bread (weight est.)
+Oven-Roasted Turkey portion 6-inch by Subway	105	19.3	0	3.5	RC	subway sub turkey protein component build your own	57|6-inch portion (weight est.)
+Teriyaki Glazed Chicken portion 6-inch by Subway	129	18.8	10.6	2.4	RC	subway sub teriyaki chicken protein component build your own	85|6-inch portion (weight est.)
+Chicken & Monterey Jack Taquito by 7-Eleven	254	9.9	31	9.9	RC	7 eleven 7-eleven seven 7eleven taquito chicken monterey jack roller grill	71|1 taquito (weight est.)
+Buffalo Chicken Taquito by 7-Eleven	254	8.5	31	11.3	RC	7 eleven 7-eleven seven 7eleven taquito buffalo chicken roller grill	71|1 taquito (weight est.)
+Taco & Cheese Taquito by 7-Eleven	294	8.2	35.3	12.9	RC	7 eleven 7-eleven seven 7eleven taquito beef taco cheese roller grill	85|1 taquito (weight est.)
+Bacon Egg Cheese & Potato Taquito by 7-Eleven	268	8.5	32.4	11.3	RC	7 eleven 7-eleven seven 7eleven taquito breakfast bacon egg roller grill	71|1 taquito (weight est.)
+Quarter Pound Big Bite Hot Dog no bun by 7-Eleven	319	9.7	1.8	30.1	RC	7 eleven 7-eleven seven 7eleven big bite hot dog frank roller grill	113|1 hot dog (1/4 lb)
+Big Bite Hot Dog Bun by 7-Eleven	240	8	48	3	RC	7 eleven 7-eleven seven 7eleven hot dog bun big bite	50|1 bun (weight est.)
+Quarter Pound Big Bite with Bun by 7-Eleven	294	9.2	16	21.8	RC	7 eleven 7-eleven seven 7eleven big bite hot dog bun roller grill	163|1 hot dog with bun
+Buffalo Chicken Roller by 7-Eleven	224	17.6	18.8	8.2	RC	7 eleven 7-eleven seven 7eleven buffalo chicken roller grill	85|1 roller (weight est.)
+Cheese Pizza Slice by 7-Eleven	255	10.9	27.3	10.9	RC	7 eleven 7-eleven seven 7eleven pizza cheese slice	110|1 slice (weight est.)
+Pepperoni Pizza Slice by 7-Eleven	250	12	25	11	RC	7 eleven 7-eleven seven 7eleven pizza pepperoni slice	100|1 slice (weight est.)
+Chicken Tender by 7-Eleven	267	26.7	18.3	8.3	RC	7 eleven 7-eleven seven 7eleven chicken tenders tender hot food	60|1 tender (weight est.)
+Sausage Egg & Cheese English Muffin by 7-Eleven	284	11	20	17.4	RC	7 eleven 7-eleven seven 7eleven breakfast sandwich egg sausage english muffin	155|1 sandwich (weight est.)
+Bacon Egg & Cheese Croissant by 7-Eleven	256	9.6	21.6	15.2	RC	7 eleven 7-eleven seven 7eleven breakfast sandwich egg bacon croissant	125|1 sandwich (weight est.)
+Turkey Sausage Egg White Muffin by 7-Eleven	186	12.9	18.6	6.4	RC	7 eleven 7-eleven seven 7eleven breakfast sandwich egg white turkey sausage	140|1 sandwich (weight est.)
+7-Select GO! Smart Fit & Fuel Protein Blend by 7-Eleven	500	26.7	40	26.7	RC	7 eleven 7-eleven seven 7eleven select 7-select go smart protein trail mix snack nuts	30|1/4 cup
+Tonkotsu Ramen by Kuma Moon	110	5	11	5	RCE	kuma moon ramen japanese tonkotsu pork chashu noodle soup	650|1 bowl incl. broth
+Tokyo Shoyu Ramen by Kuma Moon	92	5	11	3.2	RCE	kuma moon ramen japanese tokyo shoyu soy noodle soup	600|1 bowl incl. broth
+Miso Ramen by Kuma Moon	108	5	12	4.5	RCE	kuma moon ramen japanese miso noodle soup	650|1 bowl incl. broth
+Spicy Ramen by Kuma Moon	112	5	11	5.3	RCE	kuma moon ramen japanese spicy noodle soup	650|1 bowl incl. broth
+Vegetarian Miso Ramen by Kuma Moon	90	3.5	12.5	3	RCE	kuma moon ramen japanese vegetarian veggie miso noodle soup	600|1 bowl incl. broth
+Chicken Karaage by Kuma Moon	260	17	12	16	RCE	kuma moon ramen japanese chicken karaage fried appetizer	170|1 appetizer (~6 pc)
+Chicken Katsu by Kuma Moon	270	19	14	15.5	RCE	kuma moon ramen japanese chicken katsu cutlet fried	180|1 cutlet
+Katsu Curry Rice by Kuma Moon	166	6	22	6	RCE	kuma moon ramen japanese curry rice katsu	500|1 plate
+Pork Gyoza by Kuma Moon	210	8	22	10	RCE	kuma moon ramen japanese gyoza dumplings potstickers pork appetizer	125|5 pieces
+Brown Sugar Boba Milk Tea by Kuma Moon	71	1	13	1.7	RCE	kuma moon ramen japanese brown sugar boba milk tea bubble tapioca	650|1 large (24 oz with pearls & ice)
+Classic Milk Tea with Boba by Kuma Moon	59	0.6	11	1.4	RCE	kuma moon ramen japanese milk tea boba bubble tapioca	650|1 large (24 oz with pearls & ice)
+Fruit Tea with Boba by Kuma Moon	38	0	9.5	0	RCE	kuma moon ramen japanese fruit tea lemonade boba bubble	650|1 large (24 oz with pearls & ice)
+Mochi Ice Cream by Kuma Moon	231	3	38	7.5	RCE	kuma moon ramen japanese mochi ice cream dessert	35|1 piece
+NY Cheese Pizza Slice by Italiano's Pizza	262	11	32	10	RCE	italianos italiano pizza italian blacksburg cheese slice new york hand tossed	170|1 XL slice (1/8 of 18-inch)
+Pepperoni Pizza Slice by Italiano's Pizza	285	12	30	13	RCE	italianos italiano pizza italian blacksburg pepperoni slice	170|1 XL slice (1/8 of 18-inch)
+Sicilian Cheese Pizza Slice by Italiano's Pizza	253	10	33	9	RCE	italianos italiano pizza italian blacksburg sicilian thick crust slice	200|1 square slice
+Meat Lovers Pizza Slice by Italiano's Pizza	292	13.5	27	14.5	RCE	italianos italiano pizza italian blacksburg meat lovers specialty slice	190|1 XL slice (1/8 of 18-inch)
+Buffalo Chicken Pizza Slice by Italiano's Pizza	258	13	28	10.5	RCE	italianos italiano pizza italian blacksburg buffalo chicken specialty slice	180|1 XL slice (1/8 of 18-inch)
+Garlic Knots by Italiano's Pizza	329	8	45	13	RCE	italianos italiano pizza italian blacksburg garlic knots appetizer bread	180|1 order (6 knots)
+Mozzarella Sticks by Italiano's Pizza	300	13	26	16	RCE	italianos italiano pizza italian blacksburg mozzarella sticks cheese appetizer	170|1 order (6 sticks)
+Breaded Wings by Italiano's Pizza	269	21	8	17	RCE	italianos italiano pizza italian blacksburg wings chicken buffalo breaded	350|10 wings with sauce
+Cheese Steak Sub 8-inch by Italiano's Pizza	231	13	20	11	RCE	italianos italiano pizza italian blacksburg cheesesteak cheese steak philly sub sandwich halal	330|8-inch sub
+Chicken Parmigiana Sub 8-inch by Italiano's Pizza	225	13	22	9.5	RCE	italianos italiano pizza italian blacksburg chicken parm parmigiana sub sandwich	350|8-inch sub
+Meatball Parmigiana Sub 8-inch by Italiano's Pizza	235	11	22	11.5	RCE	italianos italiano pizza italian blacksburg meatball parm parmigiana sub sandwich	350|8-inch sub
+Stromboli by Italiano's Pizza	281	13	28	13	RCE	italianos italiano pizza italian blacksburg stromboli	450|1 stromboli
+Four Cheese Calzone by Italiano's Pizza	270	12.5	29	11.5	RCE	italianos italiano pizza italian blacksburg calzone four cheese	450|1 small calzone
+Spaghetti with Marinara by Italiano's Pizza	150	5.5	24	3.5	RCE	italianos italiano pizza italian blacksburg spaghetti pasta marinara	450|1 plate
+Baked Ziti by Italiano's Pizza	171	8	20	6.5	RCE	italianos italiano pizza italian blacksburg baked ziti pasta	450|1 plate
+Fettuccine Alfredo by Italiano's Pizza	228	7	23	12	RCE	italianos italiano pizza italian blacksburg fettuccine alfredo pasta	450|1 plate
+Chicken over Rice by Italiano's Pizza	171	11	17	6.5	RCE	italianos italiano pizza italian blacksburg chicken over rice halal platter	500|1 platter
+Lamb Gyro by Italiano's Pizza	245	11	22	12.5	RCE	italianos italiano pizza italian blacksburg lamb gyro pita halal	280|1 gyro
+Chicken Gyro by Italiano's Pizza	203	13	22	7	RCE	italianos italiano pizza italian blacksburg chicken gyro pita halal	280|1 gyro
+Cannoli by Italiano's Pizza	360	7	38	20	RCE	italianos italiano pizza italian blacksburg cannoli dessert	100|1 cannoli
+French Fries by Italiano's Pizza	292	3.5	38	14	RCE	italianos italiano pizza italian blacksburg fries french side	150|1 side order

@@ -100,3 +100,7 @@ Added 2026-10-21. Individual ingredients so a build-your-own order (e.g. a Qdoba
 | Panda Express | 4 | https://www.pandaexpress.com/nutritioninformation | Christiansburg (Peppers Ferry Rd). Most entrées and sides already existed as ONR rows. |
 | Bruegger's | 56 | https://www.brueggers.com/wp-content/uploads/2022/12/PDF-BRU-Nutritonal-Guide-2022-12-27.pdf | Data as of 2022-12-01 (latest published guide found). Location: Turner Place at Lavery Hall, Virginia Tech campus (VT Dining). Pastrami, turkey sausage and sriracha skipped (oz and g disagree). |
 | Chick-fil-A | 9 | https://www.chick-fil-a.com/nutrition-allergens | Only items not already in the file. Sauces skipped: per-container values with no weight. |
+
+## Restaurant rows added Oct 22, 2026
+- RC (published values): Panda Express (official nutrition page), Subway, Chick-fil-A, 7-Eleven, Jimmy John's (per-item values via FatSecret listings; some serving weights estimated, marked "(weight est.)").
+- RCE (estimates from typical recipes/portions, no published data): Italiano's Pizza (610 N Main St) and Kuma Moon (725 University City Blvd), Blacksburg.

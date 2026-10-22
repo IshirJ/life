@@ -2261,7 +2261,7 @@ function recentFoods(){
     out.push(e.per100?{name:e.title,per100:e.per100,grams:num(e.grams)||100,src:'Recent'}:{name:e.title,k:num(e.kcal),p:num(e.protein),f:num(e.fat),c:num(e.carbs),src:'Recent'});if(out.length>=12)break}
   return out;
 }
-const SRCL={IN:'India (IFCT)',US:'USDA',TL:'TempoLife',FNDDS:'USDA FNDDS',FDN:'USDA Foundation',ON:'OpenNutrition',ONR:'OpenNutrition · Restaurant',ONB:'OpenNutrition · Brand'};
+const SRCL={IN:'India (IFCT)',US:'USDA',TL:'TempoLife',FNDDS:'USDA FNDDS',FDN:'USDA Foundation',ON:'OpenNutrition',ONR:'OpenNutrition · Restaurant',ONB:'OpenNutrition · Brand',RC:'Restaurant (published nutrition)',RCE:'Restaurant · estimate from typical recipe'};
 const fromDb=x=>({name:x.n,per100:{k:x.k,p:x.p,f:x.f,c:x.c},grams:x.sg||100,servingG:x.sg||null,servingLabel:x.sl||'',src:SRCL[x.s]||x.s||'Database'});
 function initials(n){return(n.replace(/[^A-Za-z ]/g,'').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('')||'·').toUpperCase()}
 const KCOL=[['#FF9F6B','#D9552E'],['#93C97A','#4A8A3E'],['#F5CB6B','#C98A14'],['#7CB7DE','#3A72A8'],['#C9A7E8','#7D55B5'],['#62C7BE','#1F7C80']];

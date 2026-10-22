@@ -1973,7 +1973,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='202';
+const APP_VER='203';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -2322,7 +2322,7 @@ function recentFoods(){
     out.push(e.per100?{name:e.title,per100:e.per100,grams:num(e.grams)||100,src:'Recent'}:{name:e.title,k:num(e.kcal),p:num(e.protein),f:num(e.fat),c:num(e.carbs),src:'Recent'});if(out.length>=12)break}
   return out;
 }
-const SRCL={IN:'India (IFCT)',US:'USDA',TL:'TempoLife',FNDDS:'USDA FNDDS',FDN:'USDA Foundation',ON:'OpenNutrition',ONR:'OpenNutrition · Restaurant',ONB:'OpenNutrition · Brand'};
+const SRCL={IN:'India (IFCT)',US:'USDA',TL:'TempoLife',FNDDS:'USDA FNDDS',FDN:'USDA Foundation',ON:'OpenNutrition',ONR:'OpenNutrition · Restaurant',ONB:'OpenNutrition · Brand',RC:'Restaurant (published nutrition)',RCE:'Restaurant · estimate from typical recipe'};
 const fromDb=x=>({name:x.n,per100:{k:x.k,p:x.p,f:x.f,c:x.c},grams:x.sg||100,servingG:x.sg||null,servingLabel:x.sl||'',src:SRCL[x.s]||x.s||'Database'});
 function initials(n){return(n.replace(/[^A-Za-z ]/g,'').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('')||'·').toUpperCase()}
 const KCOL=[['#FF9F6B','#D9552E'],['#93C97A','#4A8A3E'],['#F5CB6B','#C98A14'],['#7CB7DE','#3A72A8'],['#C9A7E8','#7D55B5'],['#62C7BE','#1F7C80']];
@@ -4147,7 +4147,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=202';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=203';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
