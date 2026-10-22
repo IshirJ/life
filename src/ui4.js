@@ -936,6 +936,21 @@ function ixRun(preview){
       X.strokeStyle=`rgba(${v.c},${.20*alpha})`;X.lineWidth=7;path();X.stroke();
       X.strokeStyle=`rgba(${v.c},${.95*alpha})`;X.lineWidth=1.6;path();X.stroke()});
     X.restore()};
+  /* phase B: the waves don't fade out, they MERGE: each one converges, flattens and narrows onto its matching bar on the
+     big card (orange → Calories, amber → Protein, green → Active), shifting to that bar's colour and thickness, then hands over. */
+  let WT=null;const rgb=c=>c.split(',').map(Number);
+  const drawMerge=(t,pb)=>{
+    X.save();X.globalCompositeOperation='lighter';X.lineCap='round';
+    const fade=pb<.86?1:cl(1-(pb-.86)/.14,0,1);
+    waves.forEach((v,i)=>{const T=WT[i],d=i*.035,m=ez(cl((pb-d)/.8,0,1)),k=Math.pow(1-m,1.6),sw=1+.5*Math.sin(Math.PI*m);
+      const a=rgb(v.c),b=rgb(T.c),c=a.map((x,j)=>Math.round(x+(b[j]-x)*m)).join(','),pts=[];
+      for(let q=0;q<=26;q++){const u=q/26,xs=-40+(W+80)*u,xt=T.x0+(T.x1-T.x0)*u;
+        const off=v.A*sw*(Math.sin(v.k*xs+v.w*t/1000*3+v.ph)+.45*Math.sin(v.k*2.3*xs-v.w*t/1000*2.1));
+        pts.push([xs+(xt-xs)*m,v.y+(T.y-v.y)*m+off*k])}
+      const path=()=>{X.beginPath();X.moveTo(pts[0][0],pts[0][1]);for(let q=1;q<pts.length-1;q++){const mx=(pts[q][0]+pts[q+1][0])/2,my=(pts[q][1]+pts[q+1][1])/2;X.quadraticCurveTo(pts[q][0],pts[q][1],mx,my)}X.lineTo(pts[pts.length-1][0],pts[pts.length-1][1])};
+      X.strokeStyle=`rgba(${c},${(.2+.15*m)*fade})`;X.lineWidth=7+(T.lw*2.2-7)*m;path();X.stroke();
+      X.strokeStyle=`rgba(${c},${.95*fade})`;X.lineWidth=1.6+(T.lw-1.6)*m;path();X.stroke()});
+    X.restore()};
   let t0=performance.now();
   const frame=now=>{const _c0=performance.now();try{frame0(now)}finally{if(window.__ixProf)window.__ixProf.push([now-t0,performance.now()-_c0])}};
   const frame0=now=>{
@@ -951,7 +966,7 @@ function ixRun(preview){
     if(pb>0&&pb<1){for(let q=ptr-1;q>=0&&cells[q].rv>front-.05;q--){const c=cells[q],k=1-(front-c.rv)/.05;X.fillStyle=`rgba(${TC[(c.n*6)|0]},${(.3+.6*k)*(1-pb*.4)})`;X.fillRect(c.x+1,c.y+1,S-2,S-2)}
       for(let q=ptr;q<cells.length&&cells[q].rv<=front+.04;q++){const c=cells[q],k=1-(c.rv-front)/.04;X.fillStyle=`rgba(${TC[(c.n*6)|0]},${.35*k*(1-pb*.4)})`;X.fillRect(c.x+1,c.y+1,S-2,S-2)}}
     if(pb<.9){const bucket=(t/90)|0;for(let q=0;q<26;q++){const h=hash(bucket,q),i=(h*cols)|0,j=(hash(q,bucket)*rows)|0,c=grid[i*rows+j];if(c&&c.rv>front){X.fillStyle=`rgba(${TC[q%6]},${(.10+.25*hash(i,q))*(1-pb)})`;X.fillRect(c.x+2,c.y+2,S-4,S-4)}}}
-    drawWaves(t,1+1.6*eb,pb?1-eb:eo(pa),eo(cl(t/(TA*.9),0,1)));
+    if(pb>0&&WT)drawMerge(t,pb);else drawWaves(t,1+1.6*eb,pb?1-eb:eo(pa),eo(cl(t/(TA*.9),0,1)));
     /* ---- sprite: builds in phase A, explodes in phase B ---- */
     P.setTransform(pdpr,0,0,pdpr,0,0);P.clearRect(0,0,W,HH);
     for(const p of spx){let a=cl((pa-p.t0)/.25,0,1);if(a<=0)continue;let sc=a<1?eo(a)*(1+.25*Math.sin(a*Math.PI)):1,x=p.x,y=p.y,al=1,rot=0;
@@ -977,6 +992,10 @@ function ixRun(preview){
     const tg=[...document.querySelectorAll('#view .hero,#view .qbar,#view .chips,#view .sec .card-s,#view .sec')].map(n=>[n,box(n),getComputedStyle(n).borderRadius]).filter(x=>x[1]);
     const used=new Set(),pick=()=>{for(const x of tg)if(!used.has(x[0])&&![...used].some(u=>u.contains(x[0])||x[0].contains(u))){used.add(x[0]);return x}return null};
     pre=[pick(),pick(),pick()];
+    try{const bars=[...document.querySelectorAll('#view .ts-leg .tb')].map(n=>[n,n.getBoundingClientRect()]).filter(([n,r])=>r.width>20&&r.top>0&&r.bottom<innerHeight);
+      const fill=n=>{const f=n.querySelector('i'),m=f&&getComputedStyle(f).backgroundColor.match(/\d+(\.\d+)?/g);return m&&m.length>=3?m.slice(0,3).map(x=>Math.round(+x)).join(','):'240,109,68'};
+      if(bars.length>=3){const map=[0,2,1,2,0,1];WT=waves.map((v,i)=>{const[n,r]=bars[map[i]];return{x0:r.left,x1:r.right,y:r.top+r.height/2,c:fill(n),lw:Math.max(2,r.height)}})}
+      else{const g=tvis(HI());if(g)WT=waves.map(()=>({x0:g.left,x1:g.right,y:g.bottom+4,c:'240,109,68',lw:2}))}}catch(e){WT=null}
   }
   function phaseB(){
     if(!el.isConnected)return;window.__ixB=performance.now()-t0;
