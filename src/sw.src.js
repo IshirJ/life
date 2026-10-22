@@ -3,7 +3,8 @@ const VERSION='life-v169';
 const SHELL=['./','./index.html','./foods.txt','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./notes.js','./pf.js','./exercises.json','./pdfjs/pdf.min.mjs','./pdfjs/pdf.worker.min.mjs'];
 const CDN=['https://images.unsplash.com/','https://cdn.jsdelivr.net/','https://fonts.googleapis.com/','https://fonts.gstatic.com/'];
 const CDN_MAX=80;
-self.addEventListener('install',e=>{e.waitUntil(caches.open(VERSION).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()))});
+/* install with FRESH copies (cache:'reload' skips the phone's HTTP cache, which could hold the previous version's page) */
+self.addEventListener('install',e=>{e.waitUntil(caches.open(VERSION).then(c=>c.addAll(SHELL.map(u=>new Request(u,{cache:'reload'})))).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==VERSION&&k!=='life-cdn').map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
 /* cache app files under their address without ?v=… so old versions don't pile up */
 const bare=u=>{const x=new URL(u);x.search='';x.hash='';return x.href};
@@ -14,7 +15,8 @@ self.addEventListener('fetch',e=>{
   const sameApp=url.origin===location.origin&&url.pathname.startsWith(new URL('./',self.registration.scope).pathname);
   if(sameApp){
     /* app files: try the network first so updates arrive, fall back to the cache when offline */
-    const net=fetch(req,{cache:'no-cache'}).then(r=>{if(r.ok&&r.type==='basic'){const c=r.clone();caches.open(VERSION).then(x=>x.put(bare(req.url),c))}return r});
+    /* a navigation request can't be re-sent with options (that threw, so the page copy never refreshed): fetch its URL instead */
+    const net=fetch(req.mode==='navigate'?new Request(req.url,{cache:'no-cache',credentials:'same-origin'}):req,req.mode==='navigate'?undefined:{cache:'no-cache'}).then(r=>{if(r.ok&&r.type==='basic'){const c=r.clone();caches.open(VERSION).then(x=>x.put(bare(req.url),c))}return r});
     if(req.mode==='navigate'){
       /* open instantly from the saved copy (no blank white screen while 650 KB downloads); the new version is saved for next launch */
       e.respondWith(caches.match(req,{ignoreSearch:true}).then(r=>r||caches.match('./index.html')).then(r=>{if(r){e.waitUntil(net.catch(()=>{}));return r}return net}).catch(()=>net));
