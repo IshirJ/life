@@ -1972,7 +1972,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='189';
+const APP_VER='190';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -1996,7 +1996,7 @@ function lookPanel(){
     <div class="lookset"><span class="cap">Accent colour</span><div class="swatches">${sw(ACCENTS,'accent',g.accent)}</div></div>
     <div class="lookset"><span class="cap">Big card colour</span><div class="swatches">${sw(HEROS,'hero',g.hero)}</div></div>
     <div class="lookset"><span class="cap">Theme</span>${seg('theme',[['system','Auto'],['light','Light'],['dark','Dark']],g.theme)}</div>
-    <div class="lookset"><span class="cap">Headlines</span>${seg('head',[['serif','Serif'],['sans','Sans'],['rounded','Rounded']],g.head)}</div>
+    <div class="lookset"><span class="cap">Headlines</span>${seg('head',[['serif','Serif'],['sans','Sans'],['rounded','Rounded'],['tech','Tech'],['wide','Wide'],['pixel','Pixel'],['groovy','Groovy'],['flare','Flare']],g.head)}</div>
     <div class="lookset"><span class="cap">Corners</span>${seg('corners',[['round','Round'],['tight','Tight']],g.corners)}</div>
     <div class="lookset"><span class="cap">Icons</span>${seg('icons',[['color','Colour'],['mono','Plain']],g.icons)}</div>
     <div class="lookset"><span class="cap">Animations</span>${seg('motion',[['1','On'],['0','Off']],g.motion?'1':'0')}</div>
@@ -4147,7 +4147,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=189';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=190';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -7481,6 +7481,29 @@ function pxDecorate(root){try{
   root.querySelectorAll('.empty svg.art').forEach(s=>s.outerHTML=PX_SPROUT);
 }catch(e){}}
 const _renderPx=render;render=function(a,f,d){_renderPx(a,f,d);pxDecorate(document.getElementById('view')||document)};
+
+/* ===================== extra headline styles (free Google Fonts, loaded only when picked) ===================== */
+const HEAD_FONTS={tech:'Tektur:wght@500;700',wide:'Michroma',pixel:'Pixelify+Sans:wght@500;700',groovy:'Shrikhand',flare:'Gloock'};
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="headx">
+:root[data-head="tech"]{--serif:'Tektur','Geist',sans-serif}
+:root[data-head="wide"]{--serif:'Michroma','Geist',sans-serif}
+:root[data-head="pixel"]{--serif:'Pixelify Sans','Geist',sans-serif}
+:root[data-head="groovy"]{--serif:'Shrikhand','Geist',serif}
+:root[data-head="flare"]{--serif:'Gloock',Georgia,serif}
+:root[data-head="tech"] :is(h1,h2,h3){font-weight:700;letter-spacing:.01em}
+:root[data-head="wide"] :is(h1,h2,h3){font-weight:400;letter-spacing:-.05em}
+:root[data-head="wide"] #hi,:root[data-head="wide"] .hero .big{letter-spacing:-.03em}
+:root[data-head="pixel"] :is(h1,h2,h3){font-weight:600;letter-spacing:.02em}
+:root[data-head="groovy"] :is(h1,h2,h3){font-weight:400;letter-spacing:0}
+:root[data-head="groovy"] :is(h1,h2,h3) em,:root[data-head="tech"] :is(h1,h2,h3) em,:root[data-head="wide"] :is(h1,h2,h3) em,:root[data-head="pixel"] :is(h1,h2,h3) em{font-style:normal}
+:root[data-head="flare"] :is(h1,h2,h3){font-weight:400;letter-spacing:-.005em}
+.lookset .seg2:has([data-look="head"]){flex-wrap:wrap;row-gap:6px}
+.lookset .seg2:has([data-look="head"]) button{flex:1 1 22%}
+</style>`);
+function headFont(){const k=document.documentElement.dataset.head,f=HEAD_FONTS[k];if(!f||document.getElementById('hf-'+k))return;
+  const l=document.createElement('link');l.id='hf-'+k;l.rel='stylesheet';l.href=`https://fonts.googleapis.com/css2?family=${f}&display=swap`;
+  l.onload=()=>{try{(document.fonts?document.fonts.ready:Promise.resolve()).then(()=>{if(typeof fitHello==='function')fitHello()})}catch(e){}};document.head.appendChild(l)}
+headFont();new MutationObserver(headFont).observe(document.documentElement,{attributes:true,attributeFilter:['data-head']});
 
 /* ===================== boot ===================== */
 load();

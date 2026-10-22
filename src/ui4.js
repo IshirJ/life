@@ -1888,3 +1888,26 @@ function pxDecorate(root){try{
   root.querySelectorAll('.empty svg.art').forEach(s=>s.outerHTML=PX_SPROUT);
 }catch(e){}}
 const _renderPx=render;render=function(a,f,d){_renderPx(a,f,d);pxDecorate(document.getElementById('view')||document)};
+
+/* ===================== extra headline styles (free Google Fonts, loaded only when picked) ===================== */
+const HEAD_FONTS={tech:'Tektur:wght@500;700',wide:'Michroma',pixel:'Pixelify+Sans:wght@500;700',groovy:'Shrikhand',flare:'Gloock'};
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="headx">
+:root[data-head="tech"]{--serif:'Tektur','Geist',sans-serif}
+:root[data-head="wide"]{--serif:'Michroma','Geist',sans-serif}
+:root[data-head="pixel"]{--serif:'Pixelify Sans','Geist',sans-serif}
+:root[data-head="groovy"]{--serif:'Shrikhand','Geist',serif}
+:root[data-head="flare"]{--serif:'Gloock',Georgia,serif}
+:root[data-head="tech"] :is(h1,h2,h3){font-weight:700;letter-spacing:.01em}
+:root[data-head="wide"] :is(h1,h2,h3){font-weight:400;letter-spacing:-.05em}
+:root[data-head="wide"] #hi,:root[data-head="wide"] .hero .big{letter-spacing:-.03em}
+:root[data-head="pixel"] :is(h1,h2,h3){font-weight:600;letter-spacing:.02em}
+:root[data-head="groovy"] :is(h1,h2,h3){font-weight:400;letter-spacing:0}
+:root[data-head="groovy"] :is(h1,h2,h3) em,:root[data-head="tech"] :is(h1,h2,h3) em,:root[data-head="wide"] :is(h1,h2,h3) em,:root[data-head="pixel"] :is(h1,h2,h3) em{font-style:normal}
+:root[data-head="flare"] :is(h1,h2,h3){font-weight:400;letter-spacing:-.005em}
+.lookset .seg2:has([data-look="head"]){flex-wrap:wrap;row-gap:6px}
+.lookset .seg2:has([data-look="head"]) button{flex:1 1 22%}
+</style>`);
+function headFont(){const k=document.documentElement.dataset.head,f=HEAD_FONTS[k];if(!f||document.getElementById('hf-'+k))return;
+  const l=document.createElement('link');l.id='hf-'+k;l.rel='stylesheet';l.href=`https://fonts.googleapis.com/css2?family=${f}&display=swap`;
+  l.onload=()=>{try{(document.fonts?document.fonts.ready:Promise.resolve()).then(()=>{if(typeof fitHello==='function')fitHello()})}catch(e){}};document.head.appendChild(l)}
+headFont();new MutationObserver(headFont).observe(document.documentElement,{attributes:true,attributeFilter:['data-head']});
