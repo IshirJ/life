@@ -1998,7 +1998,7 @@ HEAD_FONTS.type='Gloock&family=Tektur:wght@400;500;600;700;800&family=Michroma&f
 (document.body||document.head).insertAdjacentHTML('beforeend',`<style id="typecss">
 :root[data-head="type"]{--serif:'Gloock',Georgia,serif;--mono:'Tektur','Space Mono',ui-monospace,monospace}
 :root[data-head="type"] :is(h1,h2,h3){font-weight:400;letter-spacing:-.005em}
-:root[data-head="type"] :is(h1,h2,h3) em{font-style:normal;color:var(--accent)}
+:root[data-head="type"] :is(h1,h2,h3,#hi) em{font-style:italic;color:var(--accent)}
 :root[data-head="type"] .cap{font-family:'Michroma','Geist',sans-serif;font-size:9.5px;letter-spacing:.06em;font-weight:400}
 :root[data-head="type"] .hart .hw{font-family:'Pixelify Sans','Geist',sans-serif;font-weight:700;letter-spacing:0}
 :root[data-head="type"][data-area="mind"] #top h1,:root[data-head="type"][data-area="mind"] .hart .hw{font-family:'Shrikhand','Geist',serif;font-weight:400}

@@ -1973,7 +1973,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='192';
+const APP_VER='193';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -4144,7 +4144,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=192';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=193';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -7588,7 +7588,7 @@ HEAD_FONTS.type='Gloock&family=Tektur:wght@400;500;600;700;800&family=Michroma&f
 (document.body||document.head).insertAdjacentHTML('beforeend',`<style id="typecss">
 :root[data-head="type"]{--serif:'Gloock',Georgia,serif;--mono:'Tektur','Space Mono',ui-monospace,monospace}
 :root[data-head="type"] :is(h1,h2,h3){font-weight:400;letter-spacing:-.005em}
-:root[data-head="type"] :is(h1,h2,h3) em{font-style:normal;color:var(--accent)}
+:root[data-head="type"] :is(h1,h2,h3,#hi) em{font-style:italic;color:var(--accent)}
 :root[data-head="type"] .cap{font-family:'Michroma','Geist',sans-serif;font-size:9.5px;letter-spacing:.06em;font-weight:400}
 :root[data-head="type"] .hart .hw{font-family:'Pixelify Sans','Geist',sans-serif;font-weight:700;letter-spacing:0}
 :root[data-head="type"][data-area="mind"] #top h1,:root[data-head="type"][data-area="mind"] .hart .hw{font-family:'Shrikhand','Geist',serif;font-weight:400}
