@@ -2236,11 +2236,13 @@ function fitArt(root){for(const h of (root||document).querySelectorAll('#view .h
   /* every word on the art's side of the card is an obstacle; take the first gap tall enough (min 40 px), shrinking the art to fit */
   const obs=[];const tw=document.createTreeWalker(h,NodeFilter.SHOW_TEXT,{acceptNode:n=>n.nodeValue.trim()&&!n.parentElement.closest('.a3d,.hart,.pxw,.pxd')?1:3});
   for(let n;(n=tw.nextNode());){const rg=document.createRange();rg.selectNodeContents(n);for(const r of rg.getClientRects())if(r.width&&r.right>ar.left+4&&r.left<ar.right-4)obs.push([r.top-6,r.bottom+4])}
+  /* buttons, pills and the action row count as their whole shape, not just their label */
+  h.querySelectorAll('button,.pill,a,.chip,.hero-actions,input,.seg2').forEach(el=>{if(el.closest('.a3d,.hart'))return;const r=el.getBoundingClientRect();if(r.width&&r.height&&r.right>ar.left+4&&r.left<ar.right-4)obs.push([r.top-8,r.bottom+4])});
   obs.push([hr.bottom-12,hr.bottom]);obs.sort((x,y)=>x[0]-y[0]);
   let room=0;for(const[t,bt]of obs){if(bt<=start)continue;if(t-start>=40){room=t-start;break}start=Math.max(start,bt)}
   room-=8;if(room<40){a.style.display='none';continue}
   const sc=Math.min(1,room/(ar.height/(parseFloat(getComputedStyle(a).scale)||1)));a.style.top=(start-hr.top)+'px';a.style.transformOrigin='100% 0';a.style.scale=sc<1?sc.toFixed(3):''}}
-{const _rF=render;render=function(){const r=_rF.apply(this,arguments);try{requestAnimationFrame(()=>fitArt());setTimeout(fitArt,750)}catch(e){}return r}}
+{const _rF=render;render=function(){const r=_rF.apply(this,arguments);try{requestAnimationFrame(()=>fitArt());setTimeout(fitArt,750);setTimeout(fitArt,1800)}catch(e){}return r}}
 try{document.fonts&&document.fonts.ready.then(()=>fitArt())}catch(e){}
 addEventListener('resize',()=>setTimeout(fitArt,150));
 
