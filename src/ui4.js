@@ -850,7 +850,7 @@ function ixPaint(cv,W,H,L,cx,cy){
   background:linear-gradient(135deg,rgb(255 255 255 / .16),rgb(255 255 255 / .04) 55%,rgb(240 109 68 / .06));
   border:1px solid rgb(255 255 255 / .24);
   box-shadow:inset 0 1px 0 rgb(255 255 255 / .4),inset 0 -24px 48px rgb(240 109 68 / .12),inset 0 24px 48px rgb(134 207 160 / .08),0 24px 60px rgb(0 0 0 / .5);
-  -webkit-backdrop-filter:blur(12px) saturate(1.8);backdrop-filter:blur(12px) saturate(1.8)}
+  background:linear-gradient(135deg,rgb(255 255 255 / .2),rgb(255 255 255 / .07) 55%,rgb(240 109 68 / .1))!important}
 #ix3.ix5 .gp i{position:absolute;inset:-40%;will-change:transform;background:linear-gradient(115deg,transparent 42%,rgb(255 255 255 / .22) 50%,transparent 58%);animation:ix5sh 2.4s .2s ease-in-out infinite}
 @keyframes ix5sh{0%{transform:translateX(-45%)}60%,100%{transform:translateX(45%)}}
 #ix3.ix5 .wl{z-index:5}
@@ -873,17 +873,17 @@ const IX_COL={o:'#F06D44',O:'#FFB07A',s:'#2E7D52',g:'#3FA36B',G:'#86CFA0',a:'#F2
 function ixRun(preview){
   if($('#ix3'))return;
   const W=innerWidth,H=innerHeight,cx=W/2,cy=H*.47;
-  const TA=850,T=3450,MOVE=T-TA,EZ='cubic-bezier(.65,0,.35,1)';
+  const TA=800,T=2700,MOVE=T-TA,EZ='cubic-bezier(.65,0,.35,1)';
   const ez=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2,eo=k=>1-Math.pow(1-k,3),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
   const el=document.createElement('div');el.id='ix3';el.className='ix5';el.setAttribute('aria-hidden','true');
-  el.innerHTML=`<canvas class="cv"></canvas><canvas class="fx"></canvas><div class="gp g3"><i></i></div><div class="gp g2"><i></i></div><div class="gp g1"><i></i></div><canvas class="px"></canvas><div class="wl"></div>`;
+  el.innerHTML=`<canvas class="cv"></canvas><canvas class="fx"></canvas><div class="gp g3"><i></i></div><div class="gp g2"><i></i></div><div class="gp g1"><i></i></div><div class="wl"></div>`;
   el.style.background='#070908';document.body.appendChild(el);
   document.documentElement.classList.remove('ix-on');
   try{splashBg.style.display='none';splash.style.display='none'}catch(e){}
   if(!preview){SC.style.opacity='1';SC.style.transition='none'}
   const HH=Math.max(H,el.getBoundingClientRect().height||H),dpr0=devicePixelRatio||1;
   const mk=(c,d)=>{c.width=Math.round(W*d);c.height=Math.round(HH*d);c.style.width=W+'px';c.style.height=HH+'px';const x=c.getContext('2d');x.setTransform(d,0,0,d,0,0);return x};
-  const cv=el.querySelector('.cv'),fxc=el.querySelector('.fx'),px=el.querySelector('.px'),M=mk(cv,Math.min(1.5,dpr0)),X=mk(fxc,Math.min(1.5,dpr0)),P=mk(px,Math.min(2,dpr0));
+  const cv=el.querySelector('.cv'),fxc=el.querySelector('.fx'),M=mk(cv,Math.min(1.5,dpr0)),X=mk(fxc,Math.min(1.5,dpr0)),P=X;
   /* backdrop: near-black with theme glows and a faint pixel dot grid, painted once */
   const S=Math.round(cl(W/28,14,26)),cols=Math.ceil(W/S),rows=Math.ceil(HH/S);
   const B=M;
@@ -924,7 +924,7 @@ function ixRun(preview){
   const meas=()=>{const tf=wl.style.transform;wl.style.transform='none';const b=wl.getBoundingClientRect(),r=rng(wl);ox=r.left-b.left;oy=r.top-b.top;w0=Math.max(1,r.width);h0=Math.max(1,r.height);wl.style.transform=tf};
   if(gOK){meas();try{document.fonts&&document.fonts.ready.then(()=>{if(el.isConnected)meas()})}catch(e){}}
   const fs=parseFloat(wl.style.fontSize)||28,gy=sy+sh+(P1.y+ph-(sy+sh))/2;
-  let lastT=null,goB=false,glowed=false,homeOn=false,pre=null;const pdpr=Math.min(2,dpr0);
+  let lastT=null,goB=false,glowed=false,homeOn=false,pre=null;const pdpr=Math.min(1.5,dpr0);
   /* waves: six glowing splines */
   const waves=[0,1,2,3,4,5].map(i=>({y:cy+(i-2.5)*H*.055,A:H*(.025+.012*i),k:(1.3+i*.37)/W*Math.PI*2,w:1.2+i*.35,ph:i*1.7,c:TC[i]}));
   const drawWaves=(t,amp,alpha,reveal)=>{
@@ -952,7 +952,9 @@ function ixRun(preview){
       X.strokeStyle=`rgba(${c},${.95*fade})`;X.lineWidth=1.6+(T.lw-1.6)*m;path();X.stroke()});
     X.restore()};
   let t0=performance.now();
-  const frame=now=>{const _c0=performance.now();try{frame0(now)}finally{if(window.__ixProf)window.__ixProf.push([now-t0,performance.now()-_c0])}};
+  const FL=[];let fl0=0;
+  const frame=now=>{if(fl0)FL.push(Math.round(now-fl0));fl0=now;if(now-t0>=T&&FL.length&&!preview){try{const s=FL.slice(2),sl=s.filter(x=>x>20);localStorage.setItem('ixperf',JSON.stringify({at:new Date().toISOString(),frames:s.length,avgFps:Math.round(1000*s.length/s.reduce((a,b)=>a+b,0)),slow:sl.length,worst:Math.max(...s),slowAt:FL.map((d,i)=>[d,FL.slice(0,i).reduce((a,b)=>a+b,0)]).filter(x=>x[0]>20).map(x=>x[1]+'ms:'+x[0]).join(' ')}))}catch(e){}FL.length=0}
+    const _c0=performance.now();try{frame0(now)}finally{if(window.__ixProf)window.__ixProf.push([now-t0,performance.now()-_c0])}};
   const frame0=now=>{
     if(!el.isConnected){const h=HI();if(h)h.style.opacity='';return}
     const t=now-t0,pa=cl(t/TA,0,1),pb=t<TA?0:cl((t-TA)/MOVE,0,1),eb=ez(pb);
@@ -969,7 +971,7 @@ function ixRun(preview){
     if(pb<.9){const bucket=(t/90)|0;for(let q=0;q<26;q++){const h=hash(bucket,q),i=(h*cols)|0,j=(hash(q,bucket)*rows)|0,c=grid[i*rows+j];if(c&&c.rv>front){X.fillStyle=`rgba(${TC[q%6]},${(.10+.25*hash(i,q))*(1-pb)})`;X.fillRect(c.x+2,c.y+2,S-4,S-4)}}}
     if(pb>0&&WT)drawMerge(t,pb);else drawWaves(t,1+1.6*eb,pb?1-eb:eo(pa),eo(cl(t/(TA*.9),0,1)));
     /* ---- sprite: builds in phase A, explodes in phase B ---- */
-    P.setTransform(pdpr,0,0,pdpr,0,0);P.clearRect(0,0,W,HH);
+    P.setTransform(pdpr,0,0,pdpr,0,0);
     for(const p of spx){let a=cl((pa-p.t0)/.25,0,1);if(a<=0)continue;let sc=a<1?eo(a)*(1+.25*Math.sin(a*Math.PI)):1,x=p.x,y=p.y,al=1,rot=0;
       if(pb>0&&p.tx!=null){const q=ez(cl((pb-p.dl)/.72,0,1)),u=1-q,x0=p.x+SP/2,y0=p.y+SP/2,mx=(x0+p.tx)/2+p.bend,my=Math.min(y0,p.ty)-Math.abs(p.bend)*.4;
         x=u*u*x0+2*u*q*mx+q*q*p.tx-SP/2;y=u*u*y0+2*u*q*my+q*q*p.ty-SP/2;sc*=(1+.5*Math.sin(Math.PI*q))*(1+(4/SP-1)*q);rot=p.r*.3*Math.sin(Math.PI*q);al=q<.9?1:cl(1-(q-.9)/.1,0,1)}
@@ -2073,4 +2075,66 @@ input,textarea,select{transition:border-color .25s var(--ease-out),box-shadow .2
 @keyframes hwIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){:where(button,.chip,.pill,.tile,.card-s,.row,.folder,.habit,.tchip,.ib,.sw){transition:none!important}.hart .h3d,.hart .hw{animation:none!important}}
 html[data-motion="off"] .hart .h3d,html[data-motion="off"] .hart .hw{animation:none!important}
+</style>`);
+
+/* ===================== big-card art in real 3D (Oct 22) =====================
+   Each card's own drawing (or its icon when it has none) becomes a solid 3D object: 7 copies stacked in depth,
+   darker toward the back, tilted in perspective, with a soft floor shadow. Replaces the stacked glass panels.
+   Built in the same frame as the card, so nothing flashes; it settles in once with an ease-out. */
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="a3dcss">
+.hart .h3d{display:none!important}
+.hero .a3d{position:absolute;right:12px;top:56px;width:124px;height:98px;z-index:0;pointer-events:none;perspective:620px;animation:a3in .7s var(--ease-out,cubic-bezier(.32,.72,0,1)) both}
+.hero .a3d .a3w{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(18deg) rotateY(-28deg) rotateZ(3deg)}
+.hero .a3d svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;color:color-mix(in srgb,var(--hc,#F06D44) var(--lt,100%),#000)}
+.hero .a3d svg.f{color:color-mix(in srgb,var(--hc,#F06D44) 70%,#fff);filter:drop-shadow(0 0 6px color-mix(in srgb,var(--hc,#F06D44) 60%,transparent))}
+.hero .a3d svg.ic{inset:12% 18%;width:64%;height:76%}
+.hero .a3d svg.ic *{stroke-width:2.1}
+.hero .a3d .ash{position:absolute;left:14%;right:8%;bottom:-16px;height:18px;border-radius:50%;background:radial-gradient(closest-side,rgb(0 0 0 / .4),transparent);transform:rotateZ(3deg)}
+@keyframes a3in{from{opacity:0;transform:translateY(8px) scale(.94)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.hero .a3d{animation:none}}
+html[data-motion="off"] .hero .a3d{animation:none}
+</style>`);
+function art3d(t){
+  let inner='',vb='0 0 200 156',cls='';
+  if(typeof ARTS!=='undefined'&&ARTS[t])inner=ARTS[t];
+  else{const ico=typeof HICON!=='undefined'&&HICON[t]?ic(HICON[t]):'';const m=ico.match(/<svg[^>]*viewBox="([^"]+)"[^>]*>([\s\S]*)<\/svg>/);if(!m)return'';vb=m[1];inner=m[2];cls=' ic'}
+  const N=7;let L='';
+  for(let k=N-1;k>=1;k--)L+=`<svg class="${cls.trim()}" viewBox="${vb}" style="transform:translateZ(${(-k*2.4).toFixed(1)}px);--lt:${Math.round(78-k*7)}%" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+  L+=`<svg class="f${cls}" viewBox="${vb}" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+  return`<div class="a3d" aria-hidden="true"><div class="ash"></div><div class="a3w">${L}</div></div>`;
+}
+(function(){const _hp=hydratePhotos;hydratePhotos=function(){_hp();
+  for(const h of $$('#view .hero[data-ph].hasph')){h.querySelectorAll('.h3d').forEach(x=>x.remove());if(h.querySelector(':scope>.a3d'))continue;const t=h.dataset.ph;if(!HWORD[t])continue;
+    h.querySelectorAll(':scope>.hero-art,.h3d').forEach(x=>x.remove());const a=art3d(t);if(a)h.insertAdjacentHTML('afterbegin',a)}}})();
+
+/* ===================== every pop-up grows out of the button that opened it, and goes back into it =====================
+   Panels: scale up from the tapped button (or the last touch point) with the iOS ease-out curve; closing — by X, tapping
+   outside or swiping down — shrinks back into that same point. Menus already drop from their button. */
+let POPPT=null;
+document.addEventListener('pointerdown',e=>{if(!e.target.closest||e.target.closest('.sheet'))return;POPPT=[e.clientX,e.clientY]},true);
+(function(){
+  const sh=()=>$('.sheet'),EO='cubic-bezier(.32,.72,0,1)';
+  const originPt=()=>{const b=typeof lastTrigger!=='undefined'&&lastTrigger&&lastTrigger.isConnected?lastTrigger.getBoundingClientRect():null;
+    if(b&&b.width)return[b.left+b.width/2,b.top+b.height/2];return POPPT||[innerWidth/2,innerHeight-40]};
+  const layoutRect=s=>{const w=s.offsetParent?s.offsetParent.getBoundingClientRect():{left:0,top:0};return{left:w.left+s.offsetLeft,top:w.top+s.offsetTop,width:s.offsetWidth,height:s.offsetHeight}};
+  const _open=openSheet;openSheet=function(h){
+    const wasOpen=!wrap.hidden&&wrap.classList.contains('open');const r=_open.apply(this,arguments);
+    const s=sh();if(wasOpen||!s||noMotion()||s.classList.contains('morph'))return r;
+    const pt=originPt();s._org=pt;const L=layoutRect(s);
+    s.style.transformOrigin=`${(pt[0]-L.left).toFixed(1)}px ${(pt[1]-L.top).toFixed(1)}px`;s.style.transition='none';
+    try{s.getAnimations().forEach(a=>a.cancel());const a=s.animate([{transform:'scale(.1)',opacity:0},{transform:'scale(1)',opacity:1}],{duration:460,easing:EO});a.onfinish=()=>{s.style.transition=''}}catch(e){s.style.transition=''}
+    return r};
+  const _close=closeSheet;closeSheet=function(){
+    const s=sh();if(!s||wrap.hidden||noMotion()||s.classList.contains('morph'))return _close.apply(this,arguments);
+    const cur=s.style.transform&&s.style.transform!=='none'?s.style.transform:'translate(0,0)';
+    const pt=s._org||originPt(),L=layoutRect(s);
+    s.style.transformOrigin=`${(pt[0]-L.left).toFixed(1)}px ${(pt[1]-L.top).toFixed(1)}px`;
+    const r=_close.apply(this,arguments);
+    try{s.getAnimations().forEach(a=>a.cancel());s.animate([{transform:cur,opacity:1},{transform:'translate(0,0) scale(.1)',opacity:0}],{duration:300,easing:'cubic-bezier(.4,0,.6,1)',fill:'forwards'})}catch(e){}
+    return r};
+})();
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="popcss">
+.menu{transform-origin:50% 0;transition:opacity .26s cubic-bezier(.32,.72,0,1),transform .34s cubic-bezier(.32,.72,0,1)!important}
+.menu.hide{transform:scale(.3) translateY(-10px)!important}
+.menu.up.hide{transform:scale(.3) translateY(10px)!important}
 </style>`);
