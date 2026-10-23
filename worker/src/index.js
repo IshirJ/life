@@ -618,7 +618,7 @@ async function route(request, env, url) {
     case 'POST /ingest/jobs':
       return ingestJobs(request, env);
     case 'GET /jobs':
-      return listJobs(env);
+      return listJobs(env, await config());
     case 'POST /screen':
       return logScreen(request, env, tzOf(await config()));
     case 'GET /screen':

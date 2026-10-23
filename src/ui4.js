@@ -2287,3 +2287,183 @@ const IMP={Urgent:'#F0533F',High:'#F2A65A',Normal:'#86CFA0',Low:'#7FB8E0'};
 {const _api=api;api=async function(path,o){try{return await _api.apply(this,arguments)}catch(e){
   if(/Load failed|Failed to fetch|NetworkError|access control/i.test(String(e&&e.message||e)))throw new Error(navigator.onLine?'Your Life server isn’t answering right now (it may have hit its free daily limit; it resets at 8 pm). Try again later.':'You’re offline.');
   throw e}}}
+
+/* ===================== Oct 23 (b): live meeting status, inline projects, smart jobs, grades layout ===================== */
+/* ---- meetings know if they're upcoming, happening now or over (default length 1 h; set "Ends" for exact) ---- */
+if(!TYPES.meeting.f.some(f=>f[0]==='end')){const i=TYPES.meeting.f.findIndex(f=>f[0]==='time');TYPES.meeting.f.splice(i+1,0,['end','Ends (optional)','time'])}
+const hmMin=t=>{const m=/^(\d{1,2}):(\d{2})/.exec(t||'');return m?+m[1]*60+ +m[2]:null};
+const nowMin=()=>{const d=new Date();return d.getHours()*60+d.getMinutes()};
+/* status of the occurrence that matters right now: {st:'live'|'soon'|'up'|'done'|'past', d:date, s:start min, en:end min} */
+function meetInfo(e){
+  const td=today(),rep=e.repeat&&e.repeat!=='Never'&&e.repeat!=='none';let d=nextOcc(e,td);if(!d&&!e.date)return{st:'up',d:''};if(!d)return{st:'past',d:e.date};
+  const s=hmMin(e.time),en0=hmMin(e.end),en=s==null?null:(en0!=null&&en0>s?en0:s+60),n=nowMin();
+  if(d<td)return{st:'past',d,s,en};
+  if(d>td)return{st:'up',d,s,en};
+  if(s==null)return{st:'up',d,s,en,allDay:true};
+  if(n<s)return{st:s-n<=60?'soon':'up',d,s,en,mins:s-n};
+  if(n<en)return{st:'live',d,s,en,left:en-n};
+  if(rep){const d2=nextOcc(e,shiftDays(td,1));return d2?{st:'up',d:d2,s,en,endedToday:true}:{st:'done',d,s,en}}
+  return{st:'done',d,s,en};
+}
+const mm2t=m=>fmtT(`${pad(Math.floor(m/60)%24)}:${pad(m%60)}`);
+function meetRow(e,I){
+  let h=row(e);const sub=[I.s!=null?`${mm2t(I.s)}–${mm2t(I.en)}`:'',e.with].filter(Boolean).join(' · ');
+  const pill=I.st==='live'?`<span class="mt-pill live"><i></i>Now · ${I.left} min left</span>`:I.st==='soon'?`<span class="mt-pill soon">in ${I.mins} min</span>`:I.st==='done'?`<span class="mt-pill done">Done</span>`:I.d?`<span class="meta plain">${esc(I.d===today()?(I.allDay?'Today':mm2t(I.s)):relDue(I.d))}</span>`:'';
+  h=h.replace(/<span class="rs">[\s\S]*?<\/span><\/button>/,`<span class="rs">${esc(sub)}</span></button>`).replace(/<span class="meta[^"]*">[^<]*<\/span>(?=<\/li>)/,'');
+  const j=h.lastIndexOf('</li>');h=h.slice(0,j)+pill+h.slice(j);
+  return h.replace('<li class="row',`<li class="row mt-${I.st}${I.st==='done'||I.st==='past'?' done':''}`);
+}
+const mKey=x=>(x[1].d||'9999')+String(x[1].s==null?9999:x[1].s).padStart(4,'0');
+function meetSections(){
+  const all=of('meeting').map(e=>[e,meetInfo(e)]);
+  const live=all.filter(x=>x[1].st==='live').sort((a,b)=>mKey(a).localeCompare(mKey(b)));
+  const up=all.filter(x=>x[1].st==='up'||x[1].st==='soon').sort((a,b)=>mKey(a).localeCompare(mKey(b)));
+  const done=all.filter(x=>x[1].st==='done').sort((a,b)=>mKey(b).localeCompare(mKey(a)));
+  const past=all.filter(x=>x[1].st==='past').sort((a,b)=>mKey(b).localeCompare(mKey(a))).slice(0,10);
+  const ul=a=>`<ul class="list card-s">${a.map(x=>meetRow(...x)).join('')}</ul>`;
+  let h='';
+  if(live.length)h+=section('Happening <em>now</em>',ul(live));
+  h+=section('Upcoming',up.length?ul(up):emptyBox('No meetings coming up.'));
+  if(done.length)h+=section('Earlier <em>today</em>',ul(done));
+  if(past.length)h+=section('Past',ul(past));
+  return h;
+}
+{const _vwMt=viewWork;viewWork=function(){let h=_vwMt();if(state.sub.work!=='meeting')return h;
+  const re=/<section class="sec"><div class="sec-h"><h2>(?:Upcoming|Past)<\/h2>[\s\S]*?<\/section>/g,i=h.search(re);if(i<0)return h;
+  return h.slice(0,i)+meetSections()+h.slice(i).replace(re,'')}}
+{const _wh6=workHero;workHero=function(k){if(k!=='meeting')return _wh6(k);
+  const a=of('meeting'),I=a.map(e=>[e,meetInfo(e)]),td=today();
+  const live=I.filter(x=>x[1].st==='live'),next=I.filter(x=>x[1].st==='up'||x[1].st==='soon').sort((x,y)=>mKey(x).localeCompare(mKey(y)));
+  const wk=next.filter(x=>x[1].d&&dayDiff(x[1].d)<=7).length+live.length,left=I.filter(x=>x[1].d===td&&x[1].st!=='done'&&!x[1].endedToday).length;
+  const nx=next[0],when=nx&&(nx[1].d===td?(nx[1].allDay?'today':`today ${mm2t(nx[1].s)}`):`${dayDiff(nx[1].d)===1?'tomorrow':wdOf(nx[1].d)}${nx[1].s!=null?' '+mm2t(nx[1].s):''}`);
+  const line=live.length?`now <b>${esc(live[0][0].title)}</b> · ${live[0][1].left} min left${nx?` · then ${esc(nx[0].title)}`:''}`:nx?`coming up · next <b>${esc(nx[0].title)}</b>, ${esc(when)}`:'nothing coming up';
+  return heroBanner('Meetings',`${wk}`,line,[['Left today',left],['Next 7 days',wk],['Done today',I.filter(x=>x[1].st==='done'||x[1].endedToday).length]],'',heroAct('meeting','New meeting'))}}
+/* repaint when a meeting starts or ends */
+let MT_SIG='';setInterval(()=>{if(document.hidden||state.tab!=='work'||state.sub.work!=='meeting'||!wrap.hidden)return;
+  const sig=of('meeting').map(e=>{const I=meetInfo(e);return I.st+(I.st==='live'?I.left:I.st==='soon'?I.mins:'')}).join();
+  if(sig===MT_SIG)return;MT_SIG=sig;if(document.activeElement&&/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;const y=SC.scrollTop;render(false);SC.scrollTop=y},20000);
+
+/* ---- projects: tap a card to open it in place (steps, tasks, add); the pencil edits the project's details ---- */
+const PJ_OPEN=new Set();
+function pjBody(p){
+  const st=projStats(p),s=st.s,open=st.it.filter(x=>!x.done).sort(byDue),done=st.it.filter(x=>x.done).length;
+  const chk=(on,attr,lbl)=>`<button class="chk${on?' on':''}" ${attr} aria-label="${lbl}"><i><svg viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7"/></svg></i></button>`;
+  const steps=s.map(x=>{const late=x.due&&!x.done&&dayDiff(x.due)<0;return`<li class="${x.done?'done':''}">${chk(x.done,`data-pjs="${esc(p.id)}:${esc(x.id)}"`,x.done?'Mark not done':'Mark done')}<span class="st"><span>${esc(x.t)}</span>${x.due?`<small class="${late?'late':''}">${esc(dueTxt(x.due))}</small>`:''}</span><button class="pj-act del" data-pjsdel="${esc(p.id)}:${esc(x.id)}" aria-label="Delete step">${ic('close')}</button></li>`}).join('');
+  const tasks=open.map(t=>{const late=t.due&&dayDiff(t.due)<0;return`<li>${chk(false,`data-pjt="${esc(t.id)}"`,'Mark done')}<button class="st pjx-open" data-open="${esc(t.id)}"><span>${esc(t.title||'Task')}</span>${t.due?`<small class="${late?'late':''}">${esc(dueTxt(t.due))}</small>`:''}</button></li>`}).join('');
+  const add=(k,ph)=>`<div class="stepadd pjx-add"><input data-pjin="${k}" data-pid="${esc(p.id)}" placeholder="${ph}" enterkeyhint="done" autocomplete="off">${dchip(`pjd_${k}_${p.id}`,'',`${k==='step'?'Step':'Task'} due date (optional)`)}<button class="primary" data-pjadd="${k}" data-pid="${esc(p.id)}" aria-label="Add ${k}">${ic('plus')}</button></div>`;
+  return`<div class="pjx-b">
+    <div class="pj-h"><span class="cap">Next steps${s.length?` · ${s.filter(x=>x.done).length}/${s.length}`:''}</span></div>
+    ${steps?`<ul class="psteps">${steps}</ul>`:''}${add('step','Add a step')}
+    <div class="pj-h"><span class="cap">Open tasks · ${open.length}${done?` <span style="opacity:.6">· ${done} done</span>`:''}</span></div>
+    ${tasks?`<ul class="psteps">${tasks}</ul>`:''}${add('task','Add a task')}
+    ${p.notes?`<div class="cap" style="margin:6px 0 4px">Notes</div><div class="notes">${esc(p.notes)}</div>`:''}</div>`;
+}
+projCards=function(a){
+  return`<div class="pjgrid">${a.map(p=>{const st=projStats(p),nx=st.s.find(x=>!x.done),o=PJ_OPEN.has(p.id);
+    const sub=(nx?`Next: ${nx.t}`:p.next?`Next: ${p.next}`:'')||(st.tot?'All done':'No steps or tasks yet');
+    return`<div class="card-s pjcard pjx${o?' open':''}" data-pjcard="${esc(p.id)}"><div class="pjx-h"><button class="pjx-tog" data-pjx="${esc(p.id)}" aria-expanded="${o}"><span class="pj-top">${tileE(p)}<span class="pj-t"><b>${esc(p.title||'Project')}</b><small>${esc(sub)}</small></span>${ic('chev','i chev')}</span></button><button class="pjx-edit" data-edit="${esc(p.id)}" aria-label="Edit ${esc(p.title||'project')}">${ic('edit')}</button></div>
+      <span class="pjbar"><i style="width:${Math.round(st.pct*100)}%"></i></span>
+      <span class="pj-meta"><span>${st.s.length?`${st.s.filter(x=>x.done).length}/${st.s.length} steps`:'No steps'}</span><span>${st.it.length?`${st.open} open · ${st.it.length-st.open} done`:'No tasks'}</span></span>${o?pjBody(p):''}</div>`}).join('')}</div>`;
+};
+function pjRerender(focusSel){const y=SC.scrollTop;render(false);SC.scrollTop=y;if(focusSel){const i=document.querySelector(focusSel);i&&i.focus({preventScroll:true})}}
+function pjxAdd(k,pid){const p=find(pid),inp=document.querySelector(`[data-pjin="${k}"][data-pid="${CSS.escape(pid)}"]`),t=(inp&&inp.value||'').trim();if(!p)return;if(!t){inp&&inp.focus();return}
+  const due=(document.getElementById(`pjd_${k}_${pid}`)||{}).value||'';
+  if(k==='step'){p.steps=p.steps||[];p.steps.push({id:uid(),t,due,done:false})}else db.entries.push({id:uid(),type:'task',title:t,project:p.id,due,priority:'Normal',created:Date.now()});
+  delete p.sample;save();pjRerender(`[data-pjin="${k}"][data-pid="${CSS.escape(pid)}"]`)}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-pjx],[data-pjs],[data-pjsdel],[data-pjt],[data-pjadd]');if(!b)return;e.stopImmediatePropagation();e.preventDefault();const d=b.dataset;
+  if(d.pjx){const card=b.closest('.pjx');if(PJ_OPEN.has(d.pjx))PJ_OPEN.delete(d.pjx);else PJ_OPEN.add(d.pjx);pjRerender();const n=document.querySelector(`[data-pjcard="${CSS.escape(d.pjx)}"] .pjx-b`);if(n&&n.animate)n.animate([{opacity:0,transform:'translateY(-6px)'},{opacity:1,transform:'none'}],{duration:320,easing:'cubic-bezier(.16,1,.3,1)'});return}
+  if(d.pjadd){pjxAdd(d.pjadd,d.pid);return}
+  if(d.pjt){const t=find(d.pjt);if(!t)return;t.done=true;t.doneAt=Date.now();delete t.sample;save();tick();pjRerender();return}
+  const[pid,sid]=(d.pjs||d.pjsdel).split(':'),p=find(pid);if(!p)return;
+  if(d.pjsdel){p.steps=(p.steps||[]).filter(x=>x.id!==sid);save();pjRerender();return}
+  const s=(p.steps||[]).find(x=>x.id===sid);if(!s)return;s.done=!s.done;save();if(s.done)tick();pjRerender()},true);
+document.addEventListener('keydown',e=>{const k=e.target.dataset&&e.target.dataset.pjin;if(e.key==='Enter'&&k){e.preventDefault();pjxAdd(k,e.target.dataset.pid)}},true);
+document.addEventListener('change',e=>{const l=e.target.closest&&e.target.closest('.pjx .dchip');if(!l)return;const v=e.target.value;l.classList.toggle('set',!!v);const sp=l.querySelector('span');if(sp)sp.textContent=v?fmtDate(v):'Date'});
+
+/* ---- jobs: Gemini reads each job email (server side); Applied stays tucked away ---- */
+{const _jc=jobCompany,_js=jobStage,_jr=jobRole;
+  jobCompany=m=>{if(m&&m.ai&&!m.ai.job)return'';return m&&m.ai&&m.ai.company?m.ai.company:_jc(m)};
+  jobStage=m=>{if(m&&m.ai){if(!m.ai.job||m.ai.stage==='Form'||m.ai.stage==='Other')return null;return m.ai.stage}return _js(m)};
+  jobRole=m=>m&&m.ai&&m.ai.role?m.ai.role:_jr(m);}
+const jkey=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+/* after the import: re-read every job's emails so a later reading (or a later email) fixes the stage and the date */
+let JOBS_LAST=null;{const _aj=api;api=async function(p){const r=await _aj.apply(this,arguments);if(p==='/jobs')JOBS_LAST=r;return r}}
+{const _ij=importJobs;importJobs=async function(force){
+  JOBS_LAST=null;await _ij(force);const r=JOBS_LAST;JOBS_LAST=null;if(!r||uiLocked())return;
+  const items=(Array.isArray(r&&r.items)?r.items:[]).filter(m=>m&&m.id!=null),byId=new Map(items.map(m=>[String(m.id),m]));let ch=0;
+  /* merge duplicates made before the AI knew the real company */
+  for(const j of of('job').filter(j=>j.src==='gmail')){
+    const ms=(j.mailIds||[]).map(id=>byId.get(String(id))).filter(m=>m&&m.ai&&m.ai.job&&m.ai.company);if(!ms.length)continue;
+    const cnt={};ms.forEach(m=>{cnt[m.ai.company]=(cnt[m.ai.company]||0)+1});const best=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0][0];
+    if(jkey(best)&&jkey(best)!==jkey(j.title)){const twin=of('job').find(x=>x!==j&&jkey(x.title)===jkey(best));
+      if(twin){twin.mailIds=[...new Set([...(twin.mailIds||[]),...(j.mailIds||[])])].slice(-500);if(!twin.role)twin.role=j.role;db.entries=db.entries.filter(x=>x!==j);ch++;continue}
+      j.title=best;ch++}}
+  for(const j of of('job').filter(j=>j.src==='gmail')){
+    const ms=(j.mailIds||[]).map(id=>byId.get(String(id))).filter(Boolean).filter(m=>jobStage(m)).sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));if(!ms.length)continue;
+    const last=ms[ms.length-1],st=jobStage(last),md=String(last.date||'');
+    if(j.manualAt&&md&&md<j.manualAt)continue;   /* you moved it yourself after that email */
+    if(st&&j.stage!==st){j.stage=st;(j.history=j.history||[]).push({stage:st,date:md.slice(0,10)||today()});ch++}
+    const w=last.ai&&last.ai.when;if((st==='Interview'||st==='Assessment')&&w&&w!==j.next){j.next=w;ch++}
+    if(!j.role){const ro=ms.map(jobRole).find(Boolean);if(ro){j.role=ro;ch++}}
+    j.lastMail=String(last.subject||'').slice(0,120);j.lastMailAt=md}
+  if(ch){save();if(state.tab==='work'&&state.sub.work==='job'){const y=SC.scrollTop;render(false);SC.scrollTop=y}}
+}}
+window.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-jstage]');if(!b)return;const j=find(b.dataset.jstage.split('|')[0]);if(j)j.manualAt=new Date().toISOString()},true);
+let JB_APPLIED=false;
+{const _vj6=viewJobs;viewJobs=function(){let h=_vj6();const a=of('job'),n=a.filter(e=>(e.stage||'Applied')==='Applied').length+a.filter(e=>e.stage==='Saved').length;
+  if(!JB_APPLIED)h=h.replace(/<section class="sec"><div class="sec-h"><h2>(?:Applied|Saved)<\/h2>[\s\S]*?<\/section>/g,'');
+  if(n){const btn=`<button class="link jb-more" data-jbapplied>${JB_APPLIED?'Hide':'Show'} ${n} waiting to hear back</button>`;const i=h.indexOf('<details class="sec">');h=i>=0?h.slice(0,i)+btn+h.slice(i):h+btn}
+  return h}}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-jbapplied]');if(!b)return;e.stopImmediatePropagation();JB_APPLIED=!JB_APPLIED;const y=SC.scrollTop;render(false);SC.scrollTop=y},true);
+{const _so6=subOf;subOf=function(e){if(e.type==='job'&&e.next&&dayDiff(e.next)>=0&&(e.stage==='Interview'||e.stage==='Assessment'))return[`${e.stage==='Interview'?'Interview':'Due'} ${relDue(e.next)}`,e.role].filter(Boolean).join(' · ');return _so6(e)}}
+
+/* ---- grades sheet: nothing cut off, tidy add-score form ---- */
+{const _ocg=openClassGrades;openClassGrades=function(cid){_ocg(cid);const f=$('#gAdd');if(!f)return;
+  const d=f.querySelector('input[name=date]');if(d&&!d.closest('.gdate')){const l=document.createElement('label');l.className='gdate';l.innerHTML=`${ic('cal')}<span>${d.value?fmtDate(d.value):'Date'}</span>`;d.replaceWith(l);l.appendChild(d);d.addEventListener('change',()=>{l.querySelector('span').textContent=d.value?fmtDate(d.value):'Date';l.classList.toggle('set',!!d.value)})}
+  const mx=f.querySelector('input[name=max]');if(mx&&!mx.closest('.gmax')){const l=document.createElement('label');l.className='gmax';l.innerHTML='<span>out of</span>';mx.replaceWith(l);l.appendChild(mx)}}}
+
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="oct23b">
+.mt-pill{flex:none;margin-left:6px;font:700 12px var(--ui);padding:5px 10px;border-radius:999px;white-space:nowrap;background:var(--surface2);color:var(--muted)}
+.mt-pill.live{background:color-mix(in srgb,#5FD08A 22%,transparent);color:#7FE0A3;display:inline-flex;align-items:center;gap:6px}
+.mt-pill.live i{width:7px;height:7px;border-radius:50%;background:#5FD08A;animation:mtPulse 1.6s ease-in-out infinite}
+@keyframes mtPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
+.mt-pill.soon{background:color-mix(in srgb,var(--accent) 20%,transparent);color:var(--accent)}
+li.row.mt-live{box-shadow:inset 3px 0 0 #5FD08A}
+li.row.mt-done .rt,li.row.mt-past .rt{text-decoration:none}
+li.row.mt-done,li.row.mt-past{opacity:.6}
+.pjx{gap:10px}.pjx-h{display:flex;align-items:flex-start;gap:6px;min-width:0}
+.pjx-tog{flex:1;min-width:0;text-align:left;padding:0;background:none;border:0;color:inherit}
+.pjx .chev{transition:transform .35s cubic-bezier(.16,1,.3,1)}.pjx.open .chev{transform:rotate(180deg)}
+.pjx-edit{flex:none;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--surface2);color:var(--muted)}
+.pjx-edit .i{width:17px;height:17px}
+.pjx-b{display:flex;flex-direction:column;gap:8px;padding-top:4px;border-top:1px solid color-mix(in srgb,var(--ink) 9%,transparent);margin-top:2px}
+.pjx-b .pj-h{margin:6px 0 0}.pjx-b .stepadd{margin:0}
+.pjx-open{background:none;border:0;padding:0;color:inherit;text-align:left;cursor:pointer}
+.jb-more{display:block;margin:4px auto 18px;font-weight:700}
+/* grades */
+.gsum{display:grid!important;grid-template-columns:1fr 1fr;gap:10px}
+.gsum>div,.gsum>label{min-width:0}
+.gcat{display:grid!important;grid-template-columns:minmax(0,1fr) 62px 28px 64px 32px;gap:5px!important;align-items:center;gap:6px}
+.gcat>input{min-width:0;padding:0 4px!important}
+.gw{padding:0 8px!important;height:36px;justify-content:flex-end;gap:3px}
+.gw input{width:34px!important;padding:0!important;margin:0;font:700 15px var(--ui)!important;font-variant-numeric:tabular-nums;text-align:right;letter-spacing:0;min-width:0}
+.gp{width:auto!important;text-align:center}
+.gcat .x{width:34px;height:34px}
+.gadd{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.gadd>input[name=name]{grid-column:1/-1}
+.gadd>select{grid-column:span 3}.gadd>input[name=score]{grid-column:span 3}
+.gadd .gmax{grid-column:span 3}.gadd .gdate{grid-column:span 3}
+.gadd .gex{grid-column:span 3;display:flex;align-items:center;gap:8px;font-weight:700}
+.gadd>button{grid-column:span 3}
+.gadd>input,.gadd>select{width:100%}
+.gcat .link{justify-self:stretch;text-align:center;padding:6px 2px!important;font-size:12px!important}
+.gcat>input{font-size:14.5px!important}.gcat .gp{font-size:12px}.gw{padding:0 6px!important}.gw input{width:28px!important}
+.gw input,.gcat>input,.gsum input,.gmax input{background:none!important;box-shadow:none!important;border:0!important;outline:0;-webkit-appearance:none;appearance:none}
+.gsum input{padding:0!important;height:auto!important;font:800 26px var(--ui)!important}
+.gadd .gex{height:42px;border-radius:12px;border:1px solid var(--line);background:var(--bg);padding:0 12px;justify-content:flex-start}
+.gadd .gex input{width:20px!important;height:20px!important;flex:none;margin:0;accent-color:var(--accent);box-shadow:none!important;border-radius:5px}
+.gmax,.gdate{position:relative;display:flex;align-items:center;gap:8px;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--bg);padding:0 12px;min-width:0;font:600 14px var(--ui);color:var(--muted)}
+.gmax span{flex:none;font-size:13px}.gmax input{border:0!important;height:100%!important;padding:0!important;background:none!important;text-align:right;flex:1;min-width:0}
+.gdate .i{width:17px;height:17px;flex:none}.gdate.set{color:var(--ink)}
+.gdate input{position:absolute;inset:0;opacity:0;width:100%!important;height:100%!important}
+</style>`);

@@ -335,7 +335,9 @@ export async function ingestJobs(request, env) {
     const id = clip(m.id, 40);
     if (!id) continue;
     if (!cur.items[id]) added++;
-    cur.items[id] = { id, from: clip(m.from, 120), domain: clip(m.domain, 80), subject: clip(m.subject, 200), date: safeIso(m.date), label: clip(m.label, 80) };
+    const prev = cur.items[id], date = safeIso(m.date), label = clip(m.label, 80);
+    cur.items[id] = { id, from: clip(m.from, 120), domain: clip(m.domain, 80), subject: clip(m.subject, 200), date, label };
+    if (prev?.ai && prev.date === date && prev.label === label) cur.items[id].ai = prev.ai;   // unchanged thread: keep its reading
   }
   const all = Object.values(cur.items).sort((x, y) => (y.date || '').localeCompare(x.date || '')).slice(0, 4000);
   cur.items = Object.fromEntries(all.map((x) => [x.id, x]));
@@ -343,8 +345,69 @@ export async function ingestJobs(request, env) {
   await kvPut(env, 'jobmail', cur);
   return json({ ok: true, added, total: all.length });
 }
-export async function listJobs(env) {
+// Job emails are read by Gemini (sender, subject, label, and for unread inbox mail the short preview): company, role,
+// stage and any interview/assessment date. Done once per email and remembered; unread inbox mail that isn't about a
+// job is remembered as "not a job" so it's never sent twice. Without a Gemini key the app falls back to its own rules.
+const JOB_STAGES = ['Applied', 'Assessment', 'Interview', 'Offer', 'Rejected', 'Form', 'Other'];
+const JOB_SCHEMA = { type: 'OBJECT', properties: { items: { type: 'ARRAY', items: { type: 'OBJECT', properties: {
+  i: { type: 'INTEGER' }, job: { type: 'BOOLEAN' }, company: { type: 'STRING' }, role: { type: 'STRING' },
+  stage: { type: 'STRING', enum: JOB_STAGES }, when: { type: 'STRING' } }, required: ['i', 'job', 'stage'] } } }, required: ['items'] };
+export async function classifyJobs(config, list, today, ai = gemini) {
+  const lines = list.map((m, i) => `${i}. from: ${clip(m.from, 80)} <${clip(m.domain, 60)}> | label: ${clip(m.label, 40) || '-'} | date: ${clip(m.date, 10)} | subject: ${clip(m.subject, 200)}${m.preview ? ` | preview: ${clip(m.preview, 240)}` : ''}`).join('\n');
+  const prompt = `Today is ${today}. These are emails from a student's job search inbox. For each one decide:
+- job: true only if it is about one of his own job/internship applications (not newsletters, job alerts, recommendations, marketing or school mail).
+- company: the hiring company's real name (never the ATS like Workday, Greenhouse, Lever, iCIMS, HireVue, CodeSignal, Handshake, LinkedIn). Short, e.g. "Deloitte".
+- role: the job title if stated, else "".
+- stage: Applied (application received/confirmation), Assessment (online assessment, test, HireVue/video, case or coding challenge to complete), Interview (interview invitation, scheduling, confirmation, next round, superday), Offer (job offer), Rejected (not moving forward), Form (post-application forms: WOTC, EEO, self-identification, background check paperwork), Other.
+- when: the interview date or assessment deadline as YYYY-MM-DD if the subject or preview gives one, else "".
+Reply with one entry per email, using its number as i.
+
+${lines}`;
+  const out = await ai(config, [{ text: prompt }], JOB_SCHEMA);
+  const res = new Map();
+  for (const r of Array.isArray(out?.items) ? out.items : []) {
+    const i = Number(r?.i);
+    if (!Number.isInteger(i) || i < 0 || i >= list.length) continue;
+    const stage = JOB_STAGES.includes(r.stage) ? r.stage : 'Other';
+    const when = /^\d{4}-\d{2}-\d{2}$/.test(String(r.when || '')) ? r.when : '';
+    res.set(list[i].id, { job: !!r.job, company: clip(r.company, 40).trim(), role: clip(r.role, 60).trim(), stage, when });
+  }
+  return res;
+}
+export async function listJobs(env, config = {}, now = Date.now(), ai = gemini) {
   const cur = (await kvGet(env, 'jobmail')) || { items: {} };
+  cur.neg = cur.neg || {};
+  const inbox = ((await kvGet(env, 'gmail'))?.items || []).filter((m) => m?.id && !cur.items[m.id] && !cur.neg[m.id]);
+  if (config.geminiKey && now - (cur.clsAt || 0) > 20000) {
+    const todo = [
+      ...inbox.map((m) => ({ ...m, domain: (/@([^>\s]+)/.exec(m.from || '') || [])[1] || '', label: 'Inbox (unread)', inbox: true })),
+      ...Object.values(cur.items).filter((m) => !m.ai).sort((x, y) => (y.date || '').localeCompare(x.date || '')),
+    ].slice(0, 160);
+    if (todo.length) {
+      cur.clsAt = now;
+      await kvPut(env, 'jobmail', cur);   // claim the run so a second open doesn't send the same batch
+      const today = new Date(now - 4 * 3600e3).toISOString().slice(0, 10);
+      const parts = [];
+      for (let i = 0; i < todo.length; i += 80) parts.push(todo.slice(i, i + 80));
+      const done = await Promise.all(parts.map((p) => classifyJobs(config, p, today, ai).catch(() => null)));
+      let changed = false;
+      done.forEach((res, k) => {
+        if (!res) return;
+        for (const m of parts[k]) {
+          const a = res.get(m.id);
+          if (!a) continue;
+          changed = true;
+          if (m.inbox) {
+            if (a.job && a.stage !== 'Other') cur.items[m.id] = { id: m.id, from: clip(m.from, 120), domain: clip(m.domain, 80), subject: clip(m.subject, 200), date: safeIso(m.date), label: 'Inbox', ai: a };
+            else cur.neg[m.id] = 1;
+          } else cur.items[m.id].ai = a;
+        }
+      });
+      const negs = Object.keys(cur.neg);
+      if (negs.length > 3000) for (const k of negs.slice(0, negs.length - 3000)) delete cur.neg[k];
+      if (changed) await kvPut(env, 'jobmail', cur);
+    }
+  }
   return json({ items: Object.values(cur.items), updated: cur.updated || null });
 }
 
