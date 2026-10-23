@@ -2277,3 +2277,13 @@ const IMP={Urgent:'#F0533F',High:'#F2A65A',Normal:'#86CFA0',Low:'#7FB8E0'};
 {const RANK={Urgent:0,High:1,Normal:2,Low:3};homeReminders=function(){
   const all=of('reminder').filter(e=>!e.done),rs=all.sort((a,b)=>((RANK[a.importance]??2)-(RANK[b.importance]??2))||((a.due||'9999')+(a.time||'')).localeCompare((b.due||'9999')+(b.time||''))).slice(0,6);
   return section('Your <em>reminders</em>',list(rs,'No reminders. Add one with the + button.'),`<button class="link" data-goto="mind:reminder">${all.length>6?'All '+all.length:'All'}</button>`)}}
+
+/* Oct 23: tab labels get breathing room from their icons; the pixel sparkle on the active dock tab is gone;
+   a server that can't be reached says so clearly instead of "Looking…" for 50 s */
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="oct23">
+.fl-tabs button{gap:7px!important;height:62px!important}
+#tabs button.on::after,.tabs button.on::after,nav.tabs button.on::after{content:none!important;display:none!important;animation:none!important}
+</style>`);
+{const _api=api;api=async function(path,o){try{return await _api.apply(this,arguments)}catch(e){
+  if(/Load failed|Failed to fetch|NetworkError|access control/i.test(String(e&&e.message||e)))throw new Error(navigator.onLine?'Your Life server isn’t answering right now (it may have hit its free daily limit; it resets at 8 pm). Try again later.':'You’re offline.');
+  throw e}}}

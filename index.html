@@ -1973,7 +1973,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='205';
+const APP_VER='206';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -4147,7 +4147,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=205';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=206';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -7870,6 +7870,16 @@ const IMP={Urgent:'#F0533F',High:'#F2A65A',Normal:'#86CFA0',Low:'#7FB8E0'};
 {const RANK={Urgent:0,High:1,Normal:2,Low:3};homeReminders=function(){
   const all=of('reminder').filter(e=>!e.done),rs=all.sort((a,b)=>((RANK[a.importance]??2)-(RANK[b.importance]??2))||((a.due||'9999')+(a.time||'')).localeCompare((b.due||'9999')+(b.time||''))).slice(0,6);
   return section('Your <em>reminders</em>',list(rs,'No reminders. Add one with the + button.'),`<button class="link" data-goto="mind:reminder">${all.length>6?'All '+all.length:'All'}</button>`)}}
+
+/* Oct 23: tab labels get breathing room from their icons; the pixel sparkle on the active dock tab is gone;
+   a server that can't be reached says so clearly instead of "Looking…" for 50 s */
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="oct23">
+.fl-tabs button{gap:7px!important;height:62px!important}
+#tabs button.on::after,.tabs button.on::after,nav.tabs button.on::after{content:none!important;display:none!important;animation:none!important}
+</style>`);
+{const _api=api;api=async function(path,o){try{return await _api.apply(this,arguments)}catch(e){
+  if(/Load failed|Failed to fetch|NetworkError|access control/i.test(String(e&&e.message||e)))throw new Error(navigator.onLine?'Your Life server isn’t answering right now (it may have hit its free daily limit; it resets at 8 pm). Try again later.':'You’re offline.');
+  throw e}}}
 
 /* ===================== boot ===================== */
 load();try{if(!LOCKED_BLOB&&typeof syncBase==='function')syncBase()}catch(e){}
