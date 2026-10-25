@@ -62,7 +62,7 @@ except FileNotFoundError: prev=''
 m=re.search(r"life-v(\d+)",prev) or re.search(r"life-v(\d+)",open('sw.src.js').read())
 nv=int(m.group(1))+1
 sw=re.sub(r"life-v\d+",f"life-v{nv}",open('sw.src.js').read(),count=1)
-body=body.replace('/*@@EXT@@*/','\n'.join(open(f).read() for f in ['secure.js','ext.js','more.js','ui2.js','ui3.js','icons.js','ui4.js']))
+body=body.replace('/*@@EXT@@*/','\n'.join(open(f).read() for f in ['secure.js','ext.js','more.js','ui2.js','ui3.js','icons.js','ui4.js','ui5.js']))
 # one radius scale for the whole app: every single border-radius snaps to 8 / 12 / 16 / 22 / 28
 def _rad(m):
     n=int(m.group(1))
