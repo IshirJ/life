@@ -335,14 +335,34 @@ async function busFetch(){
   if(changed&&state.tab==='today'&&!document.querySelector('.sheet-wrap:not([hidden]) input:focus')){const y=SC.scrollTop;_render4(false);SC.scrollTop=y;deEmoji($('#view'));hydratePhotos();animDials($('#view'))}
 }
 setInterval(()=>{if(document.hidden)return;$$('[data-eta]').forEach(el=>{const t=+el.dataset.eta;if(t){const s=etaTxt(t);el.textContent=el.closest('.buseta')?s.replace(' min',''):s}});if(state.tab==='today')busTick(false)},20000);
-document.addEventListener('click',async e=>{const b=e.target.closest('[data-panel="bus"],[data-busstop]');if(!b)return;e.stopImmediatePropagation();e.preventDefault();
-  if(b.dataset.busstop){const route=b.dataset.busroute||'',stop=b.dataset.busstop,name=b.dataset.busname||'';if(!route)return;const cfg=busCfg().map(c=>c.route===route?{route,stop,name}:c);db.settings.bus=cfg;save();delete BUS[route];busTick(true);toast(`${route}: ${name}`);openBusSet();return}
-  openBusSet()},true);
-async function openBusSet(){
-  NAV_DIR=1;openSheet(`${sheetHead('Bus <em>stops</em>')}<p class="small" style="margin-top:0">Live Blacksburg Transit departures, refreshed every minute while Today is open.</p><div id="busSet"><p class="hint">Loading stops…</p></div>`);
-  const cfg=busCfg();let h='';
-  for(const c of cfg){try{const r=await api(`/bus/stops?route=${encodeURIComponent(c.route)}`);h+=`<div class="set-grp">${esc(c.route)}</div>${(Array.isArray(r.stops)?r.stops:[]).map(s=>`<button class="trow" data-busroute="${esc(c.route)}" data-busstop="${esc(s.code)}" data-busname="${esc(s.name)}"><span>${esc(s.name)}<small>Stop ${esc(s.code)}</small></span>${s.code===c.stop?ic('check'):''}</button>`).join('')||'<p class="hint">No stops found.</p>'}`}catch(e){h+=`<p class="hint">${esc(c.route)}: ${esc(e.message)}</p>`}}
-  const el=$('#busSet');if(el)el.innerHTML=h}
+/* stop picker: one route at a time, search, your stop pinned on top; picking updates in place (the sheet used to collapse to "Loading…" and reopen) */
+const BUS_STOPS={};let BUS_R='';
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-panel="bus"],[data-busstop],[data-busrt]');if(!b)return;e.stopImmediatePropagation();e.preventDefault();
+  if(b.dataset.busrt){BUS_R=b.dataset.busrt;const q=$('#busQ');if(q)q.value='';drawBusSet(true);return}
+  if(b.dataset.busstop){const route=b.dataset.busroute||'',stop=b.dataset.busstop,name=b.dataset.busname||'';if(!route)return;
+    db.settings.bus=busCfg().map(c=>c.route===route?{route,stop,name}:c);save();delete BUS[route];busTick(true);toast(`${route} · ${name}`);
+    const q=$('#busQ');if(q)q.value='';drawBusSet(true);return}
+  BUS_R=(busCfg()[0]||{}).route||'NMG';openBusSet()},true);
+document.addEventListener('input',e=>{if(e.target&&e.target.id==='busQ')drawBusSet(false)});
+function openBusSet(){
+  const cfg=busCfg();if(!cfg.some(c=>c.route===BUS_R))BUS_R=(cfg[0]||{}).route||'NMG';
+  openSheet(`${sheetHead('Bus <em>stops</em>')}<p class="small" style="margin-top:0">Pick the stop you catch each bus from. Departures refresh every minute while Today is open.</p>
+    ${cfg.length>1?`<div class="seg2 bus-seg">${cfg.map(c=>`<button data-busrt="${esc(c.route)}" aria-pressed="${c.route===BUS_R}">${esc(c.route)}</button>`).join('')}</div>`:''}
+    <input id="busQ" type="search" placeholder="Search stops or stop number" autocomplete="off" enterkeyhint="search">
+    <div id="busSet" class="bus-set"><p class="hint">Loading stops…</p></div>`);
+  drawBusSet(false)}
+async function busStops(route){if(BUS_STOPS[route])return BUS_STOPS[route];const r=await api(`/bus/stops?route=${encodeURIComponent(route)}`);return BUS_STOPS[route]=Array.isArray(r.stops)?r.stops:[]}
+async function drawBusSet(top){
+  const el=$('#busSet');if(!el)return;const R=BUS_R,c=busCfg().find(x=>x.route===R)||{};
+  $$('.bus-seg [data-busrt]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.busrt===R)));
+  let st;try{st=await busStops(R)}catch(e){el.innerHTML=`<p class="hint">${esc(e.message)}</p>`;return}
+  if(R!==BUS_R||!$('#busSet'))return;
+  const q=(($('#busQ')||{}).value||'').trim().toLowerCase(),cur=st.find(s=>s.code===c.stop);
+  const btn=(s,on)=>`<button class="trow${on?' on':''}" data-busroute="${esc(R)}" data-busstop="${esc(s.code)}" data-busname="${esc(s.name)}"><span>${esc(s.name)}<small>Stop ${esc(s.code)}</small></span>${on?ic('check'):''}</button>`;
+  const rest=st.filter(s=>s.code!==c.stop&&(!q||(s.name+' '+s.code).toLowerCase().includes(q)));
+  el.innerHTML=(cur&&!q?`<div class="set-grp">Your ${esc(R)} stop</div>${btn(cur,true)}`:'')+`<div class="set-grp">${q?rest.length+' match'+(rest.length===1?'':'es'):'All '+esc(R)+' stops'}</div>`+(rest.map(s=>btn(s,false)).join('')||'<p class="hint">No stops match.</p>');
+  if(top){const sc=el.closest('.sheet,.sheet-body,.sheet-in')||el.parentElement;try{sc.scrollTo({top:0,behavior:'smooth'})}catch(x){}}}
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style>.bus-seg{margin:4px 0 10px}#busQ{width:100%;margin:0 0 6px}.bus-set .trow.on{box-shadow:inset 0 0 0 1.5px var(--accent)}.bus-set .trow.on .i{color:var(--accent)}</style>`);
 
 /* ---------- Activity: readiness card on top ---------- */
 const _av4=activityView;activityView=function(){let h=_av4();const R=readiness();if(!R)return h;
@@ -2235,17 +2255,26 @@ try{Object.defineProperty(JH,'playing',{configurable:true,get:()=>!JA.paused&&!J
 html[data-motion="off"] .hero .a3d .a3w,html[data-motion="off"] .hero .a3d .ash{animation:none}
 /* c. no colour fades while the app comes back from the background (they showed as white flashes) */
 html.resuming *,html.resuming *::before,html.resuming *::after{transition:none!important}
-/* d. reminders by importance */
-.row.imp{box-shadow:inset 3px 0 0 var(--imp)}
-.row.imp .imp-chip{display:inline-flex;align-items:center;gap:5px;margin-left:8px;padding:2px 8px;border-radius:999px;font:700 10.5px var(--ui);letter-spacing:.02em;color:var(--imp);background:color-mix(in srgb,var(--imp) 16%,transparent);vertical-align:middle}
-.row.imp .imp-chip::before{content:"";width:6px;height:6px;border-radius:2px;background:var(--imp)}
+/* d. reminders by importance: a bold rail, a tinted row and a clear tag */
+.row.imp{position:relative;box-shadow:none!important}
+.row.imp::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:4px;border-radius:0 4px 4px 0;background:var(--imp)}
+.row.imp.lv-Urgent,.row.imp.lv-High{background:linear-gradient(90deg,color-mix(in srgb,var(--imp) 16%,transparent),transparent 70%)!important}
+.row.imp .chk i{border-color:color-mix(in srgb,var(--imp) 70%,transparent)!important}
+.row.imp .rowbtn{align-items:flex-start}
+.imp-tag{align-self:flex-start;flex:none;width:max-content;max-width:100%;display:inline-flex;align-items:center;gap:5px;margin:4px 0 1px;padding:3px 9px 3px 7px;border-radius:7px;font:800 11px/1.2 var(--ui);letter-spacing:.06em;text-transform:uppercase;color:color-mix(in srgb,var(--imp) 62%,var(--ink));background:color-mix(in srgb,var(--imp) 18%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--imp) 35%,transparent)}
+.imp-tag svg{width:12px;height:12px;flex:none;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.lv-Urgent .imp-tag{color:#fff;background:var(--imp);box-shadow:0 4px 14px -4px color-mix(in srgb,var(--imp) 80%,transparent)}
+.lv-Urgent .imp-tag::after{content:"";width:6px;height:6px;border-radius:50%;background:#fff;animation:impP 1.6s ease-in-out infinite}
+@keyframes impP{50%{opacity:.25}}
 </style>`);
 document.addEventListener('visibilitychange',()=>{const r=document.documentElement;if(document.hidden)r.classList.add('resuming');else setTimeout(()=>r.classList.remove('resuming'),600)});
 addEventListener('pagehide',()=>document.documentElement.classList.add('resuming'));
 addEventListener('pageshow',()=>setTimeout(()=>document.documentElement.classList.remove('resuming'),600));
 const IMP={Urgent:'#F0533F',High:'#F2A65A',Normal:'#86CFA0',Low:'#7FB8E0'};
+const IMP_I={Urgent:'<path d="M8 3v6M8 12.5v.5M12 3v6M12 12.5v.5" transform="translate(-2 0)"/>',High:'<path d="M8 3v7M8 13v.5"/>',Normal:'<path d="M3.5 8.5l3 3 6-7"/>',Low:'<path d="M8 3v9M4.5 8.5L8 12l3.5-3.5"/>'};
 {const _rowI=row;row=function(e){let h=_rowI(e);if(e&&e.type==='reminder'){const k=IMP[e.importance]?e.importance:'Normal',c=IMP[k];
-  h=h.replace(/<li([^>]*?) class="row/,`<li$1 style="--imp:${c}" class="row imp`);if(k!=='Normal')h=h.replace(/(<span class="rt">[\s\S]*?<\/span>)/,`$1<span class="imp-chip">${k}</span>`)}return h}}
+  h=h.replace(/<li([^>]*?) class="row/,`<li$1 style="--imp:${c}" class="row imp lv-${k}`);
+  if(!e.done)h=h.replace(/(<span class="rt">[\s\S]*?<\/span>)/,`$1<span class="imp-tag"><svg viewBox="0 0 16 16">${IMP_I[k]}</svg>${k==='Normal'?'Normal':k}</span>`)}return h}}
 /* Home: Urgent and High reminders first, then by date */
 {const RANK={Urgent:0,High:1,Normal:2,Low:3};homeReminders=function(){
   const all=of('reminder').filter(e=>!e.done),rs=all.sort((a,b)=>((RANK[a.importance]??2)-(RANK[b.importance]??2))||((a.due||'9999')+(a.time||'')).localeCompare((b.due||'9999')+(b.time||''))).slice(0,6);
@@ -2493,14 +2522,23 @@ const TONES=[[/reminder/,'242 128 120'],[/habit/,'98 199 190'],[/progress/,'242 
 function toneSections(root){try{(root||document).querySelectorAll('#view .sec').forEach(s=>{if(s.dataset.tone)return;const h=s.querySelector('.sec-h h2');if(!h)return;const t=h.textContent.toLowerCase();const m=TONES.find(([re])=>re.test(t));if(m){s.dataset.tone='1';s.style.setProperty('--tc',m[1])}})}catch(e){}}
 {const _rT=render;render=function(a,f,d){_rT(a,f,d);toneSections(document.getElementById('view'))}}
 (document.body||document.head).insertAdjacentHTML('beforeend',`<style id="tones">
+/* premium, not painted: the card stays the app's dark surface; colour lives in a hairline gradient edge, a soft corner glow and the heading */
 #view .sec[data-tone] :is(.card-s,.habit,.stat,.ts-tile,.hstat,.tchip,.il-spark){
-  background:linear-gradient(150deg,rgb(var(--tc) / .25) 0%,rgb(var(--tc) / .09) 55%,rgb(var(--tc) / .04) 100%),var(--surface)!important;
-  border-color:rgb(var(--tc) / .32)!important;
-  box-shadow:inset 0 1px 0 rgb(255 255 255 / .06),0 8px 22px rgb(0 0 0 / .18)!important}
-#view .sec[data-tone] .card-s .card-s{background:rgb(var(--tc) / .06)!important;box-shadow:none!important}
-#view .sec[data-tone] .sec-h h2 em{color:rgb(var(--tc))!important}
+  background:
+    radial-gradient(120% 85% at 0% 0%,rgb(var(--tc) / .14),rgb(var(--tc) / .04) 45%,transparent 70%) padding-box,
+    linear-gradient(180deg,rgb(255 255 255 / .045),rgb(255 255 255 / 0) 38%) padding-box,
+    linear-gradient(var(--surface),var(--surface)) padding-box,
+    linear-gradient(155deg,rgb(var(--tc) / .62),rgb(var(--tc) / .14) 32%,rgb(255 255 255 / .06) 62%,rgb(var(--tc) / .26)) border-box!important;
+  border:1px solid transparent!important;
+  box-shadow:inset 0 1px 0 rgb(255 255 255 / .07),0 18px 36px -18px rgb(0 0 0 / .6),0 0 44px -22px rgb(var(--tc) / .55)!important}
+#view .sec[data-tone] .card-s :is(.card-s,.habit,.stat,.ts-tile,.hstat,.tchip){
+  background:linear-gradient(180deg,rgb(255 255 255 / .03),transparent) padding-box,linear-gradient(var(--surface2),var(--surface2)) padding-box,linear-gradient(155deg,rgb(var(--tc) / .3),rgb(255 255 255 / .05) 50%) border-box!important;box-shadow:none!important}
+#view .sec[data-tone] .sec-h h2 em{color:rgb(var(--tc))!important;text-shadow:0 0 22px rgb(var(--tc) / .35)}
 #view .sec[data-tone] .sec-h h2::before{filter:none}
-#view .sec[data-tone] .list.card-s>li+li{border-color:rgb(var(--tc) / .14)}
+#view .sec[data-tone] .list.card-s>li+li{border-color:rgb(255 255 255 / .06)}
 :root[data-theme="light"] #view .sec[data-tone] :is(.card-s,.habit,.stat,.ts-tile,.hstat,.tchip,.il-spark){
-  background:linear-gradient(150deg,rgb(var(--tc) / .20) 0%,rgb(var(--tc) / .08) 55%,rgb(var(--tc) / .04) 100%),var(--surface)!important;box-shadow:0 6px 18px rgb(80 60 30 / .07)!important}
+  background:radial-gradient(120% 85% at 0% 0%,rgb(var(--tc) / .12),transparent 65%) padding-box,linear-gradient(var(--surface),var(--surface)) padding-box,
+    linear-gradient(155deg,rgb(var(--tc) / .55),rgb(var(--tc) / .12) 35%,rgb(0 0 0 / .05) 65%,rgb(var(--tc) / .25)) border-box!important;
+  box-shadow:0 14px 30px -18px rgb(80 60 30 / .35)!important}
+:root[data-theme="light"] #view .sec[data-tone] .list.card-s>li+li{border-color:rgb(0 0 0 / .06)}
 </style>`);

@@ -28,9 +28,12 @@ function rhythmData(){
 function rhythmWindows(R){if(!R||R.wake==null)return null;const w=R.wake,bed=R.ub!=null?R.ub:w+16*60;
   return[{k:'Wake-up ramp',a:w,b:w+90,c:'124 183 222'},{k:'Peak focus',a:w+150,b:w+330,c:'255 196 107'},{k:'Afternoon dip',a:w+420,b:w+510,c:'169 155 255'},
     {k:'Second wind',a:w+570,b:w+720,c:'134 207 160'},{k:'Wind down',a:bed-90,b:bed,c:'232 150 210'}]}
+const wakeToday=()=>wakeLog()[today()]||((typeof hday==='function'&&hday(today()))||{}).wake||'';
+function wakeAsk(){const R=rhythmData(),v=wakeToday()||(R&&R.uw!=null?`${pad(Math.floor(R.uw/60)%24)}:${pad(Math.round(R.uw%60))}`:'08:00');
+  openSheet(`${sheetHead('When did you <em>wake up</em>?')}<input type="time" id="wkT" value="${esc(v)}" style="width:100%"><div style="display:grid;grid-template-columns:1fr ${wakeLog()[today()]?'1fr':''};gap:8px;margin-top:12px"><button class="primary" data-wakesave>Save</button>${wakeLog()[today()]?'<button class="secondary" data-wakeclear>Clear</button>':''}</div><p class="small">Sets today’s focus windows. Fitbit fills this in automatically once it’s reconnected.</p>`)}
 function rhythmCard(compact){
   const R=rhythmData();
-  const upBtn=`<button class="link" data-wakeup>${ic('check')}I’m up</button>`;
+  const tw=wakeToday(),upBtn=tw?`<button class="link" data-wakeup="edit">${ic('check')}Up ${esc(fmtT(tw))}</button>`:`<button class="link" data-wakeup>${ic('check')}I’m up</button>`;
   if(!R)return section('Body <em>rhythm</em>',`<div class="card-s rv-rhythm"><p class="small" style="margin:0">Your peak-focus window comes from your wake and bed times. Fitbit sends them once it’s reconnected, or tap <b>I’m up</b> each morning.</p></div>`,upBtn);
   const W=rhythmWindows(R),n=nowM()+(nowM()<(R.wake||0)-120?1440:0),cur=W&&W.find(x=>n>=x.a&&n<x.b);
   const lo=R.wake,hi=(R.ub!=null?R.ub:R.wake+960)+30,span=Math.max(60,hi-lo),pc=v=>Math.max(0,Math.min(100,(v-lo)/span*100));
@@ -56,7 +59,7 @@ const cafAt=(t,ds)=>ds.reduce((s,d)=>{const dt=t-d.at;if(dt<0)return s;return s+
 function bedTs(){const R=rhythmData(),b=R&&R.ub!=null?R.ub:hmM(db.settings.bedtime)??(23*60+30);const d=new Date();d.setHours(0,0,0,0);return d.getTime()+b*6e4+(b<12*60?864e5:0)}
 function caffeineCard(){
   const ds=cafDoses(),now=Date.now(),bed=bedTs(),cur=cafAt(now,ds),atBed=cafAt(bed,ds);
-  const chips=`<div class="caf-p">${CAF_P.map(([n,e,mg])=>`<button class="chip" data-caf="${esc(n)}|${mg}">${e} ${esc(n)} <small>${mg}</small></button>`).join('')}</div>`;
+  const chips=`<div class="caf-p">${CAF_P.map(([n,e,mg])=>`<button class="chip caf-b" data-caf="${esc(n)}|${mg}"><span>${e} ${esc(n)}</span><small>${mg} mg</small></button>`).join('')}</div>`;
   if(!ds.length)return section('Caffeine',`<div class="card-s caf"><p class="small" style="margin:0 0 10px">Nothing in your system. Log a drink and see when it clears before bed (half-life ≈ 5 h).</p>${chips}</div>`);
   // curve: 6 AM today → 3 AM, 50 mg = the "won't hurt sleep" line
   const d0=new Date();d0.setHours(6,0,0,0);const t0=Math.min(d0.getTime(),ds[0].at),t1=Math.max(bed+2*36e5,now+36e5),N=90;
@@ -171,13 +174,15 @@ function deadlines(projOnly){
   try{const G=db.grades||{};for(const[cid,g]of Object.entries(G)){const c=find(cid);(g.items||[]).filter(i=>i.exam&&i.date&&(i.score===''||i.score==null)).forEach(i=>add('g:'+i.id,i.name,(c&&c.title)||'Exam',+atLocal(i.date,'09:00'),null,null))}}catch(e){}
   try{if(typeof extOn==='function')for(let i=0;i<21;i++){const d=addDays(i);extOn(d).filter(e=>/exam|midterm|final|project|presentation|report|paper/i.test(e.title)&&!(typeof isExtDone==='function'&&isExtDone(e))).forEach(e=>add(e.id,e.title,e.course||'Canvas',+atLocal(d,e.start||'23:59'),null,null))}}catch(e){}
   const seen=new Set();return out.filter(x=>!seen.has(x.id)&&seen.add(x.id)&&(!projOnly||x.proj)).sort((a,b)=>a.due-b.due).slice(0,6)}
+const leftParts=ms=>{if(ms<=0)return['now',''];const m=Math.round(ms/6e4);if(m<60)return[String(Math.max(1,m)),'min'];const h=Math.floor(m/60);if(h<48)return[h+'h',(m%60)+'m'];const d=Math.floor(h/24);return[d+'d',(h%24)+'h']};
+const leftHtml=ms=>{const[a,b]=leftParts(ms);return`<span>${a}</span>${b?`<small>${b}</small>`:''}`};
 const leftTxt=ms=>{if(ms<=0)return'now';const h=ms/36e5;if(h<1)return`${Math.max(1,Math.round(ms/6e4))}m`;if(h<48)return`${Math.floor(h)}h ${Math.round((h%1)*60)}m`;const d=Math.floor(h/24);return`${d}d ${Math.round(h%24)}h`};
 function countdownCard(projOnly){
   const D=deadlines(projOnly);if(!D.length)return'';const now=Date.now();
   return section('Deadlines',`<div class="cd">${D.map(x=>{const tot=x.due-x.start,left=x.due-now,p=Math.max(0,Math.min(1,1-left/tot)),r=26,C=2*Math.PI*r,col=left<864e5?'#F06D44':left<3*864e5?'#F0B35C':'#86CFA0';
     return`<button class="cd-i" ${x.open?`data-open="${esc(x.open)}"`:''} data-cdue="${x.due}" data-cstart="${x.start}"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="${r}" style="stroke:color-mix(in srgb,var(--ink) 14%,transparent)" stroke-width="6" fill="none"/><circle cx="32" cy="32" r="${r}" stroke="${col}" stroke-width="6" fill="none" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C*p).toFixed(1)}" transform="rotate(-90 32 32)"/></svg>
-      <b class="num cd-l">${esc(leftTxt(left))}</b><span class="cd-t">${esc(x.title||'')}</span><small>${esc(x.sub||'')} · ${esc(relDue(iso(new Date(x.due))))}</small></button>`}).join('')}</div>`)}
-setInterval(()=>{if(document.hidden)return;const now=Date.now();document.querySelectorAll('.cd-i[data-cdue]').forEach(b=>{const l=b.querySelector('.cd-l');if(l)l.textContent=leftTxt(+b.dataset.cdue-now)})},30000);
+      <b class="num cd-l">${leftHtml(left)}</b><span class="cd-t">${esc(x.title||'')}</span><small>${esc(x.sub||'')} · ${esc(relDue(iso(new Date(x.due))))}</small></button>`}).join('')}</div>`)}
+setInterval(()=>{if(document.hidden)return;const now=Date.now();document.querySelectorAll('.cd-i[data-cdue]').forEach(b=>{const l=b.querySelector('.cd-l');if(l)l.innerHTML=leftHtml(+b.dataset.cdue-now)})},30000);
 
 /* ---------------------------------------------------------------- 7. leave-by for meetings (bus) */
 if(!TYPES.meeting.f.some(f=>f[0]==='place')){const i=TYPES.meeting.f.findIndex(f=>f[0]==='with');TYPES.meeting.f.splice(i>=0?i:TYPES.meeting.f.length,0,['place','Where (building, or Zoom)','text'])}
@@ -209,11 +214,15 @@ let JB_BOARD=(()=>{try{return localStorage.getItem('lifeJobBoard')==='1'}catch(e
 {const _vwF=viewWork;viewWork=function(){let h=_vwF();if(state.sub.work!=='project')return h;const c=countdownCard(true);if(!c)return h;const i=h.indexOf('</section>',h.indexOf('<section class="hero'))+10;return i>9?h.slice(0,i)+c+h.slice(i):h}}
 
 document.addEventListener('click',e=>{
-  const b=e.target.closest('[data-caf],[data-cafundo],[data-wakeup],[data-crowd],[data-crowdset],[data-kbview],[data-kbmv]');if(!b)return;
+  const b=e.target.closest('[data-caf],[data-cafundo],[data-wakeup],[data-wakesave],[data-wakeclear],[data-crowd],[data-crowdset],[data-kbview],[data-kbmv]');if(!b)return;
   e.stopImmediatePropagation();e.preventDefault();const d=b.dataset,keep=()=>{const y=SC.scrollTop;render(false);SC.scrollTop=y};
   if(d.caf){const[n,mg]=d.caf.split('|');cafLog().push({id:uid(),at:Date.now(),mg:+mg,name:n});save();tick();keep();toast(`${n} logged · ${mg} mg`);return}
   if(d.cafundo!==undefined){const L=cafLog();L.sort((a,b)=>a.at-b.at);const x=L.pop();save();keep();if(x)toast(`Removed ${x.name}`);return}
-  if(d.wakeup!==undefined){wakeLog()[today()]=nowT();save();keep();toast(`Woke at ${fmtT(nowT())} — today’s windows updated`);return}
+  if(d.wakeup!==undefined){const h=new Date().getHours();if(d.wakeup==='edit'||wakeToday()||h<3||h>=14){wakeAsk();return}
+    wakeLog()[today()]=nowT();save();keep();toast(`Woke at ${fmtT(nowT())} — today’s windows updated`);return}
+  if(d.wakesave!==undefined){const v=(($('#wkT')||{}).value||'').trim();if(!/^\d{1,2}:\d{2}$/.test(v)){toast('Pick a time');return}
+    if(hmM(v)>nowM()+1){toast('That’s later than now');return}wakeLog()[today()]=v;save();closeSheet();keep();toast(`Wake time set to ${fmtT(v)}`);return}
+  if(d.wakeclear!==undefined){delete wakeLog()[today()];save();closeSheet();keep();toast('Cleared');return}
   if(d.crowd){crowdAsk(d.crowd);return}
   if(d.crowdset){const[id,v]=d.crowdset.split('|');crowdLog().push({id:uid(),place:id,at:Date.now(),v:+v});if(crowdLog().length>400)db.crowd=crowdLog().slice(-400);save();closeSheet();keep();toast('Thanks — noted');return}
   if(d.kbview!==undefined){JB_BOARD=d.kbview==='1';try{localStorage.setItem('lifeJobBoard',JB_BOARD?'1':'0')}catch(x){}keep();return}
@@ -237,8 +246,8 @@ if(!P.bus)P.bus='<rect x="4" y="4" width="16" height="14" rx="3"/><path d="M4 11
 .rh-st b,.caf-top b{font-size:20px}.rh-st span,.caf-top span{font-size:11.5px;color:var(--muted)}
 .caf-g{width:100%;height:86px;display:block;color:var(--ink)}
 .caf-msg{margin:10px 0 10px}
-.caf-p{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -2px;padding:2px}
-.caf-p::-webkit-scrollbar{display:none}.caf-p .chip{height:38px;padding:0 12px;font-size:13px}.caf-p small{opacity:.6;font-weight:600}
+.caf-p{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.caf-p::-webkit-scrollbar{display:none}.caf-p .chip{height:auto;min-height:50px;padding:7px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:13px;line-height:1.15;white-space:nowrap;min-width:0}.caf-p .chip span{display:inline-flex;align-items:center;gap:4px;max-width:100%;overflow:hidden;text-overflow:ellipsis}.caf-p .chip .i{width:15px;height:15px;flex:none}.caf-p small{opacity:.6;font-weight:600;font-size:11px}
 .rc-v{margin:0 0 12px;font-weight:700;font-size:15px;line-height:1.35}
 .rc.rest .rc-v{color:#F28A92}.rc.go .rc-v{color:#86CFA0}
 .rc-row{display:grid;grid-template-columns:82px 1fr auto;align-items:center;gap:10px;margin:7px 0;font-size:13px}
@@ -267,7 +276,7 @@ if(!P.bus)P.bus='<rect x="4" y="4" width="16" height="14" rx="3"/><path d="M4 11
 .cd{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .cd-i{position:relative;display:grid;grid-template-columns:58px 1fr;grid-template-rows:auto auto;align-items:center;column-gap:10px;padding:10px;border-radius:var(--r-l);background:var(--surface);border:1px solid var(--line);text-align:left;min-width:0}
 .cd-i svg{grid-row:1/3;width:58px;height:58px}
-.cd-l{position:absolute;left:10px;top:10px;width:58px;height:58px;display:grid;place-items:center;font-size:11.5px;font-weight:800;letter-spacing:-.02em}
+.cd-l{position:absolute;left:10px;top:10px;width:58px;height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;gap:2px}.cd-l span{font-size:15px;font-weight:800;letter-spacing:-.03em}.cd-l small{font-size:10px;font-weight:700;opacity:.65;letter-spacing:.02em}
 .cd-t{font-weight:700;font-size:13.5px;line-height:1.2;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .cd-i small{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lv{display:flex;flex-direction:column;gap:8px;padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid rgb(255 255 255 / .07)}
