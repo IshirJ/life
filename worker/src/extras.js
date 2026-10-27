@@ -75,8 +75,28 @@ export async function getBus(url) {
   const times = tag(xml, 'AdjustedDepartureTime'), names = tag(xml, 'StopName');
   // one malformed time must not sink the whole answer
   const out = { route, stop, stopName: names[0] || '', deps: times.map((t) => safeIso(t)).filter(Boolean).slice(0, 8), at: Date.now() };
+  try { out.load = await busLoad(route); } catch { /* crowding is a bonus: departures still come back */ }
   await cachePut(ck, out, 20);
   return json(out);
+}
+// Live crowding: BT's vehicle feed reports PercentOfCapacity (and a passenger count) for most buses.
+// One feed covers every route, so it is fetched at most every 30 s and shared.
+export function parseBusLoad(xml, route) {
+  const recs = [...String(xml).matchAll(/<LatestInfoTable>([\s\S]*?)<\/LatestInfoTable>/g)].map((m) => m[1]);
+  const get = (r, t) => (new RegExp(`<${t}>([^<]*)</${t}>`).exec(r) || [])[1];
+  return recs.map((r) => ({ route: get(r, 'RouteShortName') || '', pct: get(r, 'PercentOfCapacity'), count: get(r, 'TotalCount'), last: get(r, 'LastStopName') || '' }))
+    .filter((b) => b.route.toUpperCase() === route && b.pct != null && b.pct !== '')
+    .map((b) => ({ pct: Math.max(0, Math.min(150, Math.round(+b.pct) || 0)), count: Math.max(0, Math.round(+b.count) || 0), last: clip(b.last, 60) }))
+    .slice(0, 8);
+}
+async function busLoad(route) {
+  let xml = await cacheGet('bus:info');
+  if (xml == null) {
+    const r = await btFetch('GetCurrentBusInfo');
+    xml = r.ok ? r.text : '';
+    await cachePut('bus:info', xml, 30);
+  }
+  return parseBusLoad(xml, route);
 }
 export async function getBusStops(url) {
   const route = clip(url.searchParams.get('route'), 8).toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -138,9 +158,13 @@ export function cleanActions(list) {
 
 // ---------------- Gemini (free tier) ----------------
 const GEM = 'https://generativelanguage.googleapis.com';
-function gemModel(config) { return clip(config.geminiModel || 'gemini-2.5-flash', 60).replace(/[^a-z0-9.\-]/gi, ''); }
+function gemModel(config) { return clip(config.geminiModel || 'gemini-3.1-flash-lite', 60).replace(/[^a-z0-9.\-]/gi, ''); }
 // Free-tier quotas differ per model (some new models have none), so on a quota/model error try the next one.
-const GEM_FALLBACK = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash', 'gemini-flash-latest'];
+// Gemini 2.5 Flash / Flash-Lite were shut down on Oct 16, 2026 (2.0 Flash in June): current free models first.
+// A model that answers 404 ("no longer available") is remembered as dead for this server instance and never retried.
+const GEM_FALLBACK = ['gemini-3.1-flash-lite', 'gemini-flash-lite-latest', 'gemini-flash-latest', 'gemini-3-flash-preview'];
+const GEM_DEAD = new Set();
+let GEM_GOOD = '';
 function gemHint(status, msg) {
   const m = String(msg || '');
   if (status === 400 && /API key not valid|API_KEY_INVALID/i.test(m)) return 'Your Gemini key isn’t valid. Copy it again from aistudio.google.com/apikey and paste it in Settings → Connections → AI.';
@@ -153,19 +177,25 @@ function gemHint(status, msg) {
 async function gemini(config, parts, schema, model) {
   if (!config.geminiKey) throw new HttpError(400, 'Add your free Gemini key in Life → Settings → Connections → AI');
   const body = { contents: [{ role: 'user', parts }], generationConfig: { temperature: 0.2, responseMimeType: 'application/json', ...(schema ? { responseSchema: schema } : {}) } };
-  // no "thinking" on 2.5 models: food and reels don't need it, and it made photo answers slow
-  const payload = (m) => JSON.stringify(/2\.5/.test(m) ? { ...body, generationConfig: { ...body.generationConfig, thinkingConfig: { thinkingBudget: 0 } } } : body);
+  // as little "thinking" as each model allows: food and reels don't need it, and it made answers slow
+  const noThink = new Set();
+  const think = (m) => noThink.has(m) ? null : /2\.5/.test(m) ? { thinkingBudget: 0 } : /gemini-3|latest/.test(m) ? { thinkingLevel: 'minimal' } : null;
+  const payload = (m) => { const t = think(m); return JSON.stringify(t ? { ...body, generationConfig: { ...body.generationConfig, thinkingConfig: t } } : body); };
   const call = async (m) => {
     try {
       return await fetch(`${GEM}/v1beta/models/${m}:generateContent`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': config.geminiKey }, body: payload(m), signal: AbortSignal.timeout(35000) });
     } catch (e) { return new Response(JSON.stringify({ error: { message: e?.name === 'TimeoutError' ? 'took too long' : String(e?.message || e) } }), { status: 504 }); }
   };
-  const tries = model ? [model] : [...new Set([gemModel(config), ...GEM_FALLBACK])];
+  const tries = model ? [model] : [...new Set([GEM_GOOD, gemModel(config), ...GEM_FALLBACK].filter((m) => m && !GEM_DEAD.has(m)))];
   let last = null;
   for (const m of tries) {
     let r = await call(m);
     if (r.status === 503) { await new Promise((ok) => setTimeout(ok, 900)); r = await call(m); }
-    const d = await r.json().catch(() => ({}));
+    let d = await r.json().catch(() => ({}));
+    // a model that doesn't accept this thinking setting: ask once more without it
+    if (r.status === 400 && /thinking/i.test(d?.error?.message || '') && think(m)) { noThink.add(m); r = await call(m); d = await r.json().catch(() => ({})); }
+    if (r.status === 404 || /no longer available|not found for API version|is not supported for generateContent/i.test(d?.error?.message || '')) GEM_DEAD.add(m);
+    if (r.ok) GEM_GOOD = m;
     if (r.ok) {
       const text = (d.candidates?.[0]?.content?.parts || []).filter((p) => !p.thought).map((p) => p.text || '').join('').trim();
       const clean = text.replace(/^```(?:json)?\s*|\s*```$/g, '');

@@ -335,7 +335,7 @@ test('bus: https first, http only when https is unreachable', async () => {
   try {
     const b = await (await call(env, req('/bus?route=HWA&stop=1200', { key }))).json();
     assert.equal(b.deps.length, 1);
-    assert.deepEqual(f.calls.map((c) => c.url.split(':')[0]), ['https', 'http']);
+    assert.deepEqual(f.calls.filter((c) => !/GetCurrentBusInfo/.test(c.url)).map((c) => c.url.split(':')[0]), ['https', 'http']);
     assert.ok(f.calls.every((c) => c.init.signal));
   } finally { f.restore(); cacheClear(); }
 });

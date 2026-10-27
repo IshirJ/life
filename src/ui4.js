@@ -879,7 +879,7 @@ function ixRun(preview){
   const ez=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2,eo=k=>1-Math.pow(1-k,3),cl=(v,a,b)=>Math.max(a,Math.min(b,v));
   const el=document.createElement('div');el.id='ix3';el.className='ix5';el.setAttribute('aria-hidden','true');
   el.innerHTML=`<canvas class="cv"></canvas><canvas class="fx"></canvas><div class="gp g3"><i></i></div><div class="gp g2"><i></i></div><div class="gp g1"><i></i></div><div class="rg"></div><div class="fb"></div><div class="wl"></div>`;
-  el.style.background='#070908';document.body.appendChild(el);
+  el.style.background='#070908';document.body.appendChild(el);{const b0=document.getElementById('boot0');if(b0)b0.remove()}
   document.documentElement.classList.remove('ix-on');document.documentElement.classList.add('ix-run');window.__ixLive=true;
   try{splashBg.style.display='none';splash.style.display='none'}catch(e){}
   if(!preview){SC.style.opacity='1';SC.style.transition='none'}
@@ -901,12 +901,13 @@ function ixRun(preview){
   const TC=['240,109,68','134,207,160','242,166,90','63,163,107','255,176,122','156,214,126'];
   /* glass panes: centred, measured for the greeting */
   const g1=el.querySelector('.g1'),g2=el.querySelector('.g2'),g3=el.querySelector('.g3');
-  const pw=Math.min(W-40,340),ph=Math.min(230,H*.3),P1={x:cx-pw/2,y:cy-ph/2,w:pw,h:ph},P2={x:cx-pw*.62,y:cy-ph*.95,w:pw*.62,h:ph*.62},P3={x:cx+pw*.08,y:cy+ph*.28,w:pw*.55,h:ph*.55};
+  const pw=Math.min(W-40,340),ph=Math.min(230,H*.3),P1={x:cx-pw/2,y:cy-ph/2,w:pw,h:ph},P2={x:Math.max(14,cx-pw*.6),y:cy-ph*.9,w:pw*.58,h:ph*.58},P3={x:Math.min(W-14-pw*.52,cx+pw*.1),y:cy+ph*.3,w:pw*.52,h:ph*.52};
   const place=(g,r)=>Object.assign(g.style,{left:r.x+'px',top:r.y+'px',width:r.w+'px',height:r.h+'px'});
   place(g1,P1);place(g2,P2);place(g3,P3);
   const A=(n,k,o)=>{try{return n&&n.animate(k,o)}catch(e){return null}};
-  [[g3,-14,40],[g2,10,-30],[g1,0,0]].forEach(([g,rot,dy],i)=>A(g,[{opacity:0,transform:`perspective(900px) translateY(${50+dy}px) rotateX(28deg) rotate(${rot*1.6}deg) scale(.86)`},
-    {opacity:1,transform:`perspective(900px) translateY(${dy*.1}px) rotateX(0deg) rotate(${rot*.5}deg) scale(1)`}],{duration:TA,delay:i*60,easing:'cubic-bezier(.2,.8,.25,1)',fill:'both'}));
+  /* all three panes arrive together, on one curve (no 3D tilt: it rendered jagged on iPhone) */
+  [[g3,-6],[g2,5],[g1,0]].forEach(([g,rot])=>{g.style.transformOrigin='50% 50%';A(g,[{opacity:0,transform:`translateY(28px) rotate(${rot*1.8}deg) scale(.94)`},
+    {opacity:1,transform:`translateY(0) rotate(${rot}deg) scale(1)`}],{duration:TA*.9,easing:'cubic-bezier(.16,1,.3,1)',fill:'both'})});
   /* two more things that land on Home: a ring (-> your avatar) and a warm dot (-> the + button) */
   const rgE=el.querySelector('.rg'),fbE=el.querySelector('.fb'),RR=Math.round(Math.min(pw,ph)*.19),R0={x:cx-RR,y:P1.y+ph*.3-RR,w:RR*2,h:RR*2},FD=14,F0={x:cx-FD/2,y:P1.y+ph*.78-FD/2,w:FD,h:FD};
   place(rgE,R0);place(fbE,F0);
@@ -959,20 +960,28 @@ function ixRun(preview){
   /* measure where the panes will land a moment before the shatter, so the shatter frame does no layout work */
   function premeasure(){
     if(!homeOn){homeOn=true;document.documentElement.classList.remove('ix-on')}
-    const box=n=>{const r=n&&n.getBoundingClientRect();return r&&r.width>30&&r.bottom>0&&r.top<innerHeight?r:null};
-    const tg=[...document.querySelectorAll('#view .hero,#view .qbar,#view .chips,#view .sec .card-s,#view .sec')].map(n=>[n,box(n),getComputedStyle(n).borderRadius]).filter(x=>x[1]);
+    const dockTop=(document.querySelector('.dock .tabs')||{getBoundingClientRect:()=>({top:innerHeight})}).getBoundingClientRect().top;
+    /* a card counts if its top is on screen above the dock; a tall card is cut at the dock, so the pane lands on the part you see */
+    const box=n=>{const r=n&&n.getBoundingClientRect();if(!(r&&r.width>W*.4&&r.height>40&&r.top>=0&&r.top<dockTop-70))return null;
+      const b=Math.min(r.bottom,dockTop-10);return{left:r.left,top:r.top,width:r.width,height:b-r.top,right:r.right,bottom:b}};
+    const tg=[...document.querySelectorAll('#view .hero,#view .banner,#view .sec .card-s,#view .tiles,#view .chips')].map(n=>[n,box(n),getComputedStyle(n).borderRadius]).filter(x=>x[1]).sort((a,b)=>a[1].top-b[1].top);
     const used=new Set(),pick=()=>{for(const x of tg)if(!used.has(x[0])&&![...used].some(u=>u.contains(x[0])||x[0].contains(u))){used.add(x[0]);return x}return null};
-    pre=[pick(),pick(),pick()];if(!pre[1])pre[1]=pre[0];if(!pre[2])pre[2]=pre[1];
+    pre=[pick(),pick(),pick()];   /* a pane with no card of its own fades where it is (never stacks on another) */
   }
   function phaseB(){
     if(!el.isConnected)return;window.__ixB=performance.now()-t0;el.style.background='transparent';document.documentElement.classList.remove('ix-run');
     if(!pre)premeasure();
     /* glass panes morph exactly onto Home's cards (FLIP), then hand over */
-    [[g1,P1,0,pre[0]],[g2,P2,10,pre[1]],[g3,P3,-14,pre[2]]].forEach(([g,src,rot,tx])=>{
-      g.getAnimations().forEach(a=>a.cancel());if(!tx){A(g,[{opacity:1},{opacity:0,transform:'scale(.9)'}],{duration:MOVE*.6,easing:EZ,fill:'forwards'});return}
-      const [n,r,br]=tx;place(g,{x:r.left,y:r.top,w:r.width,h:r.height});g.style.borderRadius=br||'24px';g.style.opacity='1';
-      const first=`translate(${src.x-r.left}px,${src.y-r.top}px) scale(${src.w/r.width},${src.h/r.height}) rotate(${rot*.5}deg)`;
-      g.style.webkitBackdropFilter=g.style.backdropFilter='none';g.style.background='linear-gradient(135deg,rgb(255 255 255 / .18),rgb(255 255 255 / .05))';g.style.boxShadow='inset 0 1px 0 rgb(255 255 255 / .4),0 18px 44px rgb(0 0 0 / .45)';g.style.overflow='visible';{const sh=g.querySelector('i');if(sh)sh.remove()}const gl=document.createElement('b');gl.style.cssText='position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;will-change:opacity;box-shadow:0 0 0 1.5px rgb(255 214 170 / .9),0 0 24px rgb(240 109 68 / .55)';g.appendChild(gl);const dl=rot===0?0:rot>0?70:140;A(g,[{transform:first,opacity:1,offset:0},{transform:'none',opacity:1,offset:.78},{transform:'none',opacity:0,offset:1}],{duration:950,delay:dl,easing:'cubic-bezier(.16,1,.3,1)',fill:'both'});A(gl,[{opacity:0},{opacity:0,offset:.55},{opacity:1,offset:.78},{opacity:0}],{duration:950,delay:dl,fill:'both'});
+    [[g1,P1,0,pre[0]],[g2,P2,5,pre[1]],[g3,P3,-6,pre[2]]].forEach(([g,src,rot,tx])=>{
+      g.getAnimations().forEach(a=>a.cancel());
+      if(!tx){A(g,[{opacity:1,transform:`rotate(${rot}deg)`},{opacity:0,transform:`rotate(${rot}deg) scale(.96)`}],{duration:500,easing:'cubic-bezier(.16,1,.3,1)',fill:'forwards'});return}
+      const [n,r,br]=tx,R0=getComputedStyle(g).borderRadius||'28px';
+      const gl=document.createElement('b');gl.style.cssText='position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;will-change:opacity;box-shadow:inset 0 0 0 1.5px rgb(255 214 170 / .85),inset 0 0 22px rgb(240 109 68 / .35)';g.appendChild(gl);
+      const o={duration:900,easing:'cubic-bezier(.22,1,.36,1)',fill:'both'};
+      A(g,[{left:src.x+'px',top:src.y+'px',width:src.w+'px',height:src.h+'px',borderRadius:R0,transform:`rotate(${rot}deg)`,opacity:1,offset:0},
+           {left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',borderRadius:br||'24px',transform:'rotate(0deg)',opacity:1,offset:.8},
+           {left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',borderRadius:br||'24px',transform:'rotate(0deg)',opacity:0,offset:1}],o);
+      A(gl,[{opacity:0},{opacity:0,offset:.5},{opacity:1,offset:.8},{opacity:0}],{duration:900,fill:'both'});
     });
     /* ring -> avatar, dot -> the + button: same glide, same clock */
     const flip=(n,src,tgt,rad,dur,delay)=>{n.getAnimations().forEach(a=>a.cancel());if(!tgt){A(n,[{opacity:1},{opacity:0}],{duration:MOVE*.5,easing:EZ,fill:'forwards'});return}
@@ -2430,4 +2439,68 @@ li.row.mt-done,li.row.mt-past{opacity:.6}
 .gmax span{flex:none;font-size:13px}.gmax input{border:0!important;height:100%!important;padding:0!important;background:none!important;text-align:right;flex:1;min-width:0}
 .gdate .i{width:17px;height:17px;flex:none}.gdate.set{color:var(--ink)}
 .gdate input{position:absolute;inset:0;opacity:0;width:100%!important;height:100%!important}
+</style>`);
+
+/* the dark launch cover (build.py) goes as soon as the intro or Home is on screen */
+{const _es0=endSplash;endSplash=function(){const b0=document.getElementById('boot0');if(b0)b0.remove();return _es0.apply(this,arguments)};
+ setTimeout(()=>{const b0=document.getElementById('boot0');if(b0&&!document.getElementById('ix3'))b0.remove()},6000);}
+
+SRCL.VT='VT Dining (published nutrition)';
+/* ===================== Oct 27: food search that forgives plurals, brand spellings and word order ===================== */
+{const cmp=s=>s.toLowerCase().replace(/['’`.\-&]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+ const stem=w=>w.length>4&&/ies$/.test(w)?w.slice(0,-3)+'y':w.length>5&&/(ches|shes|oes|xes)$/.test(w)?w.slice(0,-2):w.length>3&&/s$/.test(w)&&!/ss$/.test(w)?w.slice(0,-1):w;
+ const BRAND={mcdonalds:'mcdonalds',mcd:'mcdonalds',maccas:'mcdonalds',cfa:'chickfila',chickfila:'chickfila',cookout:'cook out',canes:'raising canes',bww:'buffalo wild wings',bdubs:'buffalo wild wings',jj:'jimmy johns',dd:'dunkin',dunkin:'dunkin',sbux:'starbucks',pj:'papa johns',tbell:'taco bell',bk:'burger king',moes:'moes',jerseymikes:'jersey mikes',fivegu:'five guys'};
+/* common staples: the everyday row first (USDA lists dozens of variants with similar names) */
+ const PIN={egg:['Egg, whole, cooked, hard-boiled','Egg, whole, cooked, scrambled','Egg, whole, cooked, fried','Egg, whole, raw, fresh'],
+  rice:['Rice, white, cooked, NS as to fat','Rice, cooked','Rice, brown, cooked, NS as to fat'],'white rice':['Rice, white, cooked, NS as to fat'],'brown rice':['Rice, brown, cooked, NS as to fat'],
+  'chicken breast':['Chicken breast, boneless skinless, cooked'],chicken:['Chicken breast, boneless skinless, cooked'],
+  pizza:['Pizza, cheese, from frozen, thin crust'],oatmeal:['Oatmeal, regular or quick, made with water, no added fat'],oat:['Oatmeal, regular or quick, made with water, no added fat'],
+  milk:['Milk, whole','Milk, whole, 3.25% milkfat, with added vitamin D'],bread:['Bread, white','Bread, whole wheat, made from home recipe or purchased at bakery'],
+  pasta:['Pasta, cooked'],apple:['Apple, raw'],potato:['Potato, baked, NFS'],avocado:['Avocado, raw','Avocados, raw, California'],
+  'greek yogurt':['Greek yogurt'],bagel:['Bagel'],tortilla:['Tortilla, flour'],'ground beef':['Beef, ground, 80% lean meat / 20% fat, raw'],
+  'peanut butter':['Peanut butter, chunk style, with salt'],banana:['Banana']};
+ searchFoods=function(q){
+  if(!FOODS)return[];
+  let qs=cmp(q);for(const[k,v]of Object.entries(BRAND))qs=qs.replace(new RegExp('\\b'+k+'\\b','g'),v);
+  const words=qs.split(' ').filter(Boolean);if(!words.length)return[];
+  const ws=words.map(stem);
+  const out=[];
+  for(const x of FOODS){
+    if(!x.lcc){x.lcc=' '+cmp(x.lc)+' ';x.lcj=x.lcc.replace(/ /g,'')}
+    let ok=true;for(let i=0;i<words.length;i++){const w=words[i],s=ws[i];if(!(x.lcc.includes(w)||x.lcc.includes(s)||(w.length>3&&x.lcj.includes(w)))){ok=false;break}}
+    if(!ok)continue;
+    const nl=cmp(x.n);
+    let sc=nl.startsWith(ws[0])?0:(' '+nl+' ').includes(' '+ws[0])?3:7;
+    sc+=x.n.length/28+(x.n.split(',').length-1)*.7;
+    {const nn=' '+nl+' ';for(let i=0;i<words.length;i++)sc+=nn.includes(' '+words[i]+' ')||nn.includes(' '+ws[i]+' ')?-.8:.7}   /* whole words beat fragments (eggs -> Egg, not Eggnog) */
+    sc+=x.s==='IN'?-1.5:x.s==='ONB'?2.5:x.s==='ONR'||x.s==='RC'||x.s==='VT'?.5:0;
+    if(!x.sg)sc+=1.2;                                   /* foods with a real serving size first */
+    if(/\b(raw|cooked|boiled|plain)\b/.test(nl))sc-=.4;
+    if(words.length===1){const head=cmp(x.n.split(',')[0]);if(head===words[0]||head===ws[0]||stem(head)===ws[0])sc-=1.6}   /* "eggs" -> Egg, whole… before Egg salad */
+    if(/\b(fish|roe|substitute|dried|powder|frozen|dry mix)\b/.test(nl)&&!words.some(w=>/fish|roe|substitute|dried|powder|frozen|mix/.test(w)))sc+=1;
+    if(/[A-Z]{4,}/.test(x.n))sc+=1.5;
+    {const m=/ (?:by|at) (.+)$/i.exec(x.n);if(m){const chain=' '+cmp(m[1])+' ';if(words.some(w=>chain.includes(' '+w)))sc-=1.2}}   /* "moes burrito" -> Moe's rows first */
+    out.push([sc,x]);
+  }
+  const P=PIN[ws.join(' ')]||PIN[words.join(' ')];if(P)for(const o of out){const k=P.indexOf(o[1].n);if(k>=0)o[0]=-20+k}
+  return out.sort((a,b)=>a[0]-b[0]).slice(0,50).map(o=>o[1]);
+ }}
+
+/* ===================== Oct 27: each Today section gets its own tint (same palette as the hero tiles; low enough to keep contrast) ===================== */
+const TONES=[[/reminder/,'242 128 120'],[/habit/,'98 199 190'],[/progress/,'242 166 90'],[/insight/,'169 155 255'],[/streak/,'134 207 160'],
+  [/weight/,'124 183 222'],[/injur/,'224 96 116'],[/mail|inbox/,'125 170 255'],[/bus/,'214 120 96'],[/caffeine/,'196 140 92'],[/rhythm|circadian|peak/,'255 196 107'],
+  [/recovery/,'134 207 160'],[/crowd|campus/,'98 180 230'],[/deadline|milestone/,'240 109 68'],[/next|schedule|plan|class/,'156 214 126'],[/focus/,'232 150 210'],[/money|spend/,'230 190 90']];
+function toneSections(root){try{(root||document).querySelectorAll('#view .sec').forEach(s=>{if(s.dataset.tone)return;const h=s.querySelector('.sec-h h2');if(!h)return;const t=h.textContent.toLowerCase();const m=TONES.find(([re])=>re.test(t));if(m){s.dataset.tone='1';s.style.setProperty('--tc',m[1])}})}catch(e){}}
+{const _rT=render;render=function(a,f,d){_rT(a,f,d);toneSections(document.getElementById('view'))}}
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="tones">
+#view .sec[data-tone] :is(.card-s,.habit,.stat,.ts-tile,.hstat,.tchip,.il-spark){
+  background:linear-gradient(150deg,rgb(var(--tc) / .25) 0%,rgb(var(--tc) / .09) 55%,rgb(var(--tc) / .04) 100%),var(--surface)!important;
+  border-color:rgb(var(--tc) / .32)!important;
+  box-shadow:inset 0 1px 0 rgb(255 255 255 / .06),0 8px 22px rgb(0 0 0 / .18)!important}
+#view .sec[data-tone] .card-s .card-s{background:rgb(var(--tc) / .06)!important;box-shadow:none!important}
+#view .sec[data-tone] .sec-h h2 em{color:rgb(var(--tc))!important}
+#view .sec[data-tone] .sec-h h2::before{filter:none}
+#view .sec[data-tone] .list.card-s>li+li{border-color:rgb(var(--tc) / .14)}
+:root[data-theme="light"] #view .sec[data-tone] :is(.card-s,.habit,.stat,.ts-tile,.hstat,.tchip,.il-spark){
+  background:linear-gradient(150deg,rgb(var(--tc) / .20) 0%,rgb(var(--tc) / .08) 55%,rgb(var(--tc) / .04) 100%),var(--surface)!important;box-shadow:0 6px 18px rgb(80 60 30 / .07)!important}
 </style>`);

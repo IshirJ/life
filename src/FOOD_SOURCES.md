@@ -104,3 +104,10 @@ Added 2026-10-21. Individual ingredients so a build-your-own order (e.g. a Qdoba
 ## Restaurant rows added Oct 22, 2026
 - RC (published values): Panda Express (official nutrition page), Subway, Chick-fil-A, 7-Eleven, Jimmy John's (per-item values via FatSecret listings; some serving weights estimated, marked "(weight est.)").
 - RCE (estimates from typical recipes/portions, no published data): Italiano's Pizza (610 N Main St) and Kuma Moon (725 University City Blvd), Blacksburg.
+
+## Oct 27, 2026 additions
+- **Household servings for USDA rows (`US`):** 4,290 rows that had no serving now use the first household portion (e.g. "1 large egg = 50 g") from USDA SR Legacy (FoodData Central JSON, mirror file SHA-256 0fe8ae48… matches the official download). About 2,300 rows still have no published portion and fall back to 100 g.
+- **`VT` — Virginia Tech Dining (official):** VT FoodPro menus API (foodpro.students.vt.edu/menus; locations Turner 14, Owens 39, D2 15, West End 16, Squires 18), menus Oct 27 – Nov 2, 2026. 81 rows use VT's weighed portion; 45 count items (e.g. "1 each") use VT's per-item nutrition with an estimated weight.
+- **Official chain data (`RC`):** Buffalo Wild Wings nutrition guide valid 08-18-2026 to 11-17-2026 (per wing = 6-count with sauce ÷ 6); Moe's Southwest Grill 2026 nutrition chart (components only — build a bowl from ingredient rows).
+- **Aggregator data (`RC`, less certain):** Cook Out, Bojangles, Zaxby's, Hardee's (FatSecret, cross-checked with fastfoodnutrition.org where possible); Raising Cane's, Firehouse Subs, Sheetz (fastfoodnutrition.org, 2021–2025; Sheetz partly FatSecret); Mellow Mushroom, Insomnia Cookies, Texas Roadhouse (MyFoodDiary). Most of these chains publish no weights, so rows marked "(weight est.)" are estimates — the per-serving calories match the source, the per-100 g values depend on the estimated weight.
+- All retrieved 2026-10-27. Rows whose calories were more than 25% off 4·P + 4·C + 9·F were dropped, except one official VT item.

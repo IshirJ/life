@@ -284,7 +284,7 @@ function findMinutesAsleep(o, depth = 0) {
   return null;
 }
 
-export function parseGoogleSleep(pages, tz) {
+export function parseGoogleSleep(pages, tz, times = null) {
   const out = {};
   for (const data of pages) {
     const points = data.dataPoints || data.sleepDataPoints || Object.values(data).find(Array.isArray) || [];
@@ -297,12 +297,17 @@ export function parseGoogleSleep(pages, tz) {
       const mins = findMinutesAsleep(p) ?? Math.round((e - s) / 60000);
       const key = iv.civilE?.date?.year ? fmtDate({ y: iv.civilE.date.year, m: iv.civilE.date.month, d: iv.civilE.date.day }) : fmtDate(utcToLocal(e, tz));
       out[key] = (out[key] || 0) + Math.round(mins);
+      // bedtime and wake time of the night's main (longest) sleep, local HH:MM, for the circadian rhythm card
+      if (times && (!times[key] || e - s > times[key].len)) {
+        const a = utcToLocal(s, tz), b = utcToLocal(e, tz), hm = (x) => `${String(x.h).padStart(2, '0')}:${String(x.mi).padStart(2, '0')}`;
+        times[key] = { len: e - s, bed: hm(a), wake: hm(b) };
+      }
     }
   }
   return out;
 }
 
-export async function googleSleep(env, config, startYmd) {
+export async function googleSleep(env, config, startYmd, times = null) {
   const tz = tzOf(config);
   const filter = `sleep.interval.civil_end_time >= "${fmtDate(startYmd)}T00:00:00"`; // sleep can only be filtered by its END time
   const pages = [];
@@ -317,7 +322,7 @@ export async function googleSleep(env, config, startYmd) {
     if (!token) break;
   }
   const points = pages.reduce((n, d) => n + ((d.dataPoints || Object.values(d).find(Array.isArray) || []).length), 0);
-  const res = parseGoogleSleep(pages, tz);
+  const res = parseGoogleSleep(pages, tz, times);
   if (points > 0 && !Object.keys(res).length) throw new Error('unrecognised sleep response shape');
   return res;
 }
@@ -433,7 +438,7 @@ export async function getHealth(env, config, days = 30, now = Date.now(), fresh 
       try { google.steps = await googleSteps(env, config, startYmd, fromDayNum(todayDn + 1)); any = true; }
       catch (e) { errors.push(errorEntry('google', e)); }
       if (!errors.some((x) => x.code === 'reauth')) {
-        try { google.sleep = await googleSleep(env, config, startYmd); any = true; }
+        try { google.sleepT = {}; google.sleep = await googleSleep(env, config, startYmd, google.sleepT); any = true; }
         catch (e) { errors.push({ ...errorEntry('google', e), part: 'sleep' }); }
         try { google.rhr = await googleRhr(env, config, startYmd); any = true; }
         catch (e) { errors.push({ ...errorEntry('google', e), part: 'restingHr' }); }
@@ -461,6 +466,7 @@ export async function getHealth(env, config, days = 30, now = Date.now(), fresh 
       const g = {};
       if (google.steps?.[date] != null) g.steps = google.steps[date];
       if (google.sleep?.[date] != null) g.sleepMin = google.sleep[date];
+      if (google.sleepT?.[date]) { g.bed = google.sleepT[date].bed; g.wake = google.sleepT[date].wake; }
       if (google.rhr?.[date] != null) g.restingHr = google.rhr[date];
       if (google.kcal?.[date] != null) g.burnKcal = google.kcal[date];
       const cur = map[date] || { date };

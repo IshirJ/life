@@ -18,7 +18,7 @@ test('bus departures parsed from BT XML and cached', async () => {
   cacheClear();
   const { env, key } = await paired();
   let n = 0;
-  const f = mockFetch((url) => { n++; assert.match(url, /GetNextDepartures\?routeShortName=NMG&stopCode=1411/);
+  const f = mockFetch((url) => { if (/GetCurrentBusInfo/.test(url)) return new Response('<DocumentElement></DocumentElement>'); n++; assert.match(url, /GetNextDepartures\?routeShortName=NMG&stopCode=1411/);
     return new Response('<DocumentElement><NextDepartures><StopName>Main/Red Maple Nbnd</StopName><AdjustedDepartureTime>2026-10-20T22:25:00-04:00</AdjustedDepartureTime></NextDepartures></DocumentElement>'); });
   try {
     const b = await (await call(env, req('/bus?route=nmg&stop=1411', { key }))).json();
@@ -49,7 +49,8 @@ test('ai food: Gemini JSON mapped to items', async () => {
   const { env, key } = await paired();
   await call(env, req('/config', { method: 'PUT', key, body: { geminiKey: 'G' } }));
   const f = mockFetch((url, init) => {
-    assert.match(url, /generativelanguage\.googleapis\.com\/v1beta\/models\/gemini-2\.5-flash:generateContent/);
+    assert.match(url, /generativelanguage\.googleapis\.com\/v1beta\/models\/gemini-3\.1-flash-lite:generateContent/);
+    assert.equal(JSON.parse(init.body).generationConfig.thinkingConfig.thinkingLevel, 'minimal');
     assert.equal(init.headers['x-goog-api-key'], 'G');
     const body = JSON.parse(init.body); assert.ok(body.contents[0].parts.some((p) => p.inline_data));
     return Response.json({ candidates: [{ content: { parts: [{ text: JSON.stringify({ items: [{ name: 'Dal', grams: 200, kcal: 230.4, protein: 12.33, fat: 6, carbs: 30 }] }) }] } }] });
@@ -111,7 +112,7 @@ test('ai: falls back to another model when the free quota is zero, and reports a
   try {
     const r = await call(env, req('/ai/test', { method: 'POST', key, body: {} }));
     assert.equal(r.status, 200); assert.deepEqual(await r.json(), { ok: true });
-    assert.deepEqual(seen, ['gemini-2.5-flash', 'gemini-2.5-flash-lite']);
+    assert.deepEqual(seen, ['gemini-3.1-flash-lite', 'gemini-flash-lite-latest']);
   } finally { f.restore(); }
   f = mockFetch(() => Response.json({ error: { message: 'API key not valid. Please pass a valid API key.' } }, { status: 400 }));
   try {
@@ -224,4 +225,32 @@ test('ai/food falls back to Workers AI when Gemini is rate limited', async () =>
     assert.equal(d.via, 'workers-ai');
     assert.equal(d.items[0].grams, 300);
   } finally { globalThis.fetch = realFetch; }
+});
+
+test('ai: a shut-down model (404) is skipped from then on; a model that rejects the thinking setting is asked again without it', async () => {
+  const { env, key } = await paired();
+  await call(env, req('/config', { method: 'PUT', key, body: { geminiKey: 'G', geminiModel: 'gemini-2.5-flash' } }));
+  const seen = [];
+  const f = mockFetch((url, init) => {
+    const m = url.match(/models\/([^:]+)/)[1], b = JSON.parse(init.body);
+    seen.push(m + (b.generationConfig.thinkingConfig ? '+t' : ''));
+    if (m === 'gemini-2.5-flash') return Response.json({ error: { message: 'This model models/gemini-2.5-flash is no longer available.' } }, { status: 404 });
+    if (b.generationConfig.thinkingConfig) return Response.json({ error: { message: 'thinking_level is not supported for this model.' } }, { status: 400 });
+    return Response.json({ candidates: [{ content: { parts: [{ text: '{"ok":true}' }] } }] });
+  });
+  try {
+    assert.equal((await call(env, req('/ai/test', { method: 'POST', key, body: {} }))).status, 200);
+    assert.ok(seen.some((x) => x.endsWith('+t')) && seen.some((x) => !x.endsWith('+t') && !x.startsWith('gemini-2.5')), 'retried without thinking: ' + seen.join());
+    assert.equal((await call(env, req('/ai/test', { method: 'POST', key, body: {} }))).status, 200);
+    assert.ok(seen.filter((x) => x.startsWith('gemini-2.5-flash')).length <= 1, 'dead model tried at most once: ' + seen.join());
+  } finally { f.restore(); }
+});
+
+test('bus load: reads PercentOfCapacity per route and skips buses without it', async () => {
+  const { parseBusLoad } = await import('../src/extras.js');
+  const xml = '<DocumentElement><LatestInfoTable><RouteShortName>NMG</RouteShortName><LastStopName>Main/Lucas Sbnd</LastStopName><TotalCount>36</TotalCount><PercentOfCapacity>45</PercentOfCapacity></LatestInfoTable>'
+    + '<LatestInfoTable><RouteShortName>CRC</RouteShortName><TotalCount>3</TotalCount></LatestInfoTable>'
+    + '<LatestInfoTable><RouteShortName>NMG</RouteShortName><TotalCount>2</TotalCount></LatestInfoTable></DocumentElement>';
+  assert.deepEqual(parseBusLoad(xml, 'NMG'), [{ pct: 45, count: 36, last: 'Main/Lucas Sbnd' }]);
+  assert.deepEqual(parseBusLoad(xml, 'CAS'), []);
 });
