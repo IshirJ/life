@@ -135,43 +135,60 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-qtry]');if
 const LETTERS=[['A',93,4.0],['A-',90,3.7],['B+',87,3.3],['B',83,3.0],['B-',80,2.7],['C+',77,2.3],['C',73,2.0],['C-',70,1.7],['D+',67,1.3],['D',63,1.0],['D-',60,.7],['F',0,0]];
 const letterOf=p=>(LETTERS.find(l=>p>=l[1])||LETTERS[LETTERS.length-1]);
 const G=()=>(db.grades=db.grades||{});
+/* a class can carry its own syllabus scale ([letter, min %, GPA points] high to low); otherwise the standard 93/90/87… scale */
+const letterFor=(g,p)=>{const L=(g&&Array.isArray(g.scale)&&g.scale.length)?g.scale:LETTERS;return L.find(l=>p>=l[1])||L[L.length-1]};
+/* counted = has a real score (blank, "-" and excused never count; an explicit 0 does) */
+const gCounted=i=>!i.ex&&i.score!==''&&i.score!=null&&i.score!=='-'&&num(i.max)>0;
 function gOf(cid){const g=G();if(!g[cid])g[cid]={credits:3,target:'A',cats:[{id:uid(),name:'Homework',w:30},{id:uid(),name:'Exams',w:40},{id:uid(),name:'Final',w:30,final:true}],items:[]};return g[cid]}
 /* weighted grade: each category's % (points earned ÷ points possible) times its weight, over the weight that has grades so far */
 function gradeCalc(g){
-  const cats=g.cats.map(c=>{const it=g.items.filter(i=>i.cat===c.id&&i.score!==''&&i.score!=null&&num(i.max)>0);const e=it.reduce((s,i)=>s+num(i.score),0),mx=it.reduce((s,i)=>s+num(i.max),0);return{...c,n:it.length,pct:mx?e/mx*100:null}});
+  const cats=g.cats.map(c=>{let it=g.items.filter(i=>i.cat===c.id&&gCounted(i));const dropN=num(c.drop)||0;if(dropN&&it.length>dropN)it=it.slice().sort((a,b)=>num(a.score)/num(a.max)-num(b.score)/num(b.max)).slice(dropN);const e=it.reduce((s,i)=>s+num(i.score),0),mx=it.reduce((s,i)=>s+num(i.max),0);return{...c,n:it.length,pct:mx?e/mx*100:null}});
   const graded=cats.filter(c=>c.pct!=null),W=graded.reduce((s,c)=>s+num(c.w),0),cur=W?graded.reduce((s,c)=>s+num(c.w)*c.pct,0)/W:null;
   const fin=cats.find(c=>c.final),others=cats.filter(c=>!c.final&&c.pct!=null),Wo=others.reduce((s,c)=>s+num(c.w),0),curO=Wo?others.reduce((s,c)=>s+num(c.w)*c.pct,0)/Wo:null;
-  const tgt=(LETTERS.find(l=>l[0]===g.target)||LETTERS[0])[1],wf=fin?num(fin.w)/100:0;
+  const SC=(Array.isArray(g.scale)&&g.scale.length)?g.scale:LETTERS,tgt=(SC.find(l=>l[0]===g.target)||SC[0])[1],wf=fin?num(fin.w)/100:0;
   const need=fin&&curO!=null&&wf>0&&fin.pct==null?(tgt-(1-wf)*curO)/wf:null;   /* target = (1−w_f)·current + w_f·x  →  x = (target − (1−w_f)·current) ÷ w_f */
   return{cats,cur,curO,need,tgt,wf,fin}}
 function gpaProj(){
-  const cls=of('class'),rows=cls.map(c=>{const g=G()[c.id];if(!g)return null;const r=gradeCalc(g);if(r.cur==null)return null;const L=letterOf(r.cur);return{c,g,r,L,cr:num(g.credits)||0}}).filter(Boolean);
+  const cls=of('class'),rows=cls.map(c=>{const g=G()[c.id];if(!g)return null;const r=gradeCalc(g);if(r.cur==null)return null;const L=letterFor(g,r.cur);return{c,g,r,L,cr:num(g.credits)||0}}).filter(Boolean);
   const cr=rows.reduce((s,x)=>s+x.cr,0),pts=rows.reduce((s,x)=>s+x.L[2]*x.cr,0),term=cr?pts/cr:null,st=db.settings.gpa||{},cum0=num(st.cum),cr0=num(st.credits);
   const cum=term!=null&&cr0?(cum0*cr0+pts)/(cr0+cr):null;return{rows,term,cum,cr,cum0,cr0}}
-function examsAhead(days=30){const out=[];for(const c of of('class')){const g=G()[c.id];if(!g)continue;for(const i of g.items)if(i.exam&&i.date&&dayDiff(i.date)>=0&&dayDiff(i.date)<=days)out.push({...i,cls:c})}return out.sort((a,b)=>a.date.localeCompare(b.date))}
+function examsAhead(days=30){const out=[];for(const c of of('class')){const g=G()[c.id];if(!g)continue;for(const i of g.items)if(i.exam&&i.date&&!gCounted(i)&&dayDiff(i.date)>=0&&dayDiff(i.date)<=days)out.push({...i,cls:c})}return out.sort((a,b)=>a.date.localeCompare(b.date))}
 function gradesView(){
   const P2=gpaProj(),cls=of('class'),ex=examsAhead(30);
   let h=chipsSub('work')+heroBanner('Grades',P2.term!=null?P2.term.toFixed(2):'—',P2.term!=null?`projected term GPA${P2.cum!=null?` · cumulative <b>${P2.cum.toFixed(2)}</b>`:''}`:'add scores to see your projected GPA',[['Classes',cls.length],['Credits',P2.cr||0],['Exams · 30d',ex.length]],'#B9C6FF',`<div class="hero-actions"><button class="pill glassy" id="gpaSet">${ic('gear')}GPA so far</button></div>`);
   if(ex.length)h+=section('Exams <em>coming up</em>',`<div class="card-s rvcard">${ex.map(x=>`<div class="exrow2"><span class="cdn"><b class="num">${dayDiff(x.date)}</b><small>day${dayDiff(x.date)===1?'':'s'}</small></span><span class="exm2"><b>${esc(x.name)}</b><small>${esc(x.cls.title)} · ${esc(fmtLong(x.date))}</small></span><button class="link" data-studyplan="${x.cls.id}|${x.id}">${ic('block')}Plan study</button></div>`).join('')}</div>`);
-  h+=section('Your <em>classes</em>',cls.length?`<div class="gcards">${cls.map(c=>{const g=G()[c.id],r=g?gradeCalc(g):null,L=r&&r.cur!=null?letterOf(r.cur):null;
+  h+=section('Your <em>classes</em>',cls.length?`<div class="gcards">${cls.map(c=>{const g=G()[c.id],r=g?gradeCalc(g):null,L=r&&r.cur!=null?letterFor(g,r.cur):null,nx=g?gNext(g):null;
     return`<button class="gcard card-s" data-gcls="${esc(c.id)}"><span class="gtop"><b>${esc(c.title)}</b>${L?`<span class="glet">${L[0]}</span>`:''}</span><span class="gpct num">${r&&r.cur!=null?r.cur.toFixed(1)+'%':'No scores yet'}</span>
       <i class="gbar"><i style="width:${r&&r.cur!=null?Math.min(100,r.cur):0}%"></i>${r?`<em style="left:${r.tgt}%"></em>`:''}</i>
-      <small>${r&&r.need!=null?(r.need>100?`Need ${r.need.toFixed(0)}% on the final for ${esc(g.target)}: out of reach, aim for the next grade`:r.need<=0?`${esc(g.target)} is safe even with a 0 on the final`:`Need <b>${r.need.toFixed(0)}%</b> on the final for ${esc(g.target)}`):'Tap to add categories and scores'}</small></button>`}).join('')}</div>`:emptyBox('Add your classes in the Week tab first, then track grades here.'));
+      <small>${r&&r.need!=null?(r.need>100?`Need ${r.need.toFixed(0)}% on the final for ${esc(g.target)}: out of reach, aim for the next grade`:r.need<=0?`${esc(g.target)} is safe even with a 0 on the final`:`Need <b>${r.need.toFixed(0)}%</b> on the final for ${esc(g.target)}`):r&&r.cur!=null?'Tap for the full breakdown':'Tap to add categories and scores'}</small>${nx?`<small class="gnext">Next: <b>${esc(nx.name)}</b> · ${esc(relDue(nx.date))}${nx.max?` · ${esc(nx.max)} pts`:''} · not counted yet</small>`:''}</button>`}).join('')}</div>`:emptyBox('Add your classes in the Week tab first, then track grades here.'));
   return h}
+/* scores in three groups: coming up (not counted), graded, and turned in but not graded yet */
+function gNext(g){return g.items.filter(i=>!gCounted(i)&&!i.ex&&!i.wait&&i.date&&dayDiff(i.date)>=0).sort((a,b)=>a.date.localeCompare(b.date))[0]||null}
+function gItemsHtml(g){
+  const catN=i=>(g.cats.find(x=>x.id===i.cat)||{}).name||'';
+  const rowH=(i,right,cls)=>`<div class="gitem${cls?' '+cls:''}" data-gitem="${esc(i.id)}"><span><b>${esc(i.name)}</b><small>${esc(catN(i))}${i.date?' · '+esc(fmtDate(i.date)):''}${i.exam?' · exam':''}${i.note?' · '+esc(i.note):''}</small></span><span class="gsc num">${right}</span><button class="x" data-gidel="${esc(i.id)}" aria-label="Delete">${ic('close')}</button></div>`;
+  const up=g.items.filter(i=>!gCounted(i)&&!i.ex&&!i.wait&&(!i.date||dayDiff(i.date)>=0)).sort((a,b)=>(a.date||'9999').localeCompare(b.date||'9999'));
+  const done=g.items.filter(gCounted).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const wait=g.items.filter(i=>!gCounted(i)&&(i.ex||i.wait||(i.date&&dayDiff(i.date)<0))).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+  const grp=(t,arr,f)=>arr.length?`<div class="gi-h">${t}<span>${arr.length}</span></div>${arr.map(f).join('')}`:'';
+  return grp('Coming up · not counted',up,i=>rowH(i,i.date?(dayDiff(i.date)===0?'due today':`in ${dayDiff(i.date)}d`)+(num(i.max)?` · /${i.max}`:''):(num(i.max)?`/${i.max}`:'—'),'up'))
+    +grp('Graded',done,i=>rowH(i,`${i.score}/${i.max} · ${(num(i.score)/num(i.max)*100).toFixed(0)}%`,num(i.score)===0?'zero':''))
+    +grp('Not graded yet · not counted',wait,i=>rowH(i,i.ex?'excused':'—','wait'))
+    ||'<p class="hint">No scores yet.</p>'}
 function openClassGrades(cid){
   const cls=of('class');if(!cid){if(!cls.length){toast('Add a class first (Week tab)');return}cid=cls[0].id}
   const c=find(cid),g=gOf(cid),r=gradeCalc(g);
   const catSel=v=>`<select data-gf="cat">${g.cats.map(x=>`<option value="${esc(x.id)}"${x.id===v?' selected':''}>${esc(x.name)}</option>`).join('')}</select>`;
   openSheet(`${sheetHead(`${esc(c.title)} <em>grades</em>`)}
     ${cls.length>1?`<div class="chips gcls">${cls.map(x=>`<button class="chip${x.id===cid?' on':''}" data-gcls="${esc(x.id)}">${esc(x.title)}</button>`).join('')}</div>`:''}
-    <div class="gsum"><div><b class="num">${r.cur!=null?r.cur.toFixed(1)+'%':'—'}</b><span>now${r.cur!=null?' · '+letterOf(r.cur)[0]:''}</span></div><div><b class="num"${r.need!=null&&r.need>100?' style="color:var(--late)"':''}>${r.need!=null?Math.max(0,r.need).toFixed(0)+'%':'—'}</b><span>${r.need!=null&&r.need>100?'out of reach':'needed on final'}</span></div>
+    <div class="gsum"><div><b class="num">${r.cur!=null?r.cur.toFixed(1)+'%':'—'}</b><span>now${r.cur!=null?' · '+letterFor(g,r.cur)[0]:''}</span></div><div><b class="num"${r.need!=null&&r.need>100?' style="color:var(--late)"':''}>${r.need!=null?Math.max(0,r.need).toFixed(0)+'%':'—'}</b><span>${r.need!=null&&r.need>100?'out of reach':'needed on final'}</span></div>
       <label><span>Goal</span><select data-gset="target">${LETTERS.slice(0,10).map(l=>`<option${l[0]===g.target?' selected':''}>${l[0]}</option>`).join('')}</select></label><label><span>Credits</span><input data-gset="credits" type="number" inputmode="numeric" value="${esc(g.credits)}"></label></div>
     ${r.need!=null?`<p class="small formula">Final needed = (goal ${r.tgt}% − (1 − ${r.wf.toFixed(2)}) × ${r.curO.toFixed(1)}%) ÷ ${r.wf.toFixed(2)} = <b>${r.need.toFixed(1)}%</b>. Assumes your other categories stay where they are.</p>`:''}
     <div class="set-grp">Categories <small>weights should add to 100 · now ${g.cats.reduce((s,x)=>s+num(x.w),0)}</small></div>
     <div class="gcats">${r.cats.map(x=>`<div class="gcat" data-gcat="${esc(x.id)}"><input data-gc="name" value="${esc(x.name)}" aria-label="Category name"><span class="gw"><input data-gc="w" type="number" inputmode="decimal" value="${esc(x.w)}" aria-label="Weight"><i>%</i></span><span class="gp num">${x.pct!=null?x.pct.toFixed(0)+'%':'—'}</span><button class="link${x.final?' on':''}" data-gfinal="${esc(x.id)}" title="Mark as the final exam">${x.final?'Final ✓':'Final?'}</button><button class="x" data-gcdel="${esc(x.id)}" aria-label="Remove category">${ic('close')}</button></div>`).join('')}
       <button class="link" id="gcAdd">${ic('plus')}Category</button></div>
     <div class="set-grp">Scores &amp; exams</div>
-    <div class="gitems">${g.items.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(i=>`<div class="gitem" data-gitem="${esc(i.id)}"><span><b>${esc(i.name)}</b><small>${esc((g.cats.find(x=>x.id===i.cat)||{}).name||'')}${i.date?' · '+esc(fmtDate(i.date)):''}${i.exam?' · exam':''}</small></span><span class="gsc num">${i.score!==''&&i.score!=null?`${i.score}/${i.max} · ${(num(i.score)/num(i.max)*100).toFixed(0)}%`:i.exam&&i.date?`in ${dayDiff(i.date)}d`:'—'}</span><button class="x" data-gidel="${esc(i.id)}" aria-label="Delete">${ic('close')}</button></div>`).join('')||'<p class="hint">No scores yet.</p>'}</div>
+    <div class="gitems">${gItemsHtml(g)}</div>
     <form class="gadd" id="gAdd"><input name="name" placeholder="e.g. Exam 2" required><select name="cat">${g.cats.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('')}</select>
       <input name="score" type="number" inputmode="decimal" step="any" placeholder="Score"><input name="max" type="number" inputmode="decimal" step="any" placeholder="Out of" value="100"><input name="date" type="date"><label class="gex"><input type="checkbox" name="exam">Exam</label><button class="primary" type="submit">Add</button></form>
     <p class="small">Leave the score blank for an upcoming exam: you’ll get a countdown and study-block suggestions.</p>`);
