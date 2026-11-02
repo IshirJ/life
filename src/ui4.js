@@ -2445,7 +2445,7 @@ li.row.mt-done,li.row.mt-past{opacity:.6}
 /* grades */
 .gsum{display:grid!important;grid-template-columns:1fr 1fr;gap:10px}
 .gsum>div,.gsum>label{min-width:0}
-.gcat{display:grid!important;grid-template-columns:minmax(0,1fr) 62px 28px 64px 32px;gap:5px!important;align-items:center;gap:6px}
+.gcat{display:grid!important;grid-template-columns:minmax(0,1fr) 62px 48px 34px;gap:5px!important;align-items:center;gap:6px}
 .gcat>input{min-width:0;padding:0 4px!important}
 .gw{padding:0 8px!important;height:36px;justify-content:flex-end;gap:3px}
 .gw input{width:34px!important;padding:0!important;margin:0;font:700 15px var(--ui)!important;font-variant-numeric:tabular-nums;text-align:right;letter-spacing:0;min-width:0}
@@ -2524,7 +2524,7 @@ function toneSections(root){try{let k=0;(root||document).querySelectorAll('#view
 (document.body||document.head).insertAdjacentHTML('beforeend',`<style id="tones">
 /* Today's sections: solid neutral greys in four steps (no colour wash), crisp hairline edges, tiles one step lighter than their card.
    Colour stays only in each heading's italic word. */
-#view{--sh0:#17171A;--sh1:#1E1F22;--sh2:#25262A;--sh3:#2C2D32;--shIn:rgb(255 255 255 / .045);--shEdge:rgb(255 255 255 / .085);--shTop:rgb(255 255 255 / .06);--shDrop:0 14px 30px -18px rgb(0 0 0 / .75)}
+#view{--sh0:#1A1A1D;--sh1:#26262A;--sh2:#323237;--sh3:#3D3D43;--shIn:rgb(255 255 255 / .07);--shEdge:rgb(255 255 255 / .13);--shTop:rgb(255 255 255 / .06);--shDrop:0 14px 30px -18px rgb(0 0 0 / .75)}
 #view .sec[data-shade="0"]{--shd:var(--sh0)}#view .sec[data-shade="1"]{--shd:var(--sh1)}#view .sec[data-shade="2"]{--shd:var(--sh2)}#view .sec[data-shade="3"]{--shd:var(--sh3)}
 #view .sec[data-shade] :is(.card-s,.habit,.stat,.ts-tile,.hstat,.tchip,.il-spark){
   background:var(--shd)!important;border:1px solid var(--shEdge)!important;
