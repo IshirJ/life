@@ -2,7 +2,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Doto:wght@900&family=Geist:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,500;1,6..72,500&family=Space+Mono:wght@400;700&display=swap" media="print" onload="this.media='all'">
-<script>(function(){var w=innerWidth,h=innerHeight,m=Math.min(w,h);document.documentElement.dataset.lay=m>=600&&w>=700?'tab':w>h&&w>=560?'land':'port'})();try{var _d=JSON.parse(localStorage.getItem('ishiros.life.v1')||'null'),_t=_d&&_d.settings&&_d.settings.theme;if(_t==='light'||_t==='dark')document.documentElement.dataset.theme=_t;if(_d&&_d.settings&&_d.settings.accent)document.documentElement.style.setProperty('--accent',_d.settings.accent)}catch(e){}</script>
+<script>(function(){var w=innerWidth,h=innerHeight,m=Math.min(w,h);document.documentElement.dataset.lay=m>=600&&w>=700?'tab':w>h&&w>=560?'land':'port'})();try{var _t=localStorage.getItem('lifeTheme'),_a=localStorage.getItem('lifeAccent');if(_t===null){var _d=JSON.parse(localStorage.getItem('ishiros.life.v1')||'null');_t=_d&&_d.settings&&_d.settings.theme||'';_a=_d&&_d.settings&&_d.settings.accent||''}if(_t==='light'||_t==='dark')document.documentElement.dataset.theme=_t;if(_a)document.documentElement.style.setProperty('--accent',_a)}catch(e){}</script>
 <style>
 /* Layout: one-column phone app. Every tab opens with a glass "hero" card (number + art), then sectioned cards.
    Floating glass tab bar with labels + round add button. Openers come from their button (side panel, drop-down, bottom sheet, zoom).
@@ -1918,6 +1918,7 @@ const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
   DATA_VER++;const g=db.settings,r=document.documentElement;
   if(g.theme==='light'||g.theme==='dark')r.dataset.theme=g.theme;else r.removeAttribute('data-theme');
+  try{if(!LOCKED_BLOB){localStorage.setItem('lifeTheme',g.theme||'');localStorage.setItem('lifeAccent',g.accent||'')}}catch(e){}
   g.accent?r.style.setProperty('--accent',g.accent):r.style.removeProperty('--accent');
   if(g.hero){r.style.setProperty('--sage',g.hero);r.style.setProperty('--sage-soft',`color-mix(in srgb,${g.hero} 72%,#fff)`)}else{r.style.removeProperty('--sage');r.style.removeProperty('--sage-soft')}
   r.dataset.head=g.head;r.dataset.corners=g.corners;r.dataset.icons=g.icons;r.dataset.motion=g.motion?'on':'off';

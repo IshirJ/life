@@ -22,7 +22,7 @@ ${DK('#view .habit small,#view .tile .cap','color:#AAAAAA')}
 .hero .ts-leg>button{background:rgb(0 0 0 / .32)!important;border-color:rgb(255 255 255 / .10)!important}
 
 /* ---- reminders: each its own card; badge · title + meta · check ---- */
-#view .list.card-s:has(>li.rmd),#view .list.card-s.rmdl{background:none!important;border:0!important;box-shadow:none!important;padding:0!important;display:grid;gap:8px;overflow:visible;border-radius:0!important}
+
 li.row.rmd{position:relative;display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 12px 12px 12px!important;border-radius:20px;min-height:0;
   background:linear-gradient(180deg,var(--pf1,var(--surface)),var(--pf2,var(--surface)))!important;border:1px solid var(--pedge,var(--line))!important;box-shadow:inset 0 1px 0 rgb(255 255 255 / .045),0 14px 30px -20px rgb(0 0 0 / .8)!important;overflow:hidden}
 li.row.rmd+li.row.rmd{border-top:1px solid var(--pedge,var(--line))!important}
@@ -173,3 +173,17 @@ let CW_ALL=false;
 document.addEventListener('click',e=>{if(!e.target.closest('[data-cwall]'))return;e.preventDefault();e.stopImmediatePropagation();CW_ALL=true;const y=SC.scrollTop;render(false);SC.scrollTop=y},true);
 /* insights with too little data: one line */
 {const _vtI=viewToday;viewToday=function(){let h=_vtI();return h.replace(/Insights appear once there are about 10 days[^<]*/,'Insights unlock after about 10 days of synced sleep and logging.')}}
+
+/* reminder list: the outer box is gone completely (it drew square corners around the rounded cards) */
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="rmfix">
+html body #view .sec ul.list.card-s.card-s.card-s:has(>li.rmd){background:none!important;border:0!important;box-shadow:none!important;padding:0!important;display:grid!important;gap:8px;overflow:visible!important;border-radius:0!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html body #view .sec ul.list.card-s.card-s.card-s:has(>li.rmd)::before,html body #view .sec ul.list.card-s.card-s.card-s:has(>li.rmd)::after{display:none!important}
+html body #view li.row.rmd{border-radius:22px!important;margin:0!important}
+html body #view li.row.rmd .rm-b{border-radius:10px}
+</style>`);
+/* the end-of-intro halo burst over every card read as white flashes: off */
+ixGlowAll=function(){};
+/* coming back to Life within 30 minutes never replays the intro (iOS sometimes reloads the app in the background) */
+try{const t=+localStorage.getItem('lifeHiddenAt')||0;if(t&&Date.now()-t<30*6e4)sessionStorage.setItem('lifeNoIntro','1')}catch(e){}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)try{localStorage.setItem('lifeHiddenAt',String(Date.now()))}catch(e){}});
+addEventListener('pagehide',()=>{try{localStorage.setItem('lifeHiddenAt',String(Date.now()))}catch(e){}});
