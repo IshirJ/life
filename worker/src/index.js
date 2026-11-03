@@ -89,6 +89,41 @@ function cleanEnc(e) {
   if (e.iv.length > 64 || e.ct.length > 3000 || !/^[A-Za-z0-9+/=_-]+$/.test(e.iv + e.ct)) return undefined;
   return { iv: e.iv, ct: e.ct };
 }
+// Optional send-time checks for coaching nudges: skip when today's numbers already show you're on track.
+const COND_KEYS = ['kcalBelow', 'proteinBelow', 'stepsBelow', 'moveBelow'];
+function cleanCond(c) {
+  if (!c || typeof c !== 'object') return undefined;
+  const out = {};
+  for (const k of COND_KEYS) if (Number.isFinite(Number(c[k])) && Number(c[k]) >= 0 && Number(c[k]) < 100000) out[k] = Number(c[k]);
+  return Object.keys(out).length ? out : undefined;
+}
+// today's numbers, fetched once per cron run and only when a due nudge needs them
+export async function condCheck(env, items, now, getToday) {
+  let day = null;
+  const today = async () => (day ??= (await getToday()) || {});
+  const keep = [];
+  for (const it of items) {
+    const c = it.cond;
+    if (!c) { keep.push(it); continue; }
+    const d = await today();
+    let ok = true;
+    if (c.kcalBelow != null && Number(d.kcal || 0) >= c.kcalBelow) ok = false;
+    if (c.proteinBelow != null && Number(d.protein || 0) >= c.proteinBelow) ok = false;
+    if (c.stepsBelow != null && d.steps != null && Number(d.steps) >= c.stepsBelow) ok = false;
+    if (c.moveBelow != null) {
+      // compare with the step count seen ~an hour ago (stored by the previous sitting check)
+      const snap = (await kvGet(env, 'mvsnap')) || {};
+      const steps = d.steps == null ? null : Number(d.steps);
+      if (steps == null) ok = false;
+      else {
+        if (!(snap.date === d.date && now - snap.t > 40 * 60000 && now - snap.t < 100 * 60000 && steps - snap.steps < c.moveBelow)) ok = false;
+        await kvPut(env, 'mvsnap', { date: d.date, t: now, steps });
+      }
+    }
+    keep.push(ok ? it : { ...it, skip: true });
+  }
+  return keep;
+}
 function cleanSchedule(items, now) {
   if (!Array.isArray(items)) throw new HttpError(400, 'items must be an array');
   return items
@@ -100,6 +135,7 @@ function cleanSchedule(items, now) {
       url: it?.url ? String(it.url).slice(0, 500) : undefined,
       tag: it?.tag ? String(it.tag).slice(0, 100) : undefined,
       enc: cleanEnc(it?.enc),
+      cond: cleanCond(it?.cond),
     }))
     .filter((it) => it.id && Number.isFinite(it.at) && it.at > now - DUE_WINDOW)
     .sort((a, b) => a.at - b.at)
@@ -160,8 +196,13 @@ export async function runCron(env, now = Date.now()) {
   const sub = await kvGet(env, 'sub');
   if (!sub) return { sent: 0, wrote: false };
   const sentObj = (await kvGet(env, 'sent')) || {};
-  const pending = due.filter((it) => !sentObj[sentKey(it)] && !memSent.has(sentKey(it)));
+  let pending = due.filter((it) => !sentObj[sentKey(it)] && !memSent.has(sentKey(it)));
   if (!pending.length) return { sent: 0, wrote: false };
+  if (pending.some((it) => it.cond)) {
+    pending = await condCheck(env, pending, now, async () => {
+      try { const cfg = (await kvGet(env, 'config')) || {}; const h = await getHealth(env, cfg, 1, now); return h.days?.[0] || null; } catch { return null; }
+    });
+  }
 
   // Every send is isolated: one bad reminder can't abort the run, and whatever was delivered is
   // always recorded (finally), so the next minute never repeats it.
@@ -170,6 +211,7 @@ export async function runCron(env, now = Date.now()) {
   try {
     for (const it of pending) {
       let r;
+      if (it.skip) { sentObj[sentKey(it)] = now; memSent.add(sentKey(it)); continue; }   // on track: nudge not needed
       try {
         r = await sendPush(env, sub, { title: it.title, body: it.body, url: it.url, tag: it.tag || it.id, enc: it.enc });
       } catch (e) {

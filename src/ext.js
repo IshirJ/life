@@ -115,7 +115,7 @@ async function refreshStatus(){if(!syncOn())return null;try{SV.status=await api(
 const b64uBytes=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return Uint8Array.from(atob(s),c=>c.charCodeAt(0))};
 
 /* notifications: Life works out the exact times, your server sends them */
-const NDEF={on:false,reminders:true,digestOn:true,digest:'08:00',classes:true,events:false,food:false,foodTime:'20:00',review:true,backup:true,habits:true,urgent:true};
+const NDEF={on:false,reminders:true,digestOn:true,digest:'08:00',classes:true,events:false,food:false,foodTime:'20:00',review:true,backup:true,habits:true,urgent:true,nudges:true};
 const NS=()=>({...NDEF,...(SYNC.notif||{})});
 async function enablePush(){
   if(!syncOn()){toast('Connect your server first');return false}
@@ -168,7 +168,7 @@ async function pushSchedule(force){
   if(!force&&h===meta.schedHash&&meta.schedDay===today())return;
   try{
     /* with end-to-end encryption on, titles and text travel encrypted; only this app's service worker can read them */
-    const out=E2E.key?await Promise.all(items.map(async it=>({id:it.id,at:it.at,tag:it.tag,url:it.url,title:'Life',body:'',enc:await e2eSealSmall({title:it.title,body:it.body})}))):items;
+    const out=E2E.key?await Promise.all(items.map(async it=>({id:it.id,at:it.at,tag:it.tag,url:it.url,...(it.cond?{cond:it.cond}:{}),title:'Life',body:'',enc:await e2eSealSmall({title:it.title,body:it.body})}))):items;
     await api('/schedule',{method:'PUT',body:JSON.stringify({items:out})});meta.schedHash=h;meta.schedDay=today();saveMeta()}catch(e){}
 }
 function queueSchedule(){clearTimeout(schedT);schedT=setTimeout(()=>pushSchedule(false),4000)}
@@ -597,6 +597,7 @@ function openNotif(){
     ${t('events','Linked calendar events','10 minutes before (Outlook, iCloud)')}
     ${t('digestOn','Morning digest','Tasks due today and anything late')}
     <label class="fld" for="nDig"><span>Digest time</span>${selectHTML('set_n_digest',times,n.digest,'nDig')}</label>
+    ${t('nudges','Cut coach','Meals, protein, steps and gym when you’re behind · “stand up” after an hour of sitting (weekdays, not during classes) · skipped when MacroFactor/Fitbit show you’re on track')}
     ${t('food','Food nudge','Only on days you haven’t logged anything')}
     <label class="fld" for="nFood"><span>Nudge time</span>${selectHTML('set_n_foodTime',ft,n.foodTime,'nFood')}</label>
     ${t('review','Weekly review','Sundays at 7:00 PM')}
