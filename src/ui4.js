@@ -957,11 +957,12 @@ function ixRun(preview){
     if(t>=TA&&!goB){goB=true;phaseB()}
     /* ---- base canvas: unrevealed dark pixels, glowing front, twinkles, waves ---- */
     if(!pre&&t>=TA-200)premeasure();
-    X.clearRect(0,0,W,HH);
+    const LITE=true;   /* the per-frame pixel dissolve redrew a full-screen canvas every frame (the main source of intro lag on iPhone); the backdrop now fades on the GPU instead */
+    if(!LITE)X.clearRect(0,0,W,HH);
     const rk=cl(pb/.8,0,1),front=pb>0?(rk<.5?2*rk*rk:1-Math.pow(-2*rk+2,2)/2)*1.06:-1;
     /* erase only the cells the wave front passed since the last frame */
-    while(ptr<cells.length&&cells[ptr].rv<=front){const c=cells[ptr++];M.clearRect(c.x-.5,c.y-.5,S+1,S+1)}
-    if(pb>0&&front<1.06){
+    while(!LITE&&ptr<cells.length&&cells[ptr].rv<=front){const c=cells[ptr++];M.clearRect(c.x-.5,c.y-.5,S+1,S+1)}
+    if(!LITE&&pb>0&&front<1.06){
       for(let q=ptr-1;q>=0&&cells[q].rv>front-.055;q--){const c=cells[q],k=1-(front-c.rv)/.055,z=(S-2)*k*k;X.fillStyle=`rgba(${c.n<.5?'255,176,122':'242,166,90'},${.2+.5*k})`;X.fillRect(c.x+S/2-z/2,c.y+S/2-z/2,z,z)}
       for(let q=ptr;q<cells.length&&cells[q].rv<=front+.03;q++){const c=cells[q],k=1-(c.rv-front)/.03;X.fillStyle=`rgba(255,238,216,${.15+.55*k})`;X.fillRect(c.x+1,c.y+1,S-2,S-2)}}
     /* ---- greeting ---- */
@@ -990,6 +991,7 @@ function ixRun(preview){
   }
   function phaseB(){
     if(!el.isConnected)return;window.__ixB=performance.now()-t0;el.style.background='transparent';document.documentElement.classList.remove('ix-run');
+    try{cv.style.willChange='opacity';cv.animate([{opacity:1},{opacity:0}],{duration:620,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'});fxc.style.display='none'}catch(e){}
     if(!pre)premeasure();
     /* glass panes morph exactly onto Home's cards (FLIP), then hand over */
     [[g1,P1,0,pre[0]],[g2,P2,5,pre[1]],[g3,P3,-6,pre[2]]].forEach(([g,src,rot,tx])=>{

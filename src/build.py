@@ -43,7 +43,7 @@ tail='''
 <script>
 if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(reg=>{
   /* look for a new version every time the app comes back to the front, not only on a cold start */
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')reg.update().catch(()=>{})});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&reg&&reg.update)reg.update().catch(()=>{})});
 }).catch(()=>{}));
   /* a new version took over: reload straight away if nothing is open, otherwise the next time the app is brought back */
   let had=!!navigator.serviceWorker.controller,pend=false;

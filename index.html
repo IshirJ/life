@@ -1974,7 +1974,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='224';
+const APP_VER='225';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){
@@ -4150,7 +4150,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=224';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=225';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -6570,11 +6570,12 @@ function ixRun(preview){
     if(t>=TA&&!goB){goB=true;phaseB()}
     /* ---- base canvas: unrevealed dark pixels, glowing front, twinkles, waves ---- */
     if(!pre&&t>=TA-200)premeasure();
-    X.clearRect(0,0,W,HH);
+    const LITE=true;   /* the per-frame pixel dissolve redrew a full-screen canvas every frame (the main source of intro lag on iPhone); the backdrop now fades on the GPU instead */
+    if(!LITE)X.clearRect(0,0,W,HH);
     const rk=cl(pb/.8,0,1),front=pb>0?(rk<.5?2*rk*rk:1-Math.pow(-2*rk+2,2)/2)*1.06:-1;
     /* erase only the cells the wave front passed since the last frame */
-    while(ptr<cells.length&&cells[ptr].rv<=front){const c=cells[ptr++];M.clearRect(c.x-.5,c.y-.5,S+1,S+1)}
-    if(pb>0&&front<1.06){
+    while(!LITE&&ptr<cells.length&&cells[ptr].rv<=front){const c=cells[ptr++];M.clearRect(c.x-.5,c.y-.5,S+1,S+1)}
+    if(!LITE&&pb>0&&front<1.06){
       for(let q=ptr-1;q>=0&&cells[q].rv>front-.055;q--){const c=cells[q],k=1-(front-c.rv)/.055,z=(S-2)*k*k;X.fillStyle=`rgba(${c.n<.5?'255,176,122':'242,166,90'},${.2+.5*k})`;X.fillRect(c.x+S/2-z/2,c.y+S/2-z/2,z,z)}
       for(let q=ptr;q<cells.length&&cells[q].rv<=front+.03;q++){const c=cells[q],k=1-(c.rv-front)/.03;X.fillStyle=`rgba(255,238,216,${.15+.55*k})`;X.fillRect(c.x+1,c.y+1,S-2,S-2)}}
     /* ---- greeting ---- */
@@ -6603,6 +6604,7 @@ function ixRun(preview){
   }
   function phaseB(){
     if(!el.isConnected)return;window.__ixB=performance.now()-t0;el.style.background='transparent';document.documentElement.classList.remove('ix-run');
+    try{cv.style.willChange='opacity';cv.animate([{opacity:1},{opacity:0}],{duration:620,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'});fxc.style.display='none'}catch(e){}
     if(!pre)premeasure();
     /* glass panes morph exactly onto Home's cards (FLIP), then hand over */
     [[g1,P1,0,pre[0]],[g2,P2,5,pre[1]],[g3,P3,-6,pre[2]]].forEach(([g,src,rot,tx])=>{
@@ -8700,9 +8702,9 @@ document.addEventListener('submit',e=>{if(e.target.id!=='jWaistF')return;e.preve
 const DK=(sel,css)=>`:root[data-theme="dark"] ${sel}{${css}}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) ${sel}{${css}}}`;
 (document.body||document.head).insertAdjacentHTML('beforeend',`<style id="prem">
 /* ---- tokens: cooler, deeper dark theme ---- */
-${DK('','--surface:#0E0E0E;--surface2:#1A1A1A;--line:#262626;--muted:#A3A3A3;--ink2:#D9D9D9;--card-shadow:inset 0 1px 0 rgb(255 255 255 / .05),0 16px 34px -18px rgb(0 0 0 / .75);--pf1:#0E0E0E;--pf2:#0C0C0C;--pin:#1A1A1A;--pin2:#1C1C1C;--pedge:rgb(255 255 255 / .08);--pedge2:rgb(255 255 255 / .12)')}
+${DK('','--surface:#0E0E0E;--surface2:#1A1A1A;--line:#262626;--muted:#A3A3A3;--ink2:#D9D9D9;--card-shadow:inset 0 1px 0 rgb(255 255 255 / .05);--pf1:#0E0E0E;--pf2:#0C0C0C;--pin:#1A1A1A;--pin2:#1C1C1C;--pedge:rgb(255 255 255 / .08);--pedge2:rgb(255 255 255 / .12)')}
 /* ---- cards ---- */
-${DK('#view .card-s,#view .habit,#view .tile,#view .stat,#view .hstat,#view .gcard','background:linear-gradient(180deg,var(--pf1),var(--pf2))!important;border:1px solid var(--pedge)!important;box-shadow:inset 0 1px 0 rgb(255 255 255 / .045),0 16px 34px -20px rgb(0 0 0 / .8)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important')}
+${DK('#view .card-s,#view .habit,#view .tile,#view .stat,#view .hstat,#view .gcard','background:linear-gradient(180deg,var(--pf1),var(--pf2))!important;border:1px solid var(--pedge)!important;box-shadow:inset 0 1px 0 rgb(255 255 255 / .045)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important')}
 ${DK('#view .card-s :is(.card-s,.habit,.tile,.stat,.hstat,.tchip,.kb-card,.cd-i,.dl,.caf-b,.jd-r)','background:linear-gradient(180deg,var(--pin2),var(--pin))!important;border:1px solid var(--pedge2)!important;box-shadow:inset 0 1px 0 rgb(255 255 255 / .06)!important')}
 ${DK('#view .sec .sec-h h2 em','text-shadow:none')}
 /* the old grey steps are gone: every Today card uses the same deep surface */
@@ -8711,16 +8713,16 @@ ${DK('#view .sec .sec-h h2 em','text-shadow:none')}
 ${DK('#view .habit .hring','background:radial-gradient(closest-side,#0A0A0A 79%,transparent 80% 100%),conic-gradient(var(--accent) var(--p),#262626 0)')}
 ${DK('#view .habit small,#view .tile .cap','color:#AAAAAA')}
 /* ---- hero mini tiles (steps / sleep / due / spent): solid dark glass for contrast ---- */
-.hero .ts-grid>button{background:rgb(0 0 0 / .45)!important;border:1px solid rgb(255 255 255 / .12)!important;box-shadow:inset 0 1px 0 rgb(255 255 255 / .08)!important;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.hero .ts-grid>button{background:rgb(0 0 0 / .45)!important;border:1px solid rgb(255 255 255 / .12)!important;box-shadow:inset 0 1px 0 rgb(255 255 255 / .08)!important}
 .hero .ts-grid>button b{color:#F6F3EC!important}
 .hero .ts-grid>button small{filter:brightness(1.25) saturate(1.1);font-weight:700}
 .hero .ts-leg>button{background:rgb(0 0 0 / .32)!important;border-color:rgb(255 255 255 / .10)!important}
 
 /* ---- reminders: each its own card; badge · title + meta · check ---- */
 
-li.row.rmd{position:relative;display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 12px 12px 12px!important;border-radius:var(--r-l);min-height:0;
-  background:linear-gradient(180deg,var(--pf1,var(--surface)),var(--pf2,var(--surface)))!important;border:1px solid var(--pedge,var(--line))!important;box-shadow:inset 0 1px 0 rgb(255 255 255 / .045),0 14px 30px -20px rgb(0 0 0 / .8)!important;overflow:hidden}
-li.row.rmd+li.row.rmd{border-top:1px solid var(--pedge,var(--line))!important}
+ul.rml>li.row.rmd{position:relative;display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 12px 12px 12px!important;border-radius:var(--r-l);min-height:0;
+  background:linear-gradient(180deg,var(--pf1,var(--surface)),var(--pf2,var(--surface)))!important;border:1px solid var(--pedge,var(--line))!important;box-shadow:inset 0 1px 0 rgb(255 255 255 / .045)!important;overflow:hidden}
+
 li.row.rmd::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(90% 160% at 0% 50%,color-mix(in srgb,var(--imp) 16%,transparent),transparent 55%);opacity:0}
 
 .rm-b{position:relative;z-index:1;width:42px;height:42px;border-radius:var(--r-m);display:grid;place-items:center;color:var(--imp);background:var(--surface2);box-shadow:inset 0 0 0 1px rgb(255 255 255 / .08)}
@@ -8737,7 +8739,7 @@ li.rmd.done{opacity:.6}
 /* ---- deadlines: countdown tickets ---- */
 .dls{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 .dl{position:relative;display:flex;flex-direction:column;gap:6px;padding:13px 14px 14px;border-radius:var(--r-l);text-align:left;min-width:0;overflow:hidden;
-  background:linear-gradient(180deg,var(--pf1,var(--surface)),var(--pf2,var(--surface)));border:1px solid var(--pedge,var(--line));box-shadow:inset 0 1px 0 rgb(255 255 255 / .045),0 14px 30px -20px rgb(0 0 0 / .8)}
+  background:linear-gradient(180deg,var(--pf1,var(--surface)),var(--pf2,var(--surface)));border:1px solid var(--pedge,var(--line));box-shadow:inset 0 1px 0 rgb(255 255 255 / .045)}
 
 .dl .cd-l{position:static!important;width:auto!important;height:auto!important;display:flex!important;align-items:baseline;gap:5px;color:var(--u);place-items:initial}
 .dl .cd-l span{font:800 25px/1 var(--mono);letter-spacing:-.04em}.dl .cd-l small{font:700 14px/1 var(--mono);opacity:.75}
@@ -8776,7 +8778,7 @@ html:not([data-lay="port"]) .tsum .hero-actions{max-width:640px}
 .cw.short .cw-row:nth-of-type(n+5){display:none}
 .cw-more{display:block;width:100%;margin-top:6px;padding:10px 0 0;border-top:1px solid var(--pedge,var(--line));text-align:center;font:700 13px var(--ui);color:var(--muted)}
 </style>`);
-(document.body||document.head).insertAdjacentHTML('beforeend',`<style>${DK('#view .sec[data-shade] :is(.card-s,.habit,.stat,.ts-tile,.hstat,.tchip,.il-spark)','background:linear-gradient(180deg,var(--pf1),var(--pf2))!important;border:1px solid var(--pedge)!important;box-shadow:inset 0 1px 0 rgb(255 255 255 / .045),0 16px 34px -20px rgb(0 0 0 / .8)!important')}${DK('#view .sec[data-shade] .card-s :is(.card-s,.habit,.stat,.ts-tile,.hstat,.tchip)','background:linear-gradient(180deg,var(--pin2),var(--pin))!important;border:1px solid var(--pedge2)!important;box-shadow:inset 0 1px 0 rgb(255 255 255 / .06)!important')}</style>`);
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style>${DK('#view .sec[data-shade] :is(.card-s,.habit,.stat,.ts-tile,.hstat,.tchip,.il-spark)','background:linear-gradient(180deg,var(--pf1),var(--pf2))!important;border:1px solid var(--pedge)!important;box-shadow:inset 0 1px 0 rgb(255 255 255 / .045)!important')}${DK('#view .sec[data-shade] .card-s :is(.card-s,.habit,.stat,.ts-tile,.hstat,.tchip)','background:linear-gradient(180deg,var(--pin2),var(--pin))!important;border:1px solid var(--pedge2)!important;box-shadow:inset 0 1px 0 rgb(255 255 255 / .06)!important')}</style>`);
 
 /* ---- reminders ---- */
 const RM_I={Urgent:'<path d="M5.5 3.2v6.2M5.5 12.6v.2M10.5 3.2v6.2M10.5 12.6v.2"/>',High:'<path d="M8 3.2v6.4M8 12.6v.2"/>',Normal:'<path d="M3.6 8.4l2.9 2.9 5.9-6.6"/>',Low:'<path d="M8 3.2v8.6M4.6 8.6L8 12l3.4-3.4"/>'};
@@ -8869,19 +8871,24 @@ document.addEventListener('click',e=>{if(!e.target.closest('[data-cwall]'))retur
 /* insights with too little data: one line */
 {const _vtI=viewToday;viewToday=function(){let h=_vtI();return h.replace(/Insights appear once there are about 10 days[^<]*/,'Insights unlock after about 10 days of synced sleep and logging.')}}
 
-/* reminder list: the outer box is gone completely (it drew square corners around the rounded cards) */
-(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="rmfix">
-html body #view .sec ul.list.card-s.card-s.card-s:has(>li.rmd){background:none!important;border:0!important;box-shadow:none!important;padding:0!important;display:grid!important;gap:8px;overflow:visible!important;border-radius:0!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
-html body #view .sec ul.list.card-s.card-s.card-s:has(>li.rmd)::before,html body #view .sec ul.list.card-s.card-s.card-s:has(>li.rmd)::after{display:none!important}
-html body #view li.row.rmd{border-radius:var(--r-l)!important;margin:0!important}
-html body #view li.row.rmd .rm-b{border-radius:var(--r-s)}
-</style>`);
+
 /* the end-of-intro halo burst over every card read as white flashes: off */
 ixGlowAll=function(){};
 /* coming back to Life within 30 minutes never replays the intro (iOS sometimes reloads the app in the background) */
 try{const t=+localStorage.getItem('lifeHiddenAt')||0;if(t&&Date.now()-t<30*6e4)sessionStorage.setItem('lifeNoIntro','1')}catch(e){}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)try{localStorage.setItem('lifeHiddenAt',String(Date.now()))}catch(e){}});
 addEventListener('pagehide',()=>{try{localStorage.setItem('lifeHiddenAt',String(Date.now()))}catch(e){}});
+
+/* reminder lists: decided in the HTML, not with :has() (iOS kept the old box after switching tabs) */
+const rmlFix=h=>h.replace(/<ul class="list card-s">((?:(?!<\/ul>)[\s\S])*?)<\/ul>/g,(m,inner)=>{const lis=inner.match(/<li\b[^>]*>/g)||[];return lis.length&&lis.every(t=>/class="row rmd/.test(t))?`<ul class="list rml">${inner}</ul>`:m});
+for(const fn of['viewToday','viewMind','viewPlan','viewWork']){try{const f=eval(fn);if(typeof f==='function')eval(`${fn}=function(){return rmlFix(f.apply(this,arguments))}`)}catch(e){}}
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="rmfix2">
+ul.list.rml{display:grid;gap:10px;margin:0;padding:0;list-style:none;background:none;border:0;box-shadow:none}
+ul.rml>li.row.rmd{border-radius:var(--r-l)!important;margin:0!important}
+ul.rml>li.row.rmd .rm-b{border-radius:var(--r-s)}
+ul.list.card-s>li.row.rmd{display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:12px}
+ul.list.card-s>li.row.rmd .rm-b{border-radius:var(--r-s)}
+</style>`);
 
 /* ===================== boot ===================== */
 load();try{if(!LOCKED_BLOB&&typeof syncBase==='function')syncBase()}catch(e){}
@@ -8907,7 +8914,7 @@ afterSplash(()=>setTimeout(loadFoods,1500));
 <script>
 if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(reg=>{
   /* look for a new version every time the app comes back to the front, not only on a cold start */
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')reg.update().catch(()=>{})});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&reg&&reg.update)reg.update().catch(()=>{})});
 }).catch(()=>{}));
   /* a new version took over: reload straight away if nothing is open, otherwise the next time the app is brought back */
   let had=!!navigator.serviceWorker.controller,pend=false;
