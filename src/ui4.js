@@ -957,7 +957,7 @@ function ixRun(preview){
     if(t>=TA&&!goB){goB=true;phaseB()}
     /* ---- base canvas: unrevealed dark pixels, glowing front, twinkles, waves ---- */
     if(!pre&&t>=TA-200)premeasure();
-    const LITE=true;   /* the per-frame pixel dissolve redrew a full-screen canvas every frame (the main source of intro lag on iPhone); the backdrop now fades on the GPU instead */
+    const LITE=false;   /* the per-frame pixel dissolve redrew a full-screen canvas every frame (the main source of intro lag on iPhone); the backdrop now fades on the GPU instead */
     if(!LITE)X.clearRect(0,0,W,HH);
     const rk=cl(pb/.8,0,1),front=pb>0?(rk<.5?2*rk*rk:1-Math.pow(-2*rk+2,2)/2)*1.06:-1;
     /* erase only the cells the wave front passed since the last frame */
@@ -991,7 +991,6 @@ function ixRun(preview){
   }
   function phaseB(){
     if(!el.isConnected)return;window.__ixB=performance.now()-t0;el.style.background='transparent';document.documentElement.classList.remove('ix-run');
-    try{cv.style.willChange='opacity';cv.animate([{opacity:1},{opacity:0}],{duration:620,easing:'cubic-bezier(.4,0,.2,1)',fill:'forwards'});fxc.style.display='none'}catch(e){}
     if(!pre)premeasure();
     /* glass panes morph exactly onto Home's cards (FLIP), then hand over */
     [[g1,P1,0,pre[0]],[g2,P2,5,pre[1]],[g3,P3,-6,pre[2]]].forEach(([g,src,rot,tx])=>{

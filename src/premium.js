@@ -5,7 +5,7 @@
 const DK=(sel,css)=>`:root[data-theme="dark"] ${sel}{${css}}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) ${sel}{${css}}}`;
 (document.body||document.head).insertAdjacentHTML('beforeend',`<style id="prem">
 /* ---- tokens: cooler, deeper dark theme ---- */
-${DK('','--surface:#0E0E0E;--surface2:#1A1A1A;--line:#262626;--muted:#A3A3A3;--ink2:#D9D9D9;--card-shadow:inset 0 1px 0 rgb(255 255 255 / .05);--pf1:#0E0E0E;--pf2:#0C0C0C;--pin:#1A1A1A;--pin2:#1C1C1C;--pedge:rgb(255 255 255 / .08);--pedge2:rgb(255 255 255 / .12)')}
+${DK('','--surface:#181818;--surface2:#252525;--line:#313131;--muted:#A3A3A3;--ink2:#D9D9D9;--card-shadow:inset 0 1px 0 rgb(255 255 255 / .05);--pf1:#1B1B1B;--pf2:#171717;--pin:#262626;--pin2:#2A2A2A;--pedge:rgb(255 255 255 / .10);--pedge2:rgb(255 255 255 / .14)')}
 /* ---- cards ---- */
 ${DK('#view .card-s,#view .habit,#view .tile,#view .stat,#view .hstat,#view .gcard','background:linear-gradient(180deg,var(--pf1),var(--pf2))!important;border:1px solid var(--pedge)!important;box-shadow:inset 0 1px 0 rgb(255 255 255 / .045)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important')}
 ${DK('#view .card-s :is(.card-s,.habit,.tile,.stat,.hstat,.tchip,.kb-card,.cd-i,.dl,.caf-b,.jd-r)','background:linear-gradient(180deg,var(--pin2),var(--pin))!important;border:1px solid var(--pedge2)!important;box-shadow:inset 0 1px 0 rgb(255 255 255 / .06)!important')}
@@ -13,7 +13,7 @@ ${DK('#view .sec .sec-h h2 em','text-shadow:none')}
 /* the old grey steps are gone: every Today card uses the same deep surface */
 #view .sec[data-shade]{--shd:var(--pf2)}
 /* habit + progress tiles: deep card, ring track darker, crisp label */
-${DK('#view .habit .hring','background:radial-gradient(closest-side,#0A0A0A 79%,transparent 80% 100%),conic-gradient(var(--accent) var(--p),#262626 0)')}
+${DK('#view .habit .hring','background:radial-gradient(closest-side,#121212 79%,transparent 80% 100%),conic-gradient(var(--accent) var(--p),#333333 0)')}
 ${DK('#view .habit small,#view .tile .cap','color:#AAAAAA')}
 /* ---- hero mini tiles (steps / sleep / due / spent): solid dark glass for contrast ---- */
 .hero .ts-grid>button{background:rgb(0 0 0 / .45)!important;border:1px solid rgb(255 255 255 / .12)!important;box-shadow:inset 0 1px 0 rgb(255 255 255 / .08)!important}
@@ -178,13 +178,17 @@ document.addEventListener('click',e=>{if(!e.target.closest('[data-cwall]'))retur
 /* the end-of-intro halo burst over every card read as white flashes: off */
 ixGlowAll=function(){};
 /* coming back to Life within 30 minutes never replays the intro (iOS sometimes reloads the app in the background) */
-try{const t=+localStorage.getItem('lifeHiddenAt')||0;if(t&&Date.now()-t<30*6e4)sessionStorage.setItem('lifeNoIntro','1')}catch(e){}
+
 document.addEventListener('visibilitychange',()=>{if(document.hidden)try{localStorage.setItem('lifeHiddenAt',String(Date.now()))}catch(e){}});
 addEventListener('pagehide',()=>{try{localStorage.setItem('lifeHiddenAt',String(Date.now()))}catch(e){}});
 
 /* reminder lists: decided in the HTML, not with :has() (iOS kept the old box after switching tabs) */
 const rmlFix=h=>h.replace(/<ul class="list card-s">((?:(?!<\/ul>)[\s\S])*?)<\/ul>/g,(m,inner)=>{const lis=inner.match(/<li\b[^>]*>/g)||[];return lis.length&&lis.every(t=>/class="row rmd/.test(t))?`<ul class="list rml">${inner}</ul>`:m});
-for(const fn of['viewToday','viewMind','viewPlan','viewWork']){try{const f=eval(fn);if(typeof f==='function')eval(`${fn}=function(){return rmlFix(f.apply(this,arguments))}`)}catch(e){}}
+/* no eval here: the app's security policy blocks it (that's why the box kept coming back on the phone) */
+{const f=viewToday;viewToday=function(){return rmlFix(f.apply(this,arguments))}}
+{const f=viewMind;viewMind=function(){return rmlFix(f.apply(this,arguments))}}
+{const f=viewPlan;viewPlan=function(){return rmlFix(f.apply(this,arguments))}}
+{const f=viewWork;viewWork=function(){return rmlFix(f.apply(this,arguments))}}
 (document.body||document.head).insertAdjacentHTML('beforeend',`<style id="rmfix2">
 ul.list.rml{display:grid;gap:10px;margin:0;padding:0;list-style:none;background:none;border:0;box-shadow:none}
 ul.rml>li.row.rmd{border-radius:22px!important;margin:0!important}

@@ -50,8 +50,9 @@ if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWo
   /* an update reload never replays the intro, and never interrupts the first seconds after opening (that is what made it play twice) */
   const rl=()=>{try{sessionStorage.setItem('lifeNoIntro','1')}catch(e){}location.reload()};
   const go=()=>{const a=document.activeElement;if(performance.now()<20000||document.getElementById('ix3')||document.querySelector('#wrap:not([hidden])')||document.getElementById('jvHud')||(a&&/INPUT|TEXTAREA/.test(a.tagName)))pend=true;else rl()};
-  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had)go();had=true});
-  document.addEventListener('visibilitychange',()=>{if(pend&&document.visibilityState==='visible'){pend=false;rl()}});
+  /* a new version never reloads the page you're looking at (that reload was the white flash + intro when coming back to the app);
+     it is saved by the service worker and used the next time Life starts from scratch */
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{had=true});
 }
 </script>
 </body>
