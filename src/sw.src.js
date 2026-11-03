@@ -1,6 +1,6 @@
 /* Offline cache for the app itself only. Your entries live in this phone's storage and are never put in this cache. */
 const VERSION='life-v169';
-const SHELL=['./','./index.html','./foods.txt','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./notes.js','./pf.js','./exercises.json','./pdfjs/pdf.min.mjs','./pdfjs/pdf.worker.min.mjs'];
+const SHELL=['./','./index.html','./app1.js','./app2.js','./foods.txt','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./notes.js','./pf.js','./exercises.json','./pdfjs/pdf.min.mjs','./pdfjs/pdf.worker.min.mjs'];
 const CDN=['https://images.unsplash.com/','https://cdn.jsdelivr.net/','https://fonts.googleapis.com/','https://fonts.gstatic.com/'];
 const CDN_MAX=80;
 /* install with FRESH copies (cache:'reload' skips the phone's HTTP cache, which could hold the previous version's page) */

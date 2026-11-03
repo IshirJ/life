@@ -1116,8 +1116,10 @@ const today=()=>iso(new Date());
 const addDays=n=>{const d=new Date();d.setDate(d.getDate()+n);return iso(d)};
 const dayDiff=s=>Math.round((new Date(s+'T00:00')-new Date(today()+'T00:00'))/864e5);
 const wdOf=s=>DAYS[(new Date(s+'T00:00').getDay()+6)%7];
-const fmtDate=s=>s?new Date(s+'T00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'}):'';
-const fmtLong=s=>s?new Date(s+'T00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'}):'';
+/* date labels are formatted thousands of times per screen: one shared formatter + a cache instead of toLocaleDateString each time */
+const _FD=new Intl.DateTimeFormat(undefined,{month:'short',day:'numeric'}),_FL=new Intl.DateTimeFormat(undefined,{weekday:'short',month:'short',day:'numeric'}),_FDC=new Map(),_FLC=new Map();
+const fmtDate=s=>{if(!s)return'';let v=_FDC.get(s);if(v===undefined){v=_FD.format(new Date(s+'T00:00'));if(_FDC.size>2000)_FDC.clear();_FDC.set(s,v)}return v};
+const fmtLong=s=>{if(!s)return'';let v=_FLC.get(s);if(v===undefined){v=_FL.format(new Date(s+'T00:00'));if(_FLC.size>2000)_FLC.clear();_FLC.set(s,v)}return v};
 const C24=()=>{try{return!!db.settings.clock24}catch(e){return false}};
 const fmtTime=t=>{if(!t)return'';const[h,m]=t.split(':').map(Number);return C24()?`${pad(h)}:${pad(m)}`:`${(h%12)||12}:${pad(m)}`};
 const ampm=t=>t&&!C24()?(Number(t.split(':')[0])<12?'AM':'PM'):'';

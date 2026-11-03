@@ -73,7 +73,17 @@ def _rad(m):
     v='var(--r-xs)' if n<=8 else 'var(--r-s)' if n<=12 else 'var(--r-m)' if n<=18 else 'var(--r-l)' if n<=24 else 'var(--r-xl)'
     return 'border-radius:'+v+m.group(2)
 body=re.sub(r'border-radius:(\d+)px(\s*[;}"!])',_rad,body)
-open('dist/index.html','w').write((head+body+tail).replace('__APPVER__',str(nv)))
+html=(head+body+tail).replace('__APPVER__',str(nv))
+# the two big app scripts load as deferred files: the page (dark cover + layout) paints first instead of
+# iOS showing a white web view while ~900 KB of inline script is parsed and run
+_parts=[];_out=[];_pos=0;_n=0
+for _m in re.finditer(r'<script>(.*?)</script>',html,flags=re.S):
+    if len(_m.group(1))>50000:
+        _n+=1;_name=f'app{_n}.js'
+        open('dist/'+_name,'w').write(_m.group(1))
+        _out.append(html[_pos:_m.start()]+f'<script defer src="{_name}?v={nv}"></script>');_pos=_m.end()
+_out.append(html[_pos:]);html=''.join(_out)
+open('dist/index.html','w').write(html)
 shutil.copy('foods.txt','dist/foods.txt')
 shutil.copy('exercises.json','dist/exercises.json')
 shutil.copy('notes.js','dist/notes.js')

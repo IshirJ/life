@@ -19,7 +19,8 @@ ${DK('#view .habit small,#view .tile .cap','color:#AAAAAA')}
 .hero .ts-grid>button{background:rgb(0 0 0 / .45)!important;border:1px solid rgb(255 255 255 / .12)!important;box-shadow:inset 0 1px 0 rgb(255 255 255 / .08)!important}
 .hero .ts-grid>button b{color:#F6F3EC!important}
 .hero .ts-grid>button small{filter:brightness(1.25) saturate(1.1);font-weight:700}
-.hero .ts-leg>button{background:rgb(0 0 0 / .32)!important;border-color:rgb(255 255 255 / .10)!important}
+.hero .ts-leg>button{background:rgb(0 0 0 / .32)!important;border:1px solid rgb(255 255 255 / .10)!important;border-radius:14px!important;padding:8px 10px 9px!important;overflow:hidden}
+.hero .ts-leg>button .tb{border-radius:3px;overflow:hidden}
 
 /* ---- reminders: each its own card; badge · title + meta · check ---- */
 
@@ -196,3 +197,7 @@ ul.rml>li.row.rmd .rm-b{border-radius:10px}
 ul.list.card-s>li.row.rmd{display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:12px}
 ul.list.card-s>li.row.rmd .rm-b{border-radius:12px}
 </style>`);
+/* debug aid (off unless localStorage.lifeDbgRender=1): records who calls render and how long it takes */
+try{if(localStorage.getItem('lifeDbgRender')==='1'){window.__rc=[];const _rD=render;render=function(){const t=performance.now(),r=_rD.apply(this,arguments);window.__rc.push([Math.round(t),Math.round(performance.now()-t),state.tab,(new Error().stack||'').split('\n').slice(2,6).map(s=>s.trim().replace(/^at /,'').replace(/\(.*?([a-z0-9]+\.js)[^:]*:(\d+):\d+\)/,'@$1:$2')).join(' < ')]);return r}}}catch(e){}
+/* while the intro covers the screen, nothing underneath is painted (Home still lays out so the panes can land on it) */
+(document.body||document.head).insertAdjacentHTML('beforeend',`<style id="ixhide">html.ix-run #scroller,html.ix-run #bgcurve,html.ix-run #bgGlow,html.ix-run #flora,html.ix-run .top{visibility:hidden!important}</style>`);
