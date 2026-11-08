@@ -1,8 +1,8 @@
 import re,shutil
 s=open('index.html').read()
-lines=s.split('\n',4)
-headbits='\n'.join(l for l in lines[:4] if l.startswith('<'))
-body=lines[4]
+lines=s.split('\n',5)
+headbits='\n'.join(l for l in lines[:5] if l.startswith('<'))
+body=lines[5]
 # scripts from the CDN are pinned to the exact files the app loads (motion, and ZXing for the barcode scanner)
 SCRIPT_CDN="https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"
 CONNECT_OTHER="https://world.openfoodfacts.org https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com"
@@ -11,12 +11,16 @@ csp=("default-src 'self'; script-src 'self' 'unsafe-inline' "+SCRIPT_CDN+"; styl
      "connect-src 'self' https://*.workers.dev wss://*.workers.dev "+CONNECT_OTHER+"; "
      "worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'")
 connect_other=CONNECT_OTHER
+# the Studio interface: one stylesheet keyed off html[data-skin="studio"], inlined so the first paint is already in the right look
+skincss=open('skin.css').read().replace('@H','html:root[data-skin="studio"][data-skin] :is(#top,#view)').replace('@S','html:root[data-skin="studio"]')
 head=f'''<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="color-scheme" content="dark">
 <style>html,body{{background:#080A09}}html:not(.booted),html:not(.booted) body{{background:#080A09!important}}</style>
+<script>try{{if(localStorage.getItem('lifeSkin')==='studio')document.documentElement.dataset.skin='studio'}}catch(e){{}}</script>
+<style id="skin">{skincss}</style>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="{csp}">
 <script>/* once a server is connected, a second policy narrows connect-src from any *.workers.dev to exactly that server
@@ -64,7 +68,7 @@ except FileNotFoundError: prev=''
 m=re.search(r"life-v(\d+)",prev) or re.search(r"life-v(\d+)",open('sw.src.js').read())
 nv=int(m.group(1))+1
 sw=re.sub(r"life-v\d+",f"life-v{nv}",open('sw.src.js').read(),count=1)
-body=body.replace('/*@@EXT@@*/','\n'.join(open(f).read() for f in ['secure.js','ext.js','more.js','ui2.js','ui3.js','icons.js','ui4.js','feat.js','grades26.js','journey.js','premium.js']))
+body=body.replace('/*@@EXT@@*/','\n'.join(open(f).read() for f in ['secure.js','ext.js','more.js','ui2.js','ui3.js','icons.js','ui4.js','feat.js','grades26.js','journey.js','premium.js','skin.js']))
 # one radius scale for the whole app: every single border-radius snaps to 8 / 12 / 16 / 22 / 28
 def _rad(m):
     n=int(m.group(1))

@@ -4,6 +4,290 @@
 <meta charset="utf-8">
 <meta name="color-scheme" content="dark">
 <style>html,body{background:#080A09}html:not(.booted),html:not(.booted) body{background:#080A09!important}</style>
+<script>try{if(localStorage.getItem('lifeSkin')==='studio')document.documentElement.dataset.skin='studio'}catch(e){}</script>
+<style id="skin">/* ============================================================================
+   STUDIO — the second look of Life. Pure presentation: every element, id, handler
+   and view stays exactly as it is; this sheet only re-dresses them.
+   `html:root[data-skin="studio"]` is expanded by build.py to  html:root[data-skin="studio"]  so every rule
+   here outranks the classic sheet and premium.js (which both key off :root).
+   Classic is untouched: remove data-skin and nothing in here applies.
+   ========================================================================== */
+
+/* ---------- tokens: graphite + brass ---------- */
+html:root[data-skin="studio"]{
+  --bg:#141518; --surface:#1C1E22; --surface2:#262A30; --line:rgb(255 255 255 / .10); --ink:#F2F1EC; --ink2:#D2D1CB; --muted:#8F9197;
+  --accent:#D7B46A; --accent-ink:#17130A; --sage:#1F2227; --sage-ink:#F2F1EC; --sage-soft:#2A2E35;
+  --bar:#141518; --bar-ink:#8F9197; --late:#F08A7A; --soon:#E8B869; --good:#9CD8A8;
+  --hi:rgb(255 255 255 / .05); --shadow:none; --card-shadow:none;
+  --pf1:#1C1E22; --pf2:#1A1C20; --pin:#262A30; --pin2:#292D34; --pedge:rgb(255 255 255 / .10); --pedge2:rgb(255 255 255 / .14);
+  --sh0:#141518; --sh1:#16181B; --sh2:#18191D; --sh3:#1A1B1F;
+  --brass:#D7B46A; --brass-2:#B8933F; --brass-soft:rgb(215 180 106 / .14);
+  --serif:'Syne','Manrope',ui-sans-serif,system-ui,sans-serif;
+  --ui:'Manrope','Geist',ui-sans-serif,system-ui,-apple-system,sans-serif;
+  --mono:'JetBrains Mono','Space Mono',ui-monospace,Menlo,monospace;
+  --dot:'Bricolage Grotesque','Manrope',ui-sans-serif,sans-serif;
+  --hero1:#202329; --hero2:#1A1C20;
+  --r-xl:18px; --r-l:14px; --r-m:11px; --r-s:8px; --r-xs:6px;
+  --glass-blur:0; --glass-tint:100;
+  color-scheme:dark;
+}
+/* paper variant: the same drawing on light stock */
+html:root[data-skin="studio"][data-theme="light"]{
+  --bg:#ECEAE4; --surface:#F7F6F2; --surface2:#E1DFD8; --line:rgb(0 0 0 / .11); --ink:#1A1A1C; --ink2:#3C3C40; --muted:#6E6F75;
+  --accent:#A8832B; --accent-ink:#FFFFFF; --sage:#F7F6F2; --sage-ink:#1A1A1C; --sage-soft:#E1DFD8;
+  --bar:#ECEAE4; --bar-ink:#6E6F75; --late:#B8341F; --soon:#8E5F0C; --good:#2F7A4C;
+  --hi:rgb(255 255 255 / .6);
+  --pf1:#F7F6F2; --pf2:#F3F2ED; --pin:#E6E4DD; --pin2:#EAE8E2; --pedge:rgb(0 0 0 / .10); --pedge2:rgb(0 0 0 / .14);
+  --sh0:#ECEAE4; --sh1:#EAE8E2; --sh2:#E8E6E0; --sh3:#E6E4DE;
+  --brass:#A8832B; --brass-2:#8A6A1E; --brass-soft:rgb(168 131 43 / .14);
+  --hero1:#FFFFFF; --hero2:#F5F4EF;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:light){html:root[data-skin="studio"]:not([data-theme="dark"]){
+  --bg:#ECEAE4; --surface:#F7F6F2; --surface2:#E1DFD8; --line:rgb(0 0 0 / .11); --ink:#1A1A1C; --ink2:#3C3C40; --muted:#6E6F75;
+  --accent:#A8832B; --accent-ink:#FFFFFF; --sage:#F7F6F2; --sage-ink:#1A1A1C; --sage-soft:#E1DFD8;
+  --bar:#ECEAE4; --bar-ink:#6E6F75; --late:#B8341F; --soon:#8E5F0C; --good:#2F7A4C;
+  --hi:rgb(255 255 255 / .6);
+  --pf1:#F7F6F2; --pf2:#F3F2ED; --pin:#E6E4DD; --pin2:#EAE8E2; --pedge:rgb(0 0 0 / .10); --pedge2:rgb(0 0 0 / .14);
+  --sh0:#ECEAE4; --sh1:#EAE8E2; --sh2:#E8E6E0; --sh3:#E6E4DE;
+  --brass:#A8832B; --brass-2:#8A6A1E; --brass-soft:rgb(168 131 43 / .14);
+  --hero1:#FFFFFF; --hero2:#F5F4EF;
+  color-scheme:light;
+}}
+/* the classic dark/light overrides in premium.js re-set --surface etc. for dark; Studio's values win on specificity
+   whatever the theme, but a few of its card rules are !important — they read --pf1/--pf2/--pin, so the tokens above carry them. */
+
+/* ---------- first paint: never the classic near-black, never white ---------- */
+html:root[data-skin="studio"]:not(.booted),html:root[data-skin="studio"]:not(.booted) body,html:root[data-skin="studio"],html:root[data-skin="studio"] body{background:var(--bg)!important}
+html:root[data-skin="studio"] #boot0{background:var(--bg)!important;color:var(--bg)!important}
+html:root[data-skin="studio"] #splashBg{background:var(--bg)!important}
+html:root[data-skin="studio"] #ix3.ix5{background:var(--bg)!important}
+
+/* ---------- backdrop: a drafting grid, a vignette, one slow brass glow ---------- */
+html:root[data-skin="studio"] #bgcurve{inset:0;width:100%;height:100%;opacity:1!important;transform:none!important;
+  background:
+    radial-gradient(120% 90% at 50% 110%,rgb(0 0 0 / .35),transparent 60%),
+    radial-gradient(rgb(255 255 255 / .075) .8px,transparent .9px) 0 0/22px 22px,
+    var(--bg)}
+html:root[data-skin="studio"][data-theme="light"] #bgcurve{background:radial-gradient(120% 90% at 50% 110%,rgb(0 0 0 / .06),transparent 60%),radial-gradient(rgb(0 0 0 / .09) .8px,transparent .9px) 0 0/22px 22px,var(--bg)}
+@media (prefers-color-scheme:light){html:root[data-skin="studio"]:not([data-theme="dark"]) #bgcurve{background:radial-gradient(120% 90% at 50% 110%,rgb(0 0 0 / .06),transparent 60%),radial-gradient(rgb(0 0 0 / .09) .8px,transparent .9px) 0 0/22px 22px,var(--bg)}}
+html:root[data-skin="studio"] #bgcurve canvas{display:none}
+html:root[data-skin="studio"] #bgcurve::before{content:"";position:absolute;left:-20%;top:-30%;width:90%;height:70%;border-radius:50%;pointer-events:none;
+  background:radial-gradient(closest-side,var(--brass-soft),transparent 72%);will-change:transform;animation:skDrift 26s ease-in-out infinite alternate}
+@keyframes skDrift{from{transform:translate(0,0)}to{transform:translate(34%,24%)}}
+html:root[data-skin="studio"][data-motion="off"] #bgcurve::before{animation:none}
+html:root[data-skin="studio"] #flora,html:root[data-skin="studio"] #mesh,html:root[data-skin="studio"] #bgGlow{display:none!important}
+html:root[data-skin="studio"] body::before{background:var(--bg)}
+
+/* ---------- type ---------- */
+html:root[data-skin="studio"] body{font:500 15px/1.45 var(--ui);letter-spacing:0}
+html:root[data-skin="studio"] .cap{font:500 10.5px/1.3 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+html:root[data-skin="studio"] h1,html:root[data-skin="studio"] h2,html:root[data-skin="studio"] h3,html:root[data-skin="studio"] h4,html:root[data-skin="studio"] .card h4{font-family:var(--serif);letter-spacing:-.02em}
+/* one type system whatever the per-area headline setting says (those rules key off :root[data-head][data-area] #view) */
+html:root[data-skin="studio"][data-skin] :is(#top,#view){--serif:'Syne','Manrope',ui-sans-serif,sans-serif;--areaf:'Syne','Manrope',ui-sans-serif,sans-serif}
+html:root[data-skin="studio"][data-skin] :is(#top,#view) .hello h1,html:root[data-skin="studio"][data-skin] :is(#top,#view) h1{font:800 clamp(21px,6.2vw,26px)/1.08 var(--serif);letter-spacing:-.03em;text-transform:uppercase;margin-top:4px}
+html:root[data-skin="studio"][data-skin] :is(#top,#view) .hello h1 em,html:root[data-skin="studio"][data-skin] :is(#top,#view) h1 em{font-style:normal;color:var(--brass);margin-left:0}
+html:root[data-skin="studio"] #top .hello .cap{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html:root[data-skin="studio"] .hello .cap{color:var(--brass)}
+html:root[data-skin="studio"] h3{font:800 22px/1.15 var(--serif);letter-spacing:-.025em}
+html:root[data-skin="studio"] h3 em,html:root[data-skin="studio"] .sh-h h3 em,html:root[data-skin="studio"] #sheetBody h3 em,html:root[data-skin="studio"] #sheetBody h3 i{font-style:normal;color:var(--brass)}
+html:root[data-skin="studio"] .card h4{font:700 17px/1.2 var(--serif)}
+html:root[data-skin="studio"] .hero .lead,html:root[data-skin="studio"] .lead{font:600 16px/1.35 var(--ui);font-style:normal}
+html:root[data-skin="studio"] .hero .lead b{font-weight:800}
+html:root[data-skin="studio"] .num,html:root[data-skin="studio"] .meta,html:root[data-skin="studio"] .delta,html:root[data-skin="studio"] .tag,html:root[data-skin="studio"] .goal{font-variant-numeric:tabular-nums}
+
+/* section headers: a mono label with a brass index mark and a hairline underneath */
+html:root[data-skin="studio"] .sec{margin-top:26px}
+html:root[data-skin="studio"] .sec-h{min-height:32px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+html:root[data-skin="studio"] h2,html:root[data-skin="studio"][data-skin] :is(#top,#view) h2{font:500 11.5px/1.3 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);display:flex;align-items:center;gap:10px;text-wrap:nowrap}
+html:root[data-skin="studio"] h2::before,html:root[data-skin="studio"][data-skin] :is(#top,#view) h2::before{content:"";width:6px;height:6px;background:var(--brass);flex:none}
+html:root[data-skin="studio"] h2 em,html:root[data-skin="studio"][data-skin] :is(#top,#view) h2 em{font-style:normal;color:var(--brass)!important}
+html:root[data-skin="studio"][data-skin] :is(#top,#view) .hart i,html:root[data-skin="studio"][data-skin] :is(#top,#view) .hart::after{display:none}
+html:root[data-skin="studio"][data-skin] :is(#top,#view) .hart .hw{font:800 32px/1 var(--serif);max-width:62%;letter-spacing:-.05em;text-transform:uppercase;animation:none;opacity:1;color:transparent;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--brass) 26%,transparent),color-mix(in srgb,var(--brass) 5%,transparent));-webkit-background-clip:text;background-clip:text}
+html:root[data-skin="studio"] .hero>.pxw,html:root[data-skin="studio"] .hero>.pxd{display:none}
+html:root[data-skin="studio"] #tabs button.on::after{display:none}
+html:root[data-skin="studio"] .empty svg.pxs{filter:none}
+html:root[data-skin="studio"] .sec-h h2::before{display:block;width:6px;height:6px;margin:0;box-shadow:none;background:var(--brass);opacity:1;vertical-align:0}
+html:root[data-skin="studio"] .link{font:600 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);background:transparent;border:1px solid var(--line);border-radius:var(--r-s);height:30px;padding:0 10px}
+html:root[data-skin="studio"] .link svg.i{width:14px;height:14px}
+
+/* ---------- top bar ---------- */
+html:root[data-skin="studio"] .top{border-radius:0;margin:0 -16px 4px;padding:12px 16px 10px;gap:9px}
+html:root[data-skin="studio"] .top.float{background:color-mix(in srgb,var(--bg) 90%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 1px 0 var(--line)}
+html:root[data-skin="studio"] .av{width:44px;height:44px;border-radius:50%;background:var(--surface);color:var(--brass);font:800 15px var(--serif);letter-spacing:-.02em;box-shadow:inset 0 0 0 1px var(--line)}
+html:root[data-skin="studio"] .avr g{filter:none}
+html:root[data-skin="studio"] .avr .r0 circle{stroke:var(--brass)}html:root[data-skin="studio"] .avr .r1 circle{stroke:color-mix(in srgb,var(--ink) 35%,transparent)}html:root[data-skin="studio"] .avr .r2 circle{stroke:var(--brass-2)}
+html:root[data-skin="studio"] .ib{width:40px;height:40px;border-radius:var(--r-s);background:transparent;border:1px solid var(--line);box-shadow:none}
+html:root[data-skin="studio"] .ib svg.i{width:19px;height:19px}
+html:root[data-skin="studio"] .badge{border-radius:var(--r-xs);background:var(--brass);color:var(--accent-ink);font:800 10.5px/18px var(--mono);height:18px;min-width:18px;top:-5px;right:-5px;box-shadow:0 0 0 2px var(--bg)}
+
+/* ---------- the big card ---------- */
+html:root[data-skin="studio"] .hero{background:linear-gradient(180deg,var(--hero1),var(--hero2));color:var(--ink);border-radius:var(--r-xl);border:1px solid var(--pedge2);box-shadow:none;padding:22px 20px 20px}
+html:root[data-skin="studio"] .hero{--hc:var(--brass)}
+html:root[data-skin="studio"] .hero .pill.light,html:root[data-skin="studio"] .hero[class*=" h-"]:not(.h-today) .pill.light{background:var(--brass)!important;color:var(--accent-ink)!important}
+html:root[data-skin="studio"] .hero .big,html:root[data-skin="studio"] .hero[class*=" h-"] .big{font:800 58px/1 var(--dot);letter-spacing:-.045em;font-style:normal}
+html:root[data-skin="studio"] .hero[class*=" h-"]{background:linear-gradient(180deg,var(--hero1),var(--hero2));color:var(--ink)}
+html:root[data-skin="studio"] .hero::before{background:none;inset:0 auto auto 20px;top:0;width:44px;height:3px;border-radius:0 0 2px 2px;background:var(--brass)}
+html:root[data-skin="studio"] .hero-art{display:none}
+html:root[data-skin="studio"] .hero .cap{color:var(--muted)}
+html:root[data-skin="studio"] .hero .big{font:800 58px/1 var(--dot);letter-spacing:-.045em;margin:12px 0 6px}
+html:root[data-skin="studio"] .hero .ts-dial b,html:root[data-skin="studio"] .ts-c b,html:root[data-skin="studio"] .wnum,html:root[data-skin="studio"] .buseta b,html:root[data-skin="studio"] .ts-grid b{font-family:var(--dot);letter-spacing:-.03em}
+html:root[data-skin="studio"] .ts-dial .tk{stroke:color-mix(in srgb,var(--ink) 12%,transparent)}
+html:root[data-skin="studio"] .ts-dial .ticks line{stroke:color-mix(in srgb,var(--ink) 22%,transparent)}
+html:root[data-skin="studio"] .hero .ts-grid>button,html:root[data-skin="studio"] .hero .ts-grid>div{background:var(--surface2)!important;border:1px solid var(--line)!important;box-shadow:none!important;-webkit-backdrop-filter:none;backdrop-filter:none;border-radius:var(--r-m)}
+html:root[data-skin="studio"] .hero .ts-grid>button b{color:var(--ink)!important}
+html:root[data-skin="studio"] .hero .ts-leg>button{border-radius:var(--r-s)!important;background:var(--surface2)!important;border:1px solid var(--line)!important}
+html:root[data-skin="studio"] .hero .ts-grid>button small{filter:none}
+html:root[data-skin="studio"][data-theme="light"] .hero .ts-grid>button small{color:var(--ink2)}
+@media (prefers-color-scheme:light){html:root[data-skin="studio"]:not([data-theme="dark"]) .hero .ts-grid>button small{color:var(--ink2)}}
+html:root[data-skin="studio"] .ts-leg .tb{background:color-mix(in srgb,var(--ink) 10%,transparent);border-radius:1px;height:3px}
+html:root[data-skin="studio"] .ts-leg .tb i{border-radius:1px}
+html:root[data-skin="studio"] .ts-pill{background:var(--surface2);border:1px solid var(--line);border-radius:var(--r-s);font:600 12px var(--ui)}
+html:root[data-skin="studio"] .ts-verdict{color:var(--good)}
+html:root[data-skin="studio"] .segs{gap:4px}
+html:root[data-skin="studio"] .segs i{height:6px;border-radius:1px;background:color-mix(in srgb,var(--ink) 10%,transparent)}
+html:root[data-skin="studio"] .segs i.on{background:var(--brass)}
+html:root[data-skin="studio"] .macros b{font:700 20px var(--dot);letter-spacing:-.02em}
+html:root[data-skin="studio"] .hero-stats b{font:800 22px var(--dot);letter-spacing:-.03em}
+
+/* pills and chips: rectangles with a hairline, brass when chosen */
+html:root[data-skin="studio"] .pill{border-radius:var(--r-m);height:46px;font:700 14px var(--ui)}
+html:root[data-skin="studio"] .pill.light{background:var(--brass);color:var(--accent-ink);box-shadow:none}
+html:root[data-skin="studio"] .pill.glassy{background:var(--surface2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+html:root[data-skin="studio"] .chip{border-radius:var(--r-s);height:40px;padding:0 14px 0 7px;background:transparent;border:1px solid var(--line);box-shadow:none;font:600 13px var(--ui)}
+html:root[data-skin="studio"] .chip.on{background:var(--brass);border-color:var(--brass);color:var(--accent-ink)}
+html:root[data-skin="studio"] .chip .ico{border-radius:var(--r-xs)}
+
+/* ---------- cards, rows, lists ---------- */
+html:root[data-skin="studio"] .card-s,html:root[data-skin="studio"] #view .card-s,html:root[data-skin="studio"] #view .habit,html:root[data-skin="studio"] #view .tile,html:root[data-skin="studio"] #view .stat,html:root[data-skin="studio"] #view .hstat,html:root[data-skin="studio"] #view .gcard,html:root[data-skin="studio"] #view .sec[data-shade] :is(.card-s,.habit,.stat,.ts-tile,.hstat,.tchip,.il-spark){
+  background:var(--surface)!important;border:1px solid var(--line)!important;box-shadow:none!important}
+html:root[data-skin="studio"] #view .card-s :is(.card-s,.habit,.tile,.stat,.ts-tile,.hstat,.tchip),html:root[data-skin="studio"] #view .sec[data-shade] .card-s :is(.card-s,.habit,.stat,.ts-tile,.hstat,.tchip){background:var(--surface2)!important;border:1px solid var(--pedge2)!important;border-radius:var(--r-m)}
+html:root[data-skin="studio"] .banner{border-radius:var(--r-m);background:var(--surface);border:1px solid var(--line)}
+html:root[data-skin="studio"] .row{min-height:60px;padding:8px 14px}
+html:root[data-skin="studio"] .row+.row{border-top:1px solid var(--line)}
+html:root[data-skin="studio"] .rt{font:700 14.5px/1.3 var(--ui)}
+html:root[data-skin="studio"] .rs{font:500 12.5px var(--ui)}
+html:root[data-skin="studio"] .chk i{width:22px;height:22px;border-radius:var(--r-xs);border:1.5px solid color-mix(in srgb,var(--ink) 30%,transparent)}
+html:root[data-skin="studio"] .chk.on i{background:var(--brass);border-color:var(--brass);color:var(--accent-ink)}
+html:root[data-skin="studio"] .meta,html:root[data-skin="studio"] .delta,html:root[data-skin="studio"] .tag{border-radius:var(--r-xs);font:600 11px var(--mono);background:var(--surface2);color:var(--ink2);padding:5px 8px}
+html:root[data-skin="studio"] .meta.late{color:var(--late)}html:root[data-skin="studio"] .meta.soon{color:var(--soon)}
+html:root[data-skin="studio"] .empty{border:1px dashed var(--line);border-radius:var(--r-m)}
+html:root[data-skin="studio"] .list{border-radius:var(--r-l)}
+html:root[data-skin="studio"] .tiles{gap:8px}
+html:root[data-skin="studio"] .tile{border-radius:var(--r-l);padding:14px 12px;gap:10px}
+html:root[data-skin="studio"] .tile b{font:800 20px var(--dot);letter-spacing:-.03em}
+html:root[data-skin="studio"] .stat .v{font:800 26px/1.1 var(--dot);letter-spacing:-.03em}
+html:root[data-skin="studio"] .wcard{border-radius:var(--r-l)}
+html:root[data-skin="studio"] .wnum{font:800 46px/1 var(--dot);letter-spacing:-.04em}
+html:root[data-skin="studio"] .goal{font:500 11px var(--mono)}
+/* the kind icons: flat tint of the kind's own colour, no gloss */
+html:root[data-skin="studio"] .ico{border-radius:var(--r-s);background:color-mix(in srgb,var(--c2) 20%,var(--surface2));color:color-mix(in srgb,var(--c1) 85%,#fff);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c2) 35%,transparent)}
+html:root[data-skin="studio"] .ico::before{display:none}
+html:root[data-skin="studio"][data-icons="mono"] .ico{background:var(--surface2);color:var(--ink2);box-shadow:inset 0 0 0 1px var(--line)}
+html:root[data-skin="studio"] .tcard{border-radius:var(--r-m)}
+html:root[data-skin="studio"] .tli .tm{font-family:var(--mono)}
+html:root[data-skin="studio"] .blk{border-radius:var(--r-xs);box-shadow:none}
+html:root[data-skin="studio"] .folder{border-radius:var(--r-m)}
+html:root[data-skin="studio"] .folder.on{background:var(--brass);color:var(--accent-ink);border-color:var(--brass)}
+html:root[data-skin="studio"] .folder.on .cap{color:color-mix(in srgb,var(--accent-ink) 70%,transparent)}
+html:root[data-skin="studio"] .day{border-radius:var(--r-s)}
+html:root[data-skin="studio"] .day.on{background:var(--brass);color:var(--accent-ink);border-color:var(--brass)}
+html:root[data-skin="studio"] .day.on .cap{color:color-mix(in srgb,var(--accent-ink) 70%,transparent)}
+html:root[data-skin="studio"] .heat{border-radius:var(--r-l)}
+html:root[data-skin="studio"] .hm button{border-radius:2px}
+html:root[data-skin="studio"] .hm button.now{box-shadow:inset 0 0 0 1.5px var(--brass)}
+html:root[data-skin="studio"] .tip{border-radius:var(--r-s);background:var(--ink);color:var(--bg);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none;font:600 12.5px var(--ui)}
+html:root[data-skin="studio"] .seg2{border-radius:var(--r-m);background:var(--surface2);padding:3px;gap:3px}
+html:root[data-skin="studio"] .seg2 button{border-radius:var(--r-s);height:34px;font:700 12.5px var(--ui)}
+html:root[data-skin="studio"] .seg2 button[aria-pressed="true"]{background:var(--surface);color:var(--brass);box-shadow:inset 0 0 0 1px var(--line)}
+html:root[data-skin="studio"][data-theme="light"] .seg2 button[aria-pressed="true"]{background:#fff}
+html:root[data-skin="studio"] .imp-tag{border-radius:var(--r-xs);font-family:var(--mono)}
+html:root[data-skin="studio"] ul.rml>li.row.rmd{border-radius:var(--r-l)}
+html:root[data-skin="studio"] .rm-b{border-radius:var(--r-s)}
+html:root[data-skin="studio"] .dl,html:root[data-skin="studio"] .dls .dl{border-radius:var(--r-l)}
+html:root[data-skin="studio"] .dl-bar{border-radius:1px}
+html:root[data-skin="studio"] .gcat{font-family:var(--mono)}
+
+/* ---------- sheets, forms, buttons ---------- */
+html:root[data-skin="studio"] .wrap .scrim{background:rgb(0 0 0 / .55)}
+html:root[data-skin="studio"] .sheet{background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 -1px 0 var(--line),0 24px 60px rgb(0 0 0 / .35);padding:14px 18px 20px}
+html:root[data-skin="studio"] .m-bottom{border-radius:var(--r-xl) var(--r-xl) 0 0}
+html:root[data-skin="studio"] .m-top{border-radius:var(--r-xl)}
+html:root[data-skin="studio"] .m-center{border-radius:var(--r-xl)}
+html:root[data-skin="studio"] .grab{width:36px;height:4px;border-radius:2px;background:color-mix(in srgb,var(--ink) 22%,transparent)}
+html:root[data-skin="studio"] .x{border-radius:var(--r-s);background:var(--surface2);box-shadow:inset 0 0 0 1px var(--line)}
+html:root[data-skin="studio"] .fld>span,html:root[data-skin="studio"] .fld legend{font:500 10.5px var(--mono);letter-spacing:.12em}
+html:root[data-skin="studio"] input,html:root[data-skin="studio"] textarea{border-radius:var(--r-m);background:var(--surface2);border:1px solid var(--line);box-shadow:none;font:600 16px var(--ui)}
+html:root[data-skin="studio"] input:focus,html:root[data-skin="studio"] textarea:focus{border-color:var(--brass);box-shadow:0 0 0 3px var(--brass-soft)}
+html:root[data-skin="studio"] .primary{background:var(--brass);color:var(--accent-ink);border-radius:var(--r-m);height:52px;font:800 15px var(--ui);box-shadow:none}
+html:root[data-skin="studio"] .secondary{background:var(--surface2);color:var(--ink);border-radius:var(--r-m);height:52px;font:700 15px var(--ui);box-shadow:inset 0 0 0 1px var(--line)}
+html:root[data-skin="studio"] .danger{border-radius:var(--r-m)}
+html:root[data-skin="studio"] .navrow{border-radius:var(--r-m)}
+html:root[data-skin="studio"] .set-grp{font:500 10.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--brass)}
+html:root[data-skin="studio"] .sw{border-radius:var(--r-s)}
+html:root[data-skin="studio"] .hint{font:500 13px var(--ui);color:var(--muted)}
+html:root[data-skin="studio"] .qbar{border-radius:var(--r-m)}
+html:root[data-skin="studio"] .qbar input{border-radius:var(--r-s)}
+html:root[data-skin="studio"] .ghost{border-radius:var(--r-m)}
+
+/* ---------- dock: a full-width bar with a hairline, the active tab underlined in brass ---------- */
+html:root[data-skin="studio"] .dock{padding:0 0 max(8px,env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--bg) 93%,transparent);bottom:0}
+html:root[data-skin="studio"] .dock::before{-webkit-mask:none;mask:none;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px)}
+html:root[data-skin="studio"] .dock-in{max-width:none;gap:0;align-items:stretch;border-top:1px solid var(--line);padding:0 max(10px,env(safe-area-inset-left,0px)) 0 max(10px,env(safe-area-inset-right,0px))}
+html:root[data-skin="studio"] .tabs{border-radius:0;padding:0;background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;gap:0}
+html:root[data-skin="studio"] .tabs .ind{top:auto;bottom:0;height:2px;border-radius:1px;background:var(--brass);box-shadow:none;left:0}
+html:root[data-skin="studio"] .tabs .ind.lens{background:var(--brass);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;height:2px;top:auto;bottom:0}
+html:root[data-skin="studio"] .tabs .ind.lens::before,html:root[data-skin="studio"] .tabs .ind.lens::after,html:root[data-skin="studio"] .tabs .ind.lens .lmag{display:none}
+html:root[data-skin="studio"] .tabs button{height:60px;border-radius:0;gap:4px;font:600 9.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--bar-ink);transition:color .2s}
+html:root[data-skin="studio"] .tabs button svg.i{width:21px;height:21px;stroke-width:1.9}
+html:root[data-skin="studio"] .tabs button.on,html:root[data-skin="studio"] .tabs.lensing button.on,html:root[data-skin="studio"] .tabs button.under{color:var(--brass)!important;transform:none}
+html:root[data-skin="studio"] .tabs.lensing button{color:var(--bar-ink)}
+html:root[data-skin="studio"] .fab{width:48px;height:48px;border-radius:var(--r-m);margin:6px 0 0 8px;background:var(--brass);color:var(--accent-ink);box-shadow:none;transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+html:root[data-skin="studio"] .fab:active{transform:scale(.92) rotate(90deg)}
+html:root[data-skin="studio"] .fab svg.i{width:24px;height:24px;stroke-width:2.4}
+html:root[data-skin="studio"] .nbrail{border-radius:var(--r-m)}
+html:root[data-skin="studio"]:not([data-lay="port"]) .dock{background:transparent}
+html:root[data-skin="studio"]:not([data-lay="port"]) .dock-in{border-top:0}
+html:root[data-skin="studio"]:not([data-lay="port"]) .tabs{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-l);padding:6px}
+html:root[data-skin="studio"]:not([data-lay="port"]) .tabs .ind{height:100%;top:0;bottom:auto;border-radius:var(--r-s);background:var(--surface2);box-shadow:inset 0 0 0 1px var(--line)}
+html:root[data-skin="studio"]:not([data-lay="port"]) .tabs button{height:50px;border-radius:var(--r-s)}
+html:root[data-skin="studio"]:not([data-lay="port"]) .fab{margin:0}
+
+/* ---------- small polish ---------- */
+html:root[data-skin="studio"] :focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+html:root[data-skin="studio"] .tabs button.on span{font-weight:700}
+html:root[data-skin="studio"] #view .pane>.chips[role=tablist] .chip{height:36px;font:600 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase}
+html:root[data-skin="studio"] .cafE,html:root[data-skin="studio"] .caf-b{border-radius:var(--r-s)}
+html:root[data-skin="studio"] .lookset .swatches .sw{border-radius:var(--r-s)}
+html:root[data-skin="studio"] #lookHero,html:root[data-skin="studio"] #lookAccent{display:none}
+html:root[data-skin="studio"] .journ-hero,html:root[data-skin="studio"] .h-journey{background:linear-gradient(180deg,var(--hero1),var(--hero2))}
+
+/* ---------- Studio intro ---------- */
+html:root[data-skin="studio"] #skx{position:fixed;inset:0;z-index:2147483500;overflow:hidden;pointer-events:none;color:var(--ink);font-family:var(--ui);contain:strict}
+html:root[data-skin="studio"] #skx .sh{position:absolute;left:0;right:0;height:50%;background:radial-gradient(rgb(255 255 255 / .075) .8px,transparent .9px) 0 0/22px 22px,var(--bg);will-change:transform}
+html:root[data-skin="studio"][data-theme="light"] #skx .sh{background:radial-gradient(rgb(0 0 0 / .09) .8px,transparent .9px) 0 0/22px 22px,var(--bg)}
+@media (prefers-color-scheme:light){html:root[data-skin="studio"]:not([data-theme="dark"]) #skx .sh{background:radial-gradient(rgb(0 0 0 / .09) .8px,transparent .9px) 0 0/22px 22px,var(--bg)}}
+html:root[data-skin="studio"] #skx .sh.t{top:0;background-position:0 0}
+html:root[data-skin="studio"] #skx .sh.b{bottom:0;background-position:0 11px}
+html:root[data-skin="studio"] #skx .ln{position:absolute;left:50%;top:50%;height:2px;width:min(78vw,360px);background:var(--brass);transform:translate(-50%,-50%) scaleX(0);transform-origin:50% 50%;will-change:transform;box-shadow:0 0 10px rgb(215 180 106 / .22)}
+html:root[data-skin="studio"] #skx .tx{position:absolute;left:0;right:0;top:calc(50% + 14px);text-align:center;padding:0 24px}
+html:root[data-skin="studio"] #skx .dt{position:absolute;left:0;right:0;bottom:calc(50% + 14px);text-align:center;font:500 11px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--brass);opacity:0}
+html:root[data-skin="studio"] #skx .nm{font:800 clamp(40px,13vw,72px)/1.05 var(--serif);letter-spacing:-.045em;text-transform:uppercase;opacity:0;clip-path:inset(0 0 100% 0)}
+html:root[data-skin="studio"] #skx .nm em{font-style:normal;color:var(--brass)}
+html:root[data-skin="studio"] #skx .gr{font:600 14px var(--ui);color:var(--muted);opacity:0;margin-top:14px;letter-spacing:.01em}
+html:root[data-skin="studio"] #skx .mk{position:absolute;left:50%;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;background:var(--brass);transform:scale(0);will-change:transform}
+
+/* ---------- leftover pills → rectangles ---------- */
+html:root[data-skin="studio"] :is(.banner button,.cal-f button,.cart span,.cw-b,.danger,.fdp,.fl-top .chipx,.fv-main,.fv-sec,.glet,.hstat,.hstat .link,.ilq,.jv-act,.jv-stop,.jv-sugg button,.jvh-hush,.jvh-vbtn,.kb-d,.logbtn,.mt-pill,.nb-btn,.nb-pill,.ptag,.searchbox,.serv .chipsrow button,.stages button,.torch,.units button,#fcPill){border-radius:var(--r-s)}
+html:root[data-skin="studio"] :is(.jbar,.jbar>i,.pjbar,.rh-bar,.rh-bar i,.rc-row>i,.rc-row>i>i){border-radius:2px}
+html:root[data-skin="studio"] .rml .chk i,html:root[data-skin="studio"] li.rmd .chk i{border-radius:var(--r-xs)}
+html:root[data-skin="studio"] #view .habit .hring{background:radial-gradient(closest-side,var(--surface) 79%,transparent 80% 100%),conic-gradient(var(--brass) var(--p),var(--surface2) 0)}
+html:root[data-skin="studio"] .jbar>i{background:var(--brass)}
+html:root[data-skin="studio"] .k-journey{--c1:var(--brass);--c2:var(--brass-2)}
+html:root[data-skin="studio"] .sprig span{font:500 10.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+html:root[data-skin="studio"] .sprig svg{color:var(--brass);opacity:.45}
+</style>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://raw.githubusercontent.com https://images.unsplash.com; media-src 'self' blob: data: mediastream:; connect-src 'self' https://*.workers.dev wss://*.workers.dev https://world.openfoodfacts.org https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <script>/* once a server is connected, a second policy narrows connect-src from any *.workers.dev to exactly that server
@@ -60,11 +344,12 @@ m.content="connect-src 'self' "+u.origin+" wss://"+u.host+" https://world.openfo
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Doto:wght@900&family=Geist:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,500;1,6..72,500&family=Space+Mono:wght@400;700&display=swap" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Bricolage+Grotesque:wght@800&family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
 <style>html{background:#080A09}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
 </head>
 <body>
 <div id="boot0" aria-hidden="true" style="position:fixed;inset:0;z-index:2147483600;background:#080A09;color:#080A09;font:12px/1 sans-serif;overflow:hidden;pointer-events:none;-webkit-user-select:none;user-select:none">Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life Life </div>
-<script>(function(){var w=innerWidth,h=innerHeight,m=Math.min(w,h);document.documentElement.dataset.lay=m>=600&&w>=700?'tab':w>h&&w>=560?'land':'port'})();try{var _t=localStorage.getItem('lifeTheme'),_a=localStorage.getItem('lifeAccent');if(_t===null){var _d=JSON.parse(localStorage.getItem('ishiros.life.v1')||'null');_t=_d&&_d.settings&&_d.settings.theme||'';_a=_d&&_d.settings&&_d.settings.accent||''}if(_t==='light'||_t==='dark')document.documentElement.dataset.theme=_t;if(_a)document.documentElement.style.setProperty('--accent',_a)}catch(e){}</script>
+<script>(function(){var w=innerWidth,h=innerHeight,m=Math.min(w,h);document.documentElement.dataset.lay=m>=600&&w>=700?'tab':w>h&&w>=560?'land':'port'})();try{var _t=localStorage.getItem('lifeTheme'),_a=localStorage.getItem('lifeAccent');if(_t===null){var _d=JSON.parse(localStorage.getItem('ishiros.life.v1')||'null');_t=_d&&_d.settings&&_d.settings.theme||'';_a=_d&&_d.settings&&_d.settings.accent||''}if(_t==='light'||_t==='dark')document.documentElement.dataset.theme=_t;if(_a&&localStorage.getItem('lifeSkin')!=='studio')document.documentElement.style.setProperty('--accent',_a)}catch(e){}</script>
 <style>
 /* Layout: one-column phone app. Every tab opens with a glass "hero" card (number + art), then sectioned cards.
    Floating glass tab bar with labels + round add button. Openers come from their button (side panel, drop-down, bottom sheet, zoom).
@@ -1103,8 +1388,8 @@ details.sec>summary{list-style:none;cursor:pointer}details.sec>summary::-webkit-
 <div id="menuLayer"></div>
 
 <script async src="https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js" integrity="sha384-czaB7zH9slIhvFgUxhO8sSnYf4cnCeV2N3zOvDnNKFzRKu5AwqDKEZlCLsaQkoop" crossorigin="anonymous"></script>
-<script defer src="app1.js?v=227"></script>
-<script defer src="app2.js?v=227"></script>
+<script defer src="app1.js?v=228"></script>
+<script defer src="app2.js?v=228"></script>
 
 <script>
 if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(reg=>{
