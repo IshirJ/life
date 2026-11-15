@@ -27,7 +27,7 @@ html:root[data-skin="signal"]{
   --hi:transparent; --shadow:none; --card-shadow:none;
   --pf1:#212121; --pf2:#212121; --pin:#2E2E2E; --pin2:#2E2E2E; --pedge:transparent; --pedge2:transparent;
   --sh0:#151515; --sh1:#151515; --sh2:#151515; --sh3:#151515;
-  --sgf:'Archivo','Helvetica Neue',Helvetica,Arial,sans-serif;
+  --sgf:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text','Inter',system-ui,'Segoe UI',Roboto,sans-serif;
   --serif:var(--sgf); --ui:var(--sgf); --mono:var(--sgf); --dot:var(--sgf);
   --r-xl:32px; --r-l:26px; --r-m:20px; --r-s:14px; --r-xs:10px;
   --spring:cubic-bezier(.3,1.3,.45,1); --out:cubic-bezier(.2,.8,.2,1);
@@ -68,14 +68,14 @@ html:root[data-skin="signal"] body::before{background:var(--bg)}
 html:root[data-skin="signal"] body{font:480 15px/1.42 var(--sgf);letter-spacing:-.005em;font-stretch:100%;font-synthesis:none}
 html:root[data-skin="signal"] button,html:root[data-skin="signal"] input,html:root[data-skin="signal"] textarea,html:root[data-skin="signal"] select{font-family:var(--sgf)}
 html:root[data-skin="signal"] .cap{font:560 12.5px/1.3 var(--sgf);letter-spacing:0;text-transform:none;color:var(--muted)}
-html:root[data-skin="signal"] :is(.num,.big,.wnum,.tile b,.stat .v,.ts-grid b,.ts-c b,.macros b,.hero-stats b,.hstat b,.cd-n,.tv b,.buseta b,.jt b,.jst b){font-family:var(--sgf);font-stretch:74%;font-weight:800;letter-spacing:-.005em;font-style:normal;font-variant-numeric:tabular-nums}
+html:root[data-skin="signal"] :is(.num,.big,.wnum,.tile b,.stat .v,.ts-grid b,.ts-c b,.macros b,.hero-stats b,.hstat b,.cd-n,.tv b,.buseta b,.jt b,.jst b){font-family:var(--sgf);font-weight:800;letter-spacing:-.005em;font-style:normal;font-variant-numeric:tabular-nums}
 html:root[data-skin="signal"] h1,html:root[data-skin="signal"] h2,html:root[data-skin="signal"] h3,html:root[data-skin="signal"] h4{font-family:var(--sgf);font-style:normal}
 html:root[data-skin="signal"] em,html:root[data-skin="signal"] i{font-style:normal}
 
 /* ---------- top bar ---------- */
 html:root[data-skin="signal"] .top{border-radius:0;margin:0 -16px;padding:10px 16px 8px;gap:8px;align-items:center}
 html:root[data-skin="signal"] .top.float{background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:none}
-html:root[data-skin="signal"] .av{width:44px;height:44px;border-radius:50%;background:var(--paper);color:var(--paper-ink);font:800 15px var(--sgf);font-stretch:74%;letter-spacing:0;box-shadow:none}
+html:root[data-skin="signal"] .av{width:44px;height:44px;border-radius:50%;background:var(--paper);color:var(--paper-ink);font:800 15px var(--sgf);letter-spacing:0;box-shadow:none}
 html:root[data-skin="signal"] .avr{display:none}
 html:root[data-skin="signal"] .ib{width:44px;height:44px;border-radius:50%;background:var(--surface);border:0;box-shadow:none;color:var(--ink)}
 html:root[data-skin="signal"] .ib svg.i{width:19px;height:19px}
@@ -116,7 +116,7 @@ html:root[data-skin="signal"] .hero .hart>*{display:none}
 /* the disc: sits off the top-right corner of every slab except Today's, whose dial already is one */
 html:root[data-skin="signal"] .hero:not(.h-today) .hart::after{content:"";position:absolute;right:-64px;top:-78px;width:212px;height:212px;border-radius:50%;background:var(--accent)}
 html:root[data-skin="signal"] .hero .cap{color:var(--paper-sub)}
-html:root[data-skin="signal"] .hero .big,html:root[data-skin="signal"] .hero[class*=" h-"] .big{font:800 76px/.9 var(--sgf);font-stretch:70%;letter-spacing:-.02em;margin:18px 0 8px;color:var(--paper-ink)}
+html:root[data-skin="signal"] .hero .big,html:root[data-skin="signal"] .hero[class*=" h-"] .big{font:800 76px/.9 var(--sgf);letter-spacing:-.02em;margin:18px 0 8px;color:var(--paper-ink)}
 html:root[data-skin="signal"] .hero .lead,html:root[data-skin="signal"] .lead{font:520 15.5px/1.35 var(--sgf);font-style:normal;color:var(--paper-sub);max-width:58%}
 html:root[data-skin="signal"] .hero .lead b{font-weight:720;color:var(--paper-ink)}
 html:root[data-skin="signal"] .hero-stats{border-top:1px solid var(--paper-line);margin-top:16px;padding-top:14px}
@@ -247,32 +247,6 @@ html:root[data-skin="signal"] .qbar{border-radius:999px}
 html:root[data-skin="signal"] .qbar input{border-radius:999px}
 html:root[data-skin="signal"] #lookHero,html:root[data-skin="signal"] #lookAccent{display:none}
 
-/* ---------- the dock: a floating capsule; the tab you are on opens up to show its name ---------- */
-html:root[data-skin="signal"][data-lay="port"] .dock{background:linear-gradient(to top,var(--bg) 34%,color-mix(in srgb,var(--bg) 0%,transparent));padding:26px 0 max(12px,env(safe-area-inset-bottom,0px))}
-html:root[data-skin="signal"][data-lay="port"] .dock::before{display:none}
-html:root[data-skin="signal"][data-lay="port"] .dock-in{max-width:none;justify-content:center;gap:8px}
-html:root[data-skin="signal"][data-lay="port"] .tabs{flex:none;display:flex;gap:var(--tg);padding:var(--tp);border-radius:999px;background:var(--bar);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 12px 32px rgb(0 0 0 / .38);touch-action:manipulation}
-html:root[data-skin="signal"][data-lay="port"] .tabs .ind{top:var(--tp);left:0;height:var(--th);width:var(--ta)!important;border-radius:999px;background:#F3F2EE;box-shadow:none;transition:none}
-html:root[data-skin="signal"][data-lay="port"] .tabs button{width:var(--tw);height:var(--th);flex:none;flex-direction:row;gap:0;padding:0;border-radius:999px;color:var(--bar-ink);font:660 14px var(--sgf);letter-spacing:-.01em;text-transform:none;overflow:hidden;transition:width .46s var(--out),color .2s}
-html:root[data-skin="signal"][data-lay="port"] .tabs button svg.i{width:21px;height:21px;stroke-width:2;flex:none}
-html:root[data-skin="signal"][data-lay="port"] .tabs button span{max-width:0;opacity:0;margin-left:0;white-space:nowrap;transition:max-width .46s var(--out),opacity .18s,margin-left .46s var(--out)}
-html:root[data-skin="signal"][data-lay="port"] .tabs button.on{width:var(--ta);color:#141414!important;transform:none}
-html:root[data-skin="signal"][data-lay="port"] .tabs button.on span{max-width:64px;opacity:1;margin-left:7px;transition:max-width .46s var(--out),opacity .3s .12s,margin-left .46s var(--out)}
-html:root[data-skin="signal"][data-lay="port"] .tabs button:active svg.i{transform:scale(.86)}
-html:root[data-skin="signal"] .tabs button svg.i{transition:transform .25s var(--spring)}
-html:root[data-skin="signal"] #tabs button.on::after{display:none}
-html:root[data-skin="signal"] .fab{width:60px;height:60px;border-radius:50%;background:var(--accent);color:#141414;box-shadow:0 12px 30px rgb(0 0 0 / .38);transition:transform .4s var(--spring)}
-html:root[data-skin="signal"] .fab:active{transform:scale(.88) rotate(90deg);transition-duration:.12s}
-html:root[data-skin="signal"] .fab svg.i{width:26px;height:26px;stroke-width:2.6}
-html:root[data-skin="signal"] .nbrail{border-radius:var(--r-m)}
-/* laptop and landscape keep the rail; same tones */
-html:root[data-skin="signal"]:not([data-lay="port"]) .tabs{background:var(--bar);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
-html:root[data-skin="signal"]:not([data-lay="port"]) .tabs .ind{background:#F3F2EE;box-shadow:none}
-html:root[data-skin="signal"]:not([data-lay="port"]) .tabs button{color:var(--bar-ink);font:600 10.5px var(--sgf)}
-html:root[data-skin="signal"]:not([data-lay="port"]) .tabs button.on{color:#141414!important}
-html:root[data-skin="signal"] .tabs .ind.lens{-webkit-backdrop-filter:none;backdrop-filter:none}
-html:root[data-skin="signal"] .tabs .ind.lens::before,html:root[data-skin="signal"] .tabs .ind.lens::after,html:root[data-skin="signal"] .tabs .ind.lens .lmag{display:none}
-
 /* ---------- touch: everything you can press gives a little ---------- */
 html:root[data-skin="signal"] :is(.chip,.pill,.link,.ib,.av,.primary,.secondary,.tile,.habit,.dl,.folder,.day,.ts-grid>button,li.rmd){transition:transform .28s var(--spring),background-color .18s,color .18s}
 html:root[data-skin="signal"] :is(.chip,.pill,.link,.ib,.av,.primary,.secondary):active{transform:scale(.94);transition-duration:.08s}
@@ -310,8 +284,8 @@ html:root[data-skin="signal"] .hero-stats>*{color:var(--paper-sub)}
 /* shapes that premium pins with !important */
 html:root[data-skin="signal"] .rm-b,html:root[data-skin="signal"] ul.rml>li.row.rmd .rm-b{border-radius:50%!important}
 html:root[data-skin="signal"] .dl{--u:var(--ink)!important}
-html:root[data-skin="signal"] .dl .cd-l span{font:800 30px/1 var(--sgf);font-stretch:74%;letter-spacing:0}
-html:root[data-skin="signal"] .dl .cd-l small{font:700 15px/1 var(--sgf);font-stretch:74%}
+html:root[data-skin="signal"] .dl .cd-l span{font:800 30px/1 var(--sgf);letter-spacing:0}
+html:root[data-skin="signal"] .dl .cd-l small{font:700 15px/1 var(--sgf);}
 html:root[data-skin="signal"] .dl-bar i{background:var(--accent)!important}
 html:root[data-skin="signal"] .dl-t{font:650 15px/1.25 var(--sgf);letter-spacing:-.01em}
 html:root[data-skin="signal"] .dl-s{color:var(--muted)}
@@ -338,7 +312,7 @@ html:root[data-skin="signal"] .cal-f button i{border-radius:50%}
 
 /* ---------- third pass ---------- */
 html:root[data-skin="signal"] .hero:not(:has(>.a3d)) .hart::after{display:none}
-html:root[data-skin="signal"] .hero .fd-head b,html:root[data-skin="signal"] .hero .fdv b{color:var(--paper-ink)!important;font-stretch:74%;font-weight:800}
+html:root[data-skin="signal"] .hero .fd-head b,html:root[data-skin="signal"] .hero .fdv b{color:var(--paper-ink)!important;font-weight:800}
 html:root[data-skin="signal"] .hero .fd-head,html:root[data-skin="signal"] .hero .fdv,html:root[data-skin="signal"] .hero .fd-when{color:var(--paper-sub)}
 html:root[data-skin="signal"] .hero .fd-nav button{border-radius:50%;background:var(--paper-2);color:var(--paper-ink);border:0;box-shadow:none}
 html:root[data-skin="signal"] .hero .fd-sep{background:var(--paper-line)}
@@ -382,7 +356,7 @@ html:root[data-skin="signal"] .sgwk rect.now{fill:#F5F3EE}
 html:root[data-skin="signal"] .sgline{fill:none;stroke:#F5F3EE;stroke-width:2;stroke-linecap:round;opacity:.85;vector-effect:non-scaling-stroke}
 html:root[data-skin="signal"] .sgstars{position:absolute;inset:0;width:100%;height:100%;fill:#F5F3EE;transform:translate3d(0,calc(var(--y) * .5),0)}
 html:root[data-skin="signal"] .sgstars polyline{fill:none;stroke:#F5F3EE;stroke-width:.6;opacity:.35}
-html:root[data-skin="signal"] .sggrain{position:absolute;inset:0;opacity:.2;mix-blend-mode:overlay;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+html:root[data-skin="signal"] .sggrain{position:absolute;inset:0;opacity:.2;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
 html:root[data-skin="signal"] .sghd{position:absolute;left:18px;right:18px;top:calc(var(--tb,62px) + 6px);transform:translate3d(0,calc(var(--y) * .3),0);opacity:var(--o);will-change:transform,opacity}
 html:root[data-skin="signal"] .sghd .sgl>i{color:#F5F3EE;font-size:clamp(44px,14.4vw,60px)}
 html:root[data-skin="signal"] .sghd .sgl.sg2>i{color:rgb(245 243 238 / .62)}
@@ -402,68 +376,6 @@ html:root[data-skin="signal"] #top:not(.float) .hello .cap,html:root[data-skin="
 html:root[data-skin="signal"] #top:not(.float) .badge{box-shadow:none}
 html:root[data-skin="signal"] .hero.sgoff{display:none!important}
 
-/* Today's tiles */
-html:root[data-skin="signal"] .sgbento{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:78px;gap:8px;margin-top:2px}
-html:root[data-skin="signal"] .sgt{position:relative;overflow:hidden;border-radius:26px;background:var(--surface);color:var(--ink);padding:14px;text-align:left;display:flex;flex-direction:column;align-items:flex-start;transition:transform .3s var(--spring)}
-html:root[data-skin="signal"] .sgt:active{transform:scale(.96);transition-duration:.08s}
-html:root[data-skin="signal"] .sgt .n{font:800 30px/.95 var(--sgf);font-stretch:72%;letter-spacing:-.005em;font-variant-numeric:tabular-nums}
-html:root[data-skin="signal"] .sgt .n small{font:600 13px var(--sgf);font-stretch:100%;opacity:.55;margin-left:5px}
-html:root[data-skin="signal"] .sgt .l{font:560 12.5px/1.2 var(--sgf);opacity:.62}
-html:root[data-skin="signal"] .sgt.big{grid-column:span 2;grid-row:span 2;background:var(--paper);color:var(--paper-ink);padding:16px}
-html:root[data-skin="signal"] .sgt.big .n{font-size:62px;margin-top:8px}
-html:root[data-skin="signal"] .sgt.big .v{font:660 13px/1.15 var(--sgf);margin-top:8px;max-width:76px}
-html:root[data-skin="signal"] .sgring{position:absolute;right:-30px;bottom:-32px;width:132px;height:132px;fill:none}
-html:root[data-skin="signal"] .sgring circle{fill:none;stroke:var(--paper-line);stroke-width:12;stroke-linecap:round}
-html:root[data-skin="signal"] .sgring .a{stroke:var(--accent)}
-html:root[data-skin="signal"] .sgring .b{stroke:var(--paper-ink);stroke-width:10}
-html:root[data-skin="signal"] .sgt.kc{grid-column:span 2;background:var(--accent);color:#141414}
-html:root[data-skin="signal"] .sgt.kc .l{order:-1;opacity:.72;margin-bottom:2px}
-html:root[data-skin="signal"] .sgt.kc .n{font-size:40px;position:relative;z-index:1}
-html:root[data-skin="signal"] .sgliq{position:absolute;left:0;right:0;bottom:0;top:var(--lv);background:rgb(0 0 0 / .17);pointer-events:none}
-html:root[data-skin="signal"] .sgliq svg{position:absolute;left:0;bottom:100%;width:200%;height:12px;fill:rgb(0 0 0 / .17);margin-bottom:-1px;animation:sgwave 5s linear infinite}
-@keyframes sgwave{to{transform:translateX(-50%)}}
-html:root[data-skin="signal"][data-motion="off"] .sgliq svg{animation:none}
-html:root[data-skin="signal"] .sgt.s{padding:12px 13px}
-html:root[data-skin="signal"] .sgt.s .n{font-size:27px}
-html:root[data-skin="signal"] .sgt.s.d{background:var(--surface2)}
-html:root[data-skin="signal"] .sgbars{position:absolute;left:13px;right:13px;bottom:11px;height:20px;display:flex;gap:3px;align-items:flex-end}
-html:root[data-skin="signal"] .sgbars i{flex:1;border-radius:3px;background:var(--surface2);transform-origin:bottom}
-html:root[data-skin="signal"] .sgbars i.on{background:var(--ink)}
-html:root[data-skin="signal"] .sgarc{position:absolute;left:12px;right:12px;bottom:8px;width:calc(100% - 24px);fill:none}
-html:root[data-skin="signal"] .sgarc path{fill:none;stroke:var(--surface2);stroke-width:4;stroke-linecap:round}
-html:root[data-skin="signal"] .sgarc path.on{stroke:var(--ink)}
-html:root[data-skin="signal"] .sgt.pr{grid-column:span 2}
-html:root[data-skin="signal"] .sgseg{position:absolute;left:14px;right:14px;bottom:13px;display:flex;gap:3px}
-html:root[data-skin="signal"] .sgseg i{flex:1;height:7px;border-radius:999px;background:var(--surface2)}
-html:root[data-skin="signal"] .sgseg i.on{background:var(--ink)}
-html:root[data-skin="signal"] .sgt.nx{grid-column:span 4;grid-row:span 1;height:52px;align-self:start;flex-direction:row;align-items:center;gap:10px;padding:0 18px;font:600 14px var(--sgf);border-radius:999px}
-html:root[data-skin="signal"] .sgt.nx svg{width:17px;height:17px;flex:none;opacity:.7}
-html:root[data-skin="signal"] .sgbento .sgacts{grid-column:span 4;display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:8px;margin:0;align-self:start}
-html:root[data-skin="signal"] .sgbento .sgacts .pill{height:54px;border-radius:999px;font:660 14.5px var(--sgf)}
-html:root[data-skin="signal"] .sgbento .sgacts .pill.light{background:var(--ink)!important;color:var(--bg)!important}
-html:root[data-skin="signal"] .sgbento .sgacts .pill.glassy{background:var(--surface)!important;color:var(--ink)!important;box-shadow:none!important}
-
-/* the deck */
-html:root[data-skin="signal"] .sgdeck{position:relative;height:calc(86px + (var(--n,3) - 1) * 17px);margin-top:2px;touch-action:pan-y}
-html:root[data-skin="signal"] .sgdeck>.sgc{position:absolute;left:0;right:0;top:0;height:84px;margin:0;border-radius:26px!important;transform-origin:50% 100%;transition:transform .5s var(--spring),opacity .3s,background-color .3s;will-change:transform}
-html:root[data-skin="signal"] .sgdeck>.sgc.drag{transition:none}
-html:root[data-skin="signal"] .sgdeck>.sgc[data-i="0"]{z-index:4;background:var(--paper)!important;color:var(--paper-ink)}
-html:root[data-skin="signal"] .sgdeck>.sgc[data-i="0"] .rt{color:var(--paper-ink);font-size:16.5px}
-html:root[data-skin="signal"] .sgdeck>.sgc[data-i="0"] .rm-m b{color:var(--paper-sub)!important}
-html:root[data-skin="signal"] .sgdeck>.sgc[data-i="0"] .rm-m span{color:#B23A12!important}
-html:root[data-skin="signal"] .sgdeck>.sgc[data-i="0"] .rm-b{background:var(--paper-2)!important;color:var(--paper-ink)!important}
-html:root[data-skin="signal"] .sgdeck>.sgc[data-i="0"].lv-Urgent .rm-b{background:var(--accent)!important;color:#141414!important}
-html:root[data-skin="signal"] .sgdeck>.sgc[data-i="0"].lv-High .rm-b{background:transparent!important;color:var(--accent)!important}
-html:root[data-skin="signal"] .sgdeck>.sgc[data-i="0"] .chk i{border-color:var(--paper-ink);width:34px;height:34px}
-html:root[data-skin="signal"] .sgdeck>.sgc[data-i="1"]{z-index:3;transform:translate3d(0,17px,0) scale(.93);background:var(--surface2)!important}
-html:root[data-skin="signal"] .sgdeck>.sgc[data-i="2"]{z-index:2;transform:translate3d(0,33px,0) scale(.86);background:var(--surface)!important}
-html:root[data-skin="signal"] .sgdeck>.sgc[data-i="3"]{z-index:1;transform:translate3d(0,34px,0) scale(.84);opacity:0;pointer-events:none}
-html:root[data-skin="signal"] .sgdeck>.sgc[data-i="out"]{z-index:5;transform:translate3d(calc(var(--dir,1) * 120%),0,0) rotate(calc(var(--dir,1) * 12deg));opacity:0;transition:transform .26s cubic-bezier(.5,0,.9,.4),opacity .22s}
-html:root[data-skin="signal"] .sgdeck>.sgc:not([data-i="0"])>*{opacity:0;transition:opacity .2s}
-html:root[data-skin="signal"] .sgdots{display:flex;gap:5px;justify-content:center;margin-top:12px}
-html:root[data-skin="signal"] .sgdots i{width:6px;height:6px;border-radius:50%;background:var(--surface2);transition:width .3s var(--out),background-color .2s}
-html:root[data-skin="signal"] .sgdots i.on{width:18px;border-radius:999px;background:var(--ink)}
-
 /* the other tabs: their slab rides up over the scene */
 html:root[data-skin="signal"][data-lay="port"] .sgscene:not([data-k="today"]){height:calc(250px + var(--tb,62px))}
 html:root[data-skin="signal"]:not([data-lay="port"]) .sgscene{height:calc(240px + var(--tb,62px));margin-left:0;margin-right:0;border-radius:0 0 36px 36px;grid-column:1/-1}
@@ -471,25 +383,162 @@ html:root[data-skin="signal"]:not([data-lay="port"]) .sgcap{display:none}
 html:root[data-skin="signal"]:not([data-lay="port"]) .sgbento{grid-template-columns:repeat(8,1fr);grid-column:1/-1}
 html:root[data-skin="signal"] .hero:not(:has(>.a3d)) .hart::after{display:none}
 
-/* deadlines and habits swipe sideways instead of stacking */
-html:root[data-skin="signal"][data-lay="port"] .dls{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -16px;padding:0 16px 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-html:root[data-skin="signal"][data-lay="port"] .dls::-webkit-scrollbar{display:none}
-html:root[data-skin="signal"][data-lay="port"] .dls .dl{flex:0 0 74%;scroll-snap-align:center;min-height:148px;padding:20px;justify-content:flex-start}
-html:root[data-skin="signal"][data-lay="port"] .dls .dl:first-child{background:var(--accent)!important;color:#141414;--u:#141414!important}
-html:root[data-skin="signal"][data-lay="port"] .dls .dl:first-child .dl-s{color:rgb(20 20 20 / .7)}
-html:root[data-skin="signal"][data-lay="port"] .dls .dl:first-child .dl-bar{background:rgb(0 0 0 / .18)}
-html:root[data-skin="signal"][data-lay="port"] .dls .dl:first-child .dl-bar i{background:#141414!important}
-html:root[data-skin="signal"][data-lay="port"] .dls .dl .cd-l span{font-size:52px}
-html:root[data-skin="signal"][data-lay="port"] .dls .dl .cd-l small{font-size:20px}
-html:root[data-skin="signal"][data-lay="port"] .dls .dl-t{font-size:17px;margin-top:10px}
-html:root[data-skin="signal"][data-lay="port"] .habits{display:flex;gap:10px;overflow-x:auto;margin:0 -16px;padding:0 16px 4px;scrollbar-width:none;grid-template-columns:none}
-html:root[data-skin="signal"][data-lay="port"] .habits::-webkit-scrollbar{display:none}
-html:root[data-skin="signal"][data-lay="port"] #view .habits .habit{flex:0 0 104px;height:138px;border-radius:999px!important;justify-content:flex-start;padding:10px 8px 14px;gap:6px}
-html:root[data-skin="signal"][data-lay="port"] #view .habits .habit .hring{width:84px;height:84px;margin-bottom:4px}
-html:root[data-skin="signal"][data-lay="port"] #view .habits .habit small{font-size:11px}
-html:root[data-skin="signal"] .sgbars{left:auto;right:12px;width:34px;bottom:12px;height:26px}
-html:root[data-skin="signal"] .sgarc{left:auto;right:9px;width:42px;bottom:10px}
-html:root[data-skin="signal"] .rt,html:root[data-skin="signal"] .dl-t{text-transform:none!important}
+
+
+/* ============================================================================
+   Polish pass (v232): one typeface, even spacing, nothing overlapping or bleeding
+   ========================================================================== */
+/* --- one typeface everywhere: the system face on Apple devices, Inter elsewhere --- */
+html:root[data-skin="signal"] body,html:root[data-skin="signal"] body *:not(svg):not(svg *){font-family:var(--sgf)!important;font-stretch:normal!important;font-style:normal!important}
+html:root[data-skin="signal"] body{font-feature-settings:"tnum" 0;-webkit-font-smoothing:antialiased}
+html:root[data-skin="signal"] :is(.num,.big,.wnum,.tile b,.stat .v,.ts-grid b,.ts-c b,.macros b,.hero-stats b,.hstat b,.cd-n,.tv b,.buseta b,.jt b,.jst b,.sgt .n,.dl .cd-l span,.dl .cd-l small){font-weight:700!important;letter-spacing:-.03em!important;font-variant-numeric:tabular-nums}
+html:root[data-skin="signal"] .cap{font-size:13px;font-weight:500;letter-spacing:-.005em}
+html:root[data-skin="signal"] h2,html:root[data-skin="signal"][data-skin] :is(#top,#view) h2{font:700 21px/1.2 var(--sgf);letter-spacing:-.03em}
+html:root[data-skin="signal"] h3{font:700 24px/1.12 var(--sgf);letter-spacing:-.035em}
+html:root[data-skin="signal"] .sgl>i{font-weight:750;letter-spacing:-.05em}
+html:root[data-skin="signal"] .sghd .sgl>i{font-size:clamp(38px,12.4vw,52px);line-height:1.02}
+html:root[data-skin="signal"] .hero .big,html:root[data-skin="signal"] .hero[class*=" h-"] .big{font-size:60px;line-height:.95;letter-spacing:-.045em!important;margin:16px 0 8px}
+html:root[data-skin="signal"] .wnum{font-size:52px}
+html:root[data-skin="signal"] .rt{font-weight:600}
+html:root[data-skin="signal"] .dl .cd-l span{font-size:28px}
+
+/* --- spacing: one rhythm. 12 between cards, 30 between sections, 16 at the edges --- */
+html:root[data-skin="signal"] .sec{margin-top:30px}
+html:root[data-skin="signal"] .sec-h{margin-bottom:12px;min-height:34px}
+html:root[data-skin="signal"] .tiles,html:root[data-skin="signal"] .habits,html:root[data-skin="signal"] .dls{gap:10px}
+html:root[data-skin="signal"] .card-s{padding:16px}
+html:root[data-skin="signal"] .pane>.mot{margin-top:12px}
+html:root[data-skin="signal"] .pane>.hero{margin-top:12px}
+html:root[data-skin="signal"] .pane>.banner{margin:0 0 12px}
+
+/* --- the scene, redrawn --- */
+html:root[data-skin="signal"] .sgscene{height:calc(300px + var(--tb,62px))}
+html:root[data-skin="signal"][data-lay="port"] .sgscene:not([data-k="today"]){height:calc(232px + var(--tb,62px))}
+html:root[data-skin="signal"] .sgsun{background:radial-gradient(circle at 50% 42%,#FF7A3C 0%,#FF5A1F 62%);box-shadow:none}
+html:root[data-skin="signal"] .sgglow{position:absolute;left:0;top:0;border-radius:50%;pointer-events:none;background:radial-gradient(closest-side,rgb(255 150 80 / .42),rgb(255 120 60 / .16) 45%,rgb(255 120 60 / 0) 100%);transform:translate3d(var(--sx),calc(var(--sv) + var(--y) * .62),0);will-change:transform}
+html:root[data-skin="signal"] .sgr{height:220px;fill:none;opacity:1!important}
+html:root[data-skin="signal"] .sgr.r1{transform:translate3d(0,calc(var(--y) * .46),0)}
+html:root[data-skin="signal"] .sgr.r2{transform:translate3d(0,calc(var(--y) * .34),0)}
+html:root[data-skin="signal"] .sgr.r3{transform:translate3d(0,calc(var(--y) * .22),0)}
+html:root[data-skin="signal"] .sgr.r4{transform:translate3d(0,calc(var(--y) * .1),0)}
+html:root[data-skin="signal"] .sghaze{position:absolute;left:0;right:0;bottom:36px;height:120px;pointer-events:none;background:linear-gradient(180deg,rgb(255 150 90 / 0),rgb(255 150 90 / .13) 55%,rgb(255 150 90 / 0));transform:translate3d(0,calc(var(--y) * .34),0)}
+html:root[data-skin="signal"] .sgstars{fill:#F5F3EE}
+html:root[data-skin="signal"] .sgwater{position:absolute;left:0;right:0;bottom:0;height:74px;background:linear-gradient(180deg,#6b2c2a,#2a121b 60%,#170b12);transform:translate3d(0,calc(var(--y) * .2),0)}
+html:root[data-skin="signal"] .sgwater i{position:absolute;top:0;width:68px;height:100%;background:linear-gradient(180deg,rgb(255 122 60 / .75),rgb(255 122 60 / 0));-webkit-mask:repeating-linear-gradient(180deg,#000 0 3px,transparent 3px 7px);mask:repeating-linear-gradient(180deg,#000 0 3px,transparent 3px 7px);border-radius:50%/0 0 100% 100%}
+html:root[data-skin="signal"] .sgscene[data-k="mind"] .sgr{bottom:60px}
+html:root[data-skin="signal"] .sggrain{display:none}
+html:root[data-skin="signal"] .sgpill{margin-top:12px;background:rgb(10 8 12 / .46);-webkit-backdrop-filter:none;backdrop-filter:none;height:38px}
+html:root[data-skin="signal"] #top:not(.float) .ib{background:rgb(10 8 12 / .42);-webkit-backdrop-filter:none;backdrop-filter:none}
+html:root[data-skin="signal"] .sgcap{height:34px;margin-top:-34px;border-radius:32px 32px 0 0}
+
+/* --- Today's tiles: label, number and graphic each have their own place --- */
+html:root[data-skin="signal"] .sgbento{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:88px;gap:10px;margin-top:0}
+html:root[data-skin="signal"] .sgt{position:relative;overflow:hidden;border-radius:24px;background:var(--surface);color:var(--ink);padding:14px 15px;text-align:left;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;min-width:0;transition:transform .3s var(--spring)}
+html:root[data-skin="signal"] .sgt:active{transform:scale(.96);transition-duration:.08s}
+html:root[data-skin="signal"] .sgt .l{font:500 13px/1.2 var(--sgf);color:var(--muted);white-space:nowrap}
+html:root[data-skin="signal"] .sgt .n{font:700 26px/1 var(--sgf);white-space:nowrap}
+html:root[data-skin="signal"] .sgt .n small{font:500 13px var(--sgf);color:var(--muted);margin-left:5px;letter-spacing:0!important}
+html:root[data-skin="signal"] .sgt.big{grid-column:span 2;grid-row:span 2;background:var(--paper);color:var(--paper-ink);padding:16px;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto 1fr auto;align-items:start}
+html:root[data-skin="signal"] .sgt.big .l{color:var(--paper-sub);grid-area:1/1}
+html:root[data-skin="signal"] .sgt.big .sgring{grid-area:1/2/3/3;width:72px;height:72px;position:static}
+html:root[data-skin="signal"] .sgt.big .n{grid-area:2/1;align-self:end;font-size:56px;line-height:.9;letter-spacing:-.05em!important}
+html:root[data-skin="signal"] .sgt.big .v{grid-area:3/1/4/3;font:600 13.5px/1.2 var(--sgf);color:var(--paper-sub);margin-top:8px}
+html:root[data-skin="signal"] .sgring circle{fill:none;stroke:var(--paper-line);stroke-width:9;stroke-linecap:round}
+html:root[data-skin="signal"] .sgring .a{stroke:var(--accent)}
+html:root[data-skin="signal"] .sgt.kc{grid-column:span 2;background:var(--accent);color:#141414}
+html:root[data-skin="signal"] .sgt.kc .l{color:rgb(20 20 20 / .68)}
+html:root[data-skin="signal"] .sgt.kc .n{font-size:32px;letter-spacing:-.04em!important}
+html:root[data-skin="signal"] .sgbar{display:block;width:100%;height:6px;border-radius:999px;background:var(--surface2);overflow:hidden}
+html:root[data-skin="signal"] .sgbar i{display:block;height:100%;border-radius:999px;background:var(--ink);transform-origin:left}
+html:root[data-skin="signal"] .sgt.kc .sgbar{background:rgb(0 0 0 / .16)}
+html:root[data-skin="signal"] .sgt.kc .sgbar i{background:#141414}
+html:root[data-skin="signal"] .sgt.s{padding:13px 14px;justify-content:flex-end;gap:5px}
+html:root[data-skin="signal"] .sgt.s .n{font-size:22px}
+html:root[data-skin="signal"] .sgt.s .ic{position:absolute;right:12px;top:12px;width:18px;height:18px;color:var(--muted);display:block}
+html:root[data-skin="signal"] .sgt.s .ic svg{width:18px;height:18px;display:block}
+html:root[data-skin="signal"] .sgt.pr{grid-column:span 2}
+html:root[data-skin="signal"] .sgt.nx{grid-column:span 4;height:52px;align-self:start;flex-direction:row;justify-content:flex-start;align-items:center;gap:10px;padding:0 18px;font:500 14.5px var(--sgf);border-radius:999px;margin-bottom:-36px}
+html:root[data-skin="signal"] .sgt.nx svg{width:17px;height:17px;flex:none;color:var(--muted)}
+html:root[data-skin="signal"] .sgbento .sgacts{grid-column:span 4;display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:10px;margin:0;align-self:start}
+html:root[data-skin="signal"] .sgbento .sgacts .pill{height:54px;border-radius:999px;font:600 15px var(--sgf);min-width:0;padding:0 8px}
+html:root[data-skin="signal"] .sgbento .sgacts .pill.light{background:var(--ink)!important;color:var(--bg)!important}
+html:root[data-skin="signal"] .sgbento .sgacts .pill.glassy{background:var(--surface)!important;color:var(--ink)!important;box-shadow:none!important}
+html:root[data-skin="signal"]:not([data-lay="port"]) .sgbento{grid-template-columns:repeat(8,minmax(0,1fr));grid-column:1/-1}
+/* fewer things on Today: the quick-add row repeats the + button */
+html:root[data-skin="signal"][data-ltab="today"] #view .pane>.chips{display:none}
+/* rows of chips that scroll fade out at the edge instead of being cut by it */
+html:root[data-skin="signal"][data-lay="port"] #view .pane>.chips{margin:0 -16px 12px;padding:0 16px;-webkit-mask:linear-gradient(90deg,transparent 0,#000 16px,#000 calc(100% - 28px),transparent 100%);mask:linear-gradient(90deg,transparent 0,#000 16px,#000 calc(100% - 28px),transparent 100%)}
+
+/* --- reminders: one grouped list, circle on the left, like a to-do list should be --- */
+html:root[data-skin="signal"] ul.list.rml{display:block;background:var(--surface);border-radius:24px;overflow:hidden;padding:0;gap:0}
+html:root[data-skin="signal"] ul.rml>li.row.rmd{border-radius:0!important;background:transparent!important;min-height:64px;padding:11px 16px 11px 14px;gap:12px;display:flex;align-items:center}
+html:root[data-skin="signal"] ul.rml>li.row.rmd+li.row.rmd{border-top:0!important;box-shadow:inset 0 1px 0 var(--line)}
+html:root[data-skin="signal"] ul.rml>li.rmd .rm-b{display:none}
+html:root[data-skin="signal"] ul.rml>li.rmd .chk{order:-1;flex:none;margin:0}
+html:root[data-skin="signal"] ul.rml>li.rmd .chk i{width:26px;height:26px}
+html:root[data-skin="signal"] ul.rml>li.rmd .rowbtn{flex:1;min-width:0;text-align:left}
+html:root[data-skin="signal"] ul.rml>li.rmd .rt{display:block;font:600 15.5px/1.3 var(--sgf);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html:root[data-skin="signal"] ul.rml>li.rmd.lv-Urgent .rt::before{content:"!! ";color:var(--accent);font-weight:700}
+html:root[data-skin="signal"] ul.rml>li.rmd.lv-High .rt::before{content:"! ";color:var(--accent);font-weight:700}
+html:root[data-skin="signal"] ul.rml>li.rmd .rm-m{display:flex;gap:8px;margin-top:2px;font:500 13px var(--sgf)}
+html:root[data-skin="signal"] ul.rml>li.rmd .rm-m b{font:500 13px var(--sgf);color:var(--muted)!important}
+html:root[data-skin="signal"] ul.rml>li.rmd .rm-m span{color:var(--muted)}
+html:root[data-skin="signal"] ul.rml>li.rmd .rm-m span.late{color:var(--accent)}
+html:root[data-skin="signal"] ul.rml>li.rmd.lv-Urgent .chk i,html:root[data-skin="signal"] ul.rml>li.rmd.lv-High .chk i{border-color:var(--accent)}
+
+/* --- deadlines: an even two-up grid --- */
+html:root[data-skin="signal"] .dls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+html:root[data-skin="signal"] .dl,html:root[data-skin="signal"] .dls .dl{border-radius:24px;padding:16px;min-width:0}
+html:root[data-skin="signal"] .dl-t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html:root[data-skin="signal"] .habit{border-radius:24px!important}
+
+/* --- the + sheet: grouped by area, compact --- */
+html:root[data-skin="signal"] #sheetBody:has(.sgadd) .qbar{display:none}
+html:root[data-skin="signal"] .sgadd{display:block}
+html:root[data-skin="signal"] .sgag+.sgag{margin-top:18px}
+html:root[data-skin="signal"] .sgah{font:600 13px var(--sgf);color:var(--muted);margin:0 2px 8px}
+html:root[data-skin="signal"] .sgar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+html:root[data-skin="signal"] .sgadd .tilt{flex-direction:row;justify-content:flex-start;align-items:center;gap:12px;height:58px;min-height:0;padding:0 14px 0 9px;border-radius:999px;background:var(--surface2);font:600 15px var(--sgf);text-align:left;aspect-ratio:auto;width:auto}
+html:root[data-skin="signal"] .sgadd .tilt .ico{width:40px;height:40px;flex:none;background:var(--bg)}
+
+/* --- the dock: the bar you already had (even widths, labels, drag across it), in this palette --- */
+html:root[data-skin="signal"] .dock{background:none}
+html:root[data-skin="signal"] .dock::before{display:none}
+html:root[data-skin="signal"] .tabs{background:var(--bar);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 10px 28px rgb(0 0 0 / .34)}
+html:root[data-skin="signal"] .tabs .ind{background:#F3F2EE;box-shadow:none}
+html:root[data-skin="signal"] .tabs button{color:var(--bar-ink)}
+html:root[data-skin="signal"] .tabs button.on{color:#141414!important}
+html:root[data-skin="signal"] .tabs.lensing button.on{color:var(--bar-ink)!important}
+html:root[data-skin="signal"] .tabs button.under{color:#141414!important}
+html:root[data-skin="signal"] .tabs .ind.lens{background:rgb(243 242 238 / .96)}
+html:root[data-skin="signal"] .fab{width:62px;height:62px;box-shadow:0 10px 28px rgb(0 0 0 / .34)}
+
+/* --- one palette: the stray greens, blues and purples become ink or orange --- */
+html:root[data-skin="signal"] .cal-f button i{background:var(--muted)!important}
+html:root[data-skin="signal"] .cal-f button:last-child i{background:var(--accent)!important}
+/* tiles keep a fixed height; the wide pill and the buttons take only what they need */
+html:root[data-skin="signal"] .sgbento{grid-auto-rows:auto}
+html:root[data-skin="signal"] .sgt{height:88px}
+html:root[data-skin="signal"] .sgt.big{height:186px}
+html:root[data-skin="signal"] .sgt.nx{height:52px;margin-bottom:0}
+html:root[data-skin="signal"] .sgbento .sgacts{margin-top:4px}
+html:root[data-skin="signal"] #view .tile b{font-size:22px;white-space:nowrap}
+html:root[data-skin="signal"] #view .tile b small{font-size:11px;letter-spacing:0!important}
+html:root[data-skin="signal"] #view .tile{min-width:0;overflow:hidden}
+/* water: a soft column of light, not stripes */
+html:root[data-skin="signal"] .sgwater i{width:52px;-webkit-mask:none;mask:none;border-radius:0;background:linear-gradient(180deg,rgb(255 122 60 / .6),rgb(255 122 60 / 0) 85%);filter:blur(5px)}
+/* one palette */
+html:root[data-skin="signal"] .cw-b>i,html:root[data-skin="signal"] .fd-pill>i{background:var(--muted)!important}
+html:root[data-skin="signal"] .jbar>em{background:color-mix(in srgb,var(--ink) 22%,transparent)!important}
+html:root[data-skin="signal"] .fdw-rl{color:var(--muted)!important}
+html:root[data-skin="signal"] [fill="#B9D7AE"],html:root[data-skin="signal"] [fill="#F2B8D6"]{fill:#CFCBC2}
+html:root[data-skin="signal"] [stroke="#B9D7AE"],html:root[data-skin="signal"] [stroke="#F2B8D6"]{stroke:#CFCBC2}
+html:root[data-skin="signal"] .tabs .ind.lens::before,html:root[data-skin="signal"] .tabs .ind.lens::after{display:none}
+html:root[data-skin="signal"] .tabs .ind.lens{box-shadow:0 6px 18px rgb(0 0 0 / .35)}
+html:root[data-skin="signal"] .tabs .ind.lens .lmag,html:root[data-skin="signal"] .tabs .ind.lens .lmag *{color:#141414!important}
+html:root[data-skin="signal"] .fab{background:var(--accent)!important;background-image:none!important}
+html:root[data-skin="signal"] .fab::before,html:root[data-skin="signal"] .fab::after{display:none!important}
+html:root[data-skin="signal"] #view ul.rml *,html:root[data-skin="signal"] #view .dl *{text-transform:none!important}
 </style>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://raw.githubusercontent.com https://images.unsplash.com; media-src 'self' blob: data: mediastream:; connect-src 'self' https://*.workers.dev wss://*.workers.dev https://world.openfoodfacts.org https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
@@ -547,7 +596,7 @@ m.content="connect-src 'self' "+u.origin+" wss://"+u.host+" https://world.openfo
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Doto:wght@900&family=Geist:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,500;1,6..72,500&family=Space+Mono:wght@400;700&display=swap" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..800&display=swap" media="print" onload="this.media='all'">
 <style>html{background:#080A09}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
 </head>
 <body>
@@ -1591,8 +1640,8 @@ details.sec>summary{list-style:none;cursor:pointer}details.sec>summary::-webkit-
 <div id="menuLayer"></div>
 
 <script async src="https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js" integrity="sha384-czaB7zH9slIhvFgUxhO8sSnYf4cnCeV2N3zOvDnNKFzRKu5AwqDKEZlCLsaQkoop" crossorigin="anonymous"></script>
-<script defer src="app1.js?v=231"></script>
-<script defer src="app2.js?v=231"></script>
+<script defer src="app1.js?v=232"></script>
+<script defer src="app2.js?v=232"></script>
 
 <script>
 if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(reg=>{
