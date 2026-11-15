@@ -1,0 +1,359 @@
+/* ============================================================================
+   SIGNAL — the second interface of Life.
+   One shape (the disc), two tones (ink and paper), one signal colour (orange).
+     paper  = where you are: the one bright slab per screen, the selected tab or chip
+     orange = what is live or what you can do right now: the + button, the main action, the outer ring
+     ink    = everything else
+   Nothing here touches app logic. `@S` is expanded by build.py to
+   html:root[data-skin="signal"], so each rule outranks the classic sheets
+   (which all key off :root). Take data-skin away and none of it applies.
+   ========================================================================== */
+
+/* ---------- tokens ---------- */
+@S{
+  --bg:#151515; --surface:#212121; --surface2:#2E2E2E; --line:rgb(255 255 255 / .08); --ink:#F5F5F2; --ink2:#D8D8D4; --muted:#9A9A96;
+  --accent:#FF5A1F; --accent-ink:#141414;
+  --paper:#F3F2EE; --paper-ink:#141414; --paper-sub:#62625E; --paper-2:#E2E1DB; --paper-line:rgb(0 0 0 / .09);
+  --ptile:#161616; --ptile-ink:#F5F5F2; --ptile-sub:#A6A6A2;
+  --sage:var(--paper); --sage-ink:var(--paper-ink); --sage-soft:var(--paper-2);
+  --bar:#262626; --bar-ink:#A9A9A5; --late:#FF7A5C; --soon:#FFB36B; --good:#8FD6A0;
+  --hi:transparent; --shadow:none; --card-shadow:none;
+  --pf1:#212121; --pf2:#212121; --pin:#2E2E2E; --pin2:#2E2E2E; --pedge:transparent; --pedge2:transparent;
+  --sh0:#151515; --sh1:#151515; --sh2:#151515; --sh3:#151515;
+  --sgf:'Archivo','Helvetica Neue',Helvetica,Arial,sans-serif;
+  --serif:var(--sgf); --ui:var(--sgf); --mono:var(--sgf); --dot:var(--sgf);
+  --r-xl:32px; --r-l:26px; --r-m:20px; --r-s:14px; --r-xs:10px;
+  --spring:cubic-bezier(.3,1.3,.45,1); --out:cubic-bezier(.2,.8,.2,1);
+  --tw:42px; --ta:104px; --tg:2px; --tp:5px; --th:50px;
+  --glass-blur:0; --glass-tint:100;
+  color-scheme:dark;
+}
+@S[data-theme="light"]{
+  --bg:#E8E7E2; --surface:#FFFFFF; --surface2:#EFEEE9; --line:rgb(0 0 0 / .08); --ink:#141414; --ink2:#33332F; --muted:#6C6C68;
+  --accent-ink:#141414;
+  --paper:#161616; --paper-ink:#F5F5F2; --paper-sub:#A6A6A2; --paper-2:#2C2C2C; --paper-line:rgb(255 255 255 / .10);
+  --ptile:#F3F2EE; --ptile-ink:#141414; --ptile-sub:#62625E;
+  --bar:#161616; --bar-ink:#A9A9A5; --late:#C2371B; --soon:#9A5B00; --good:#22703F;
+  --pf1:#FFFFFF; --pf2:#FFFFFF; --pin:#EFEEE9; --pin2:#EFEEE9;
+  --sh0:#E8E7E2; --sh1:#E8E7E2; --sh2:#E8E7E2; --sh3:#E8E7E2;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:light){@S:not([data-theme="dark"]){
+  --bg:#E8E7E2; --surface:#FFFFFF; --surface2:#EFEEE9; --line:rgb(0 0 0 / .08); --ink:#141414; --ink2:#33332F; --muted:#6C6C68;
+  --accent-ink:#141414;
+  --paper:#161616; --paper-ink:#F5F5F2; --paper-sub:#A6A6A2; --paper-2:#2C2C2C; --paper-line:rgb(255 255 255 / .10);
+  --ptile:#F3F2EE; --ptile-ink:#141414; --ptile-sub:#62625E;
+  --bar:#161616; --bar-ink:#A9A9A5; --late:#C2371B; --soon:#9A5B00; --good:#22703F;
+  --pf1:#FFFFFF; --pf2:#FFFFFF; --pin:#EFEEE9; --pin2:#EFEEE9;
+  --sh0:#E8E7E2; --sh1:#E8E7E2; --sh2:#E8E7E2; --sh3:#E8E7E2;
+  color-scheme:light;
+}}
+
+/* ---------- first paint and backdrop: flat, no foliage, no canvas ---------- */
+@S,@S body{background:var(--bg)!important}
+@S #boot0{background:var(--bg)!important;color:var(--bg)!important}
+@S #splashBg,@S #ix3.ix5{background:var(--bg)!important}
+@S #bgcurve,@S #flora,@S #mesh,@S #bgGlow{display:none!important}
+@S body::before{background:var(--bg)}
+
+/* ---------- type: one family, three widths ----------
+   normal width for reading, condensed heavy for every number, tight heavy for headlines */
+@S body{font:480 15px/1.42 var(--sgf);letter-spacing:-.005em;font-stretch:100%;font-synthesis:none}
+@S button,@S input,@S textarea,@S select{font-family:var(--sgf)}
+@S .cap{font:560 12.5px/1.3 var(--sgf);letter-spacing:0;text-transform:none;color:var(--muted)}
+@S :is(.num,.big,.wnum,.tile b,.stat .v,.ts-grid b,.ts-c b,.macros b,.hero-stats b,.hstat b,.cd-n,.tv b,.buseta b,.jt b,.jst b){font-family:var(--sgf);font-stretch:74%;font-weight:800;letter-spacing:-.005em;font-style:normal;font-variant-numeric:tabular-nums}
+@S h1,@S h2,@S h3,@S h4{font-family:var(--sgf);font-style:normal}
+@S em,@S i{font-style:normal}
+
+/* ---------- top bar ---------- */
+@S .top{border-radius:0;margin:0 -16px;padding:10px 16px 8px;gap:8px;align-items:center}
+@S .top.float{background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:none}
+@S .av{width:44px;height:44px;border-radius:50%;background:var(--paper);color:var(--paper-ink);font:800 15px var(--sgf);font-stretch:74%;letter-spacing:0;box-shadow:none}
+@S .avr{display:none}
+@S .ib{width:44px;height:44px;border-radius:50%;background:var(--surface);border:0;box-shadow:none;color:var(--ink)}
+@S .ib svg.i{width:19px;height:19px}
+@S .badge{border-radius:999px;background:var(--accent);color:var(--accent-ink);font:800 11px/18px var(--sgf);height:18px;min-width:18px;top:-3px;right:-3px;box-shadow:0 0 0 3px var(--bg)}
+@H .hello{min-width:0}
+@H .hello h1{font:620 15.5px/1.2 var(--sgf)!important;letter-spacing:-.01em;color:var(--ink);text-transform:none;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@H .hello h1 br{display:none}
+@H .hello h1 em{color:inherit;margin-left:.28em}
+@H .hello .cap{font:520 12.5px/1.2 var(--sgf);color:var(--muted);margin-bottom:2px}
+/* on the other tabs the big title lives in the page; the small one in the bar only appears once that has scrolled away */
+@S[data-ltab]:not([data-ltab="today"]) #top .hello h1{opacity:0;transform:translateY(5px);transition:opacity .22s,transform .3s var(--out)}
+@S[data-ltab]:not([data-ltab="today"]) #top.float .hello h1{opacity:1;transform:none}
+
+/* ---------- the page headline ---------- */
+@S .sgh{margin:10px 0 20px;display:block}
+@S .sgl{display:block;overflow:hidden;padding-bottom:.08em;margin-bottom:-.08em}
+@S .sgl>i{display:block;font:770 clamp(40px,12.4vw,54px)/.98 var(--sgf);letter-spacing:-.045em;color:var(--ink);will-change:transform}
+@S .sgl.sg2>i{color:var(--muted)}
+
+/* ---------- section heads ---------- */
+@S .sec{margin-top:30px}
+@S .sec-h{min-height:36px;margin-bottom:12px;padding-bottom:0;border:0}
+@S h2,@H h2{font:730 22px/1.15 var(--sgf);letter-spacing:-.035em;text-transform:none;color:var(--ink);display:block}
+@S h2::before,@H h2::before,@S .sec-h h2::before{display:none!important}
+@S h2 em,@H h2 em{color:inherit!important;font-style:normal}
+@S h3{font:760 26px/1.08 var(--sgf);letter-spacing:-.04em}
+@S h3 em,@S #sheetBody h3 em,@S #sheetBody h3 i{color:inherit;font-style:normal}
+@S .card h4,@S h4{font:700 17px/1.2 var(--sgf);letter-spacing:-.02em}
+@S .link{font:600 13px var(--sgf);letter-spacing:0;text-transform:none;color:var(--ink);background:var(--surface);border:0;border-radius:999px;height:34px;padding:0 13px}
+@S .link svg.i{width:14px;height:14px}
+
+/* ---------- the slab: one per screen ---------- */
+@S .hero,@S .hero[class*=" h-"],@S .journ-hero{background:var(--paper)!important;color:var(--paper-ink);border-radius:var(--r-xl);border:0;box-shadow:none;padding:22px 20px 20px;overflow:hidden;position:relative;isolation:isolate;--hc:var(--accent)}
+@S .hero::before{display:none}
+@S .hero>.pxw,@S .hero>.pxd,@S .hero>svg:not(.i),@S .hero-art{display:none}
+@S .hero .hart{display:block;position:absolute;inset:0;pointer-events:none;z-index:-1;background:none;overflow:hidden;border-radius:inherit}
+@S .hero .hart>*{display:none}
+/* the disc: sits off the top-right corner of every slab except Today's, whose dial already is one */
+@S .hero:not(.h-today) .hart::after{content:"";position:absolute;right:-64px;top:-78px;width:212px;height:212px;border-radius:50%;background:var(--accent)}
+@S .hero .cap{color:var(--paper-sub)}
+@S .hero .big,@S .hero[class*=" h-"] .big{font:800 76px/.9 var(--sgf);font-stretch:70%;letter-spacing:-.02em;margin:18px 0 8px;color:var(--paper-ink)}
+@S .hero .lead,@S .lead{font:520 15.5px/1.35 var(--sgf);font-style:normal;color:var(--paper-sub);max-width:58%}
+@S .hero .lead b{font-weight:720;color:var(--paper-ink)}
+@S .hero-stats{border-top:1px solid var(--paper-line);margin-top:16px;padding-top:14px}
+@S .hero-stats b{font-size:24px;color:var(--paper-ink)}
+@S .hero-stats span,@S .hero-stats small{color:var(--paper-sub)}
+@S .hero .pill,@S .pill{border-radius:999px;height:50px;font:650 14.5px var(--sgf);letter-spacing:-.01em;box-shadow:none;border:0}
+@S .hero .pill.light,@S .hero[class*=" h-"]:not(.h-today) .pill.light{background:var(--accent)!important;color:var(--accent-ink)!important}
+@S .hero .pill.glassy{background:var(--paper-2)!important;color:var(--paper-ink)!important;box-shadow:none!important;-webkit-backdrop-filter:none;backdrop-filter:none}
+@S .pill.light{background:var(--accent);color:var(--accent-ink)}
+@S .pill.glassy{background:var(--surface2);color:var(--ink)}
+
+/* Today's slab */
+@S .hero .ts-top .cap{color:var(--paper-sub)}
+@S .ts-ring circle{stroke-linecap:round}
+@S .ts-ring .tk,@S .ts-ring circle:nth-of-type(odd){stroke:var(--paper-line)!important}
+@S .ts-ring circle:nth-of-type(2){stroke:var(--accent)!important}
+@S .ts-ring circle:nth-of-type(4){stroke:var(--paper-ink)!important}
+@S .ts-ring circle:nth-of-type(6){stroke:var(--paper-sub)!important}
+@S .ts-c b{font-size:38px;color:var(--paper-ink)}
+@S .ts-c small{color:var(--paper-sub);font:540 11.5px var(--sgf)}
+@S .hero .ts-leg>button{background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:6px 0 9px;border-bottom:1px solid var(--paper-line)!important}
+@S .hero .ts-leg>button:last-of-type{border-bottom:0!important}
+@S .ts-leg .tl{color:var(--paper-ink);font:620 13.5px var(--sgf)}
+@S .ts-leg .tl i{border-radius:50%;background:var(--paper-ink)!important}
+@S .ts-leg>button:nth-of-type(1) .tl i{background:var(--accent)!important}
+@S .ts-leg>button:nth-of-type(3) .tl i{background:var(--paper-sub)!important}
+@S .ts-leg .tv b{font-size:20px;color:var(--paper-ink)}
+@S .ts-leg .tv small{color:var(--paper-sub)}
+@S .ts-leg .tb{background:var(--paper-line)!important;border-radius:999px;height:4px;overflow:hidden}
+@S .ts-leg .tb i{border-radius:999px;background:var(--paper-ink)!important}
+@S .ts-leg>button:nth-of-type(1) .tb i{background:var(--accent)!important}
+@S .ts-verdict{color:var(--paper-sub)!important;font:560 12.5px var(--sgf)}
+@S .hero .ts-grid{gap:6px}
+@S .hero .ts-grid>button,@S .hero .ts-grid>div{background:var(--ptile)!important;border:0!important;box-shadow:none!important;-webkit-backdrop-filter:none;backdrop-filter:none;border-radius:var(--r-m);color:var(--ptile-ink)}
+@S .hero .ts-grid>button::before,@S .hero .ts-grid>button::after{display:none!important}
+@S .hero .ts-grid>button svg{color:var(--ptile-sub)!important;stroke:currentColor}
+@S .hero .ts-grid>button b{color:var(--ptile-ink)!important;font-size:22px}
+@S .hero .ts-grid>button small{color:var(--ptile-sub)!important;filter:none;font:520 11.5px var(--sgf)}
+@S .ts-pill{background:var(--paper-2);border:0;border-radius:999px;font:560 13px var(--sgf);color:var(--paper-ink)}
+@S .segs i{height:5px;border-radius:999px;background:var(--paper-line)}
+@S .segs i.on{background:var(--paper-ink)}
+
+/* ---------- chips ---------- */
+@S .chip{border-radius:999px;height:44px;padding:0 16px 0 6px;background:var(--surface);border:0;box-shadow:none;font:600 14px var(--sgf);color:var(--ink)}
+@S .chip.on{background:var(--ink);color:var(--bg)}
+@S .ico{border-radius:50%;background:var(--surface2);color:var(--ink);box-shadow:none}
+@S .ico::before{display:none}
+@S .chip .ico{width:32px;height:32px}
+@S .chip.on .ico{background:var(--bg);color:var(--ink)}
+
+/* ---------- cards, rows, lists: fills, no outlines ---------- */
+@S .card-s,@S #view .card-s,@S #view .habit,@S #view .tile,@S #view .stat,@S #view .hstat,@S #view .gcard,@S #view .sec[data-shade] :is(.card-s,.habit,.stat,.ts-tile,.hstat,.tchip,.il-spark){
+  background:var(--surface)!important;border:0!important;box-shadow:none!important}
+@S #view .card-s :is(.card-s,.habit,.tile,.stat,.ts-tile,.hstat,.tchip),@S #view .sec[data-shade] .card-s :is(.card-s,.habit,.stat,.ts-tile,.hstat,.tchip){background:var(--surface2)!important;border:0!important;border-radius:var(--r-m)}
+@S .card-s{border-radius:var(--r-l)}
+@S .banner{border-radius:var(--r-l);background:var(--surface);border:0;box-shadow:none}
+@S .banner button{border-radius:999px;background:var(--surface2);color:var(--ink)}
+@S .row{min-height:62px;padding:9px 16px}
+@S .row+.row{border-top:1px solid var(--line)}
+@S .rt{font:620 15px/1.3 var(--sgf);letter-spacing:-.01em}
+@S .rs{font:480 13px var(--sgf);color:var(--muted)}
+@S .chk i{width:26px;height:26px;border-radius:50%;border:2px solid color-mix(in srgb,var(--ink) 28%,transparent);transition:transform .3s var(--spring),background .15s,border-color .15s}
+@S .chk:active i{transform:scale(.82)}
+@S .chk.on i{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+@S .meta,@S .delta,@S .tag{border-radius:999px;font:600 12px var(--sgf);background:var(--surface2);color:var(--ink2);padding:5px 10px;letter-spacing:0}
+@S .meta.late{color:var(--late)}@S .meta.soon{color:var(--soon)}
+@S .empty{border:0;background:var(--surface);border-radius:var(--r-l);color:var(--muted)}
+@S .list{border-radius:var(--r-l)}
+@S .tiles{gap:8px}
+@S .tile{border-radius:var(--r-l);padding:16px 14px;gap:10px}
+@S .tile b{font-size:26px}
+@S .stat .v{font-size:32px;line-height:1}
+@S .wcard{border-radius:var(--r-l)}
+@S .wnum{font-size:60px;line-height:.92}
+@S .goal{font:520 12.5px var(--sgf)}
+@S .tcard{border-radius:var(--r-m)}
+@S .blk{border-radius:var(--r-xs);box-shadow:none}
+@S .folder{border-radius:var(--r-m);border:0;background:var(--surface)}
+@S .folder.on{background:var(--ink);color:var(--bg)}
+@S .folder.on .cap{color:color-mix(in srgb,var(--bg) 60%,transparent)}
+@S .day{border-radius:999px;border:0;background:var(--surface)}
+@S .day.on{background:var(--ink);color:var(--bg)}
+@S .day.on .cap{color:color-mix(in srgb,var(--bg) 60%,transparent)}
+@S .heat{border-radius:var(--r-l)}
+@S .hm button{border-radius:50%}
+@S .hm button.now{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--ink)}
+@S .tip{border-radius:999px;background:var(--ink);color:var(--bg);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none;font:600 13px var(--sgf)}
+@S .seg2{border-radius:999px;background:var(--surface2);padding:4px;gap:2px;border:0;box-shadow:none}
+@S .seg2 button{border-radius:999px;height:36px;font:620 13.5px var(--sgf);color:var(--muted)}
+@S .seg2 button[aria-pressed="true"]{background:var(--ink);color:var(--bg);box-shadow:none}
+@S .sprig{display:none}
+
+/* reminders: urgency is one colour at four weights */
+@S ul.rml>li.row.rmd{border-radius:var(--r-l);background:var(--surface)!important;border:0!important;box-shadow:none!important}
+@S .rm-b{border-radius:50%;width:40px;height:40px;background:var(--surface2)!important;color:var(--muted)!important;border:0!important;box-shadow:none!important}
+@S .lv-Urgent .rm-b{background:var(--accent)!important;color:var(--accent-ink)!important}
+@S .lv-High .rm-b{background:transparent!important;color:var(--accent)!important;box-shadow:inset 0 0 0 2px var(--accent)!important}
+@S .lv-Normal .rm-b{color:var(--ink)!important}
+@S .rm-m b{font:650 12px var(--sgf);letter-spacing:0;text-transform:none;color:var(--muted)!important}
+@S .lv-Urgent .rm-m b,@S .lv-High .rm-m b{color:var(--accent)!important}
+@S .imp-tag{border-radius:999px;font-family:var(--sgf);text-transform:none;letter-spacing:0}
+
+/* deadlines */
+@S .dl,@S .dls .dl{border-radius:var(--r-l);background:var(--surface)!important;border:0!important;box-shadow:none!important}
+@S .dl-bar{border-radius:999px;height:4px;background:var(--surface2)}
+@S .dl-bar i{border-radius:999px;background:var(--ink)!important}
+
+/* ---------- sheets and forms ---------- */
+@S .wrap .scrim{background:rgb(0 0 0 / .62)}
+@S .sheet{background:var(--surface);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none;padding:14px 18px 22px}
+@S[data-theme="light"] .sheet{background:var(--bg)}
+@media (prefers-color-scheme:light){@S:not([data-theme="dark"]) .sheet{background:var(--bg)}}
+@S .m-bottom{border-radius:34px 34px 0 0}
+@S .m-top,@S .m-center,@S .m-zoom{border-radius:34px}
+@S .grab{width:40px;height:5px;border-radius:999px;background:color-mix(in srgb,var(--ink) 20%,transparent)}
+@S .x{border-radius:50%;background:var(--surface2);box-shadow:none;border:0}
+@S .fld>span,@S .fld legend{font:560 13px var(--sgf);letter-spacing:0;text-transform:none;color:var(--muted)}
+@S input,@S textarea,@S select{border-radius:var(--r-m);background:var(--surface2);border:0;box-shadow:none;font:540 16px var(--sgf);color:var(--ink)}
+@S input:focus,@S textarea:focus{box-shadow:inset 0 0 0 2px var(--ink)}
+@S .primary{background:var(--accent);color:var(--accent-ink);border-radius:999px;height:56px;font:700 16px var(--sgf);letter-spacing:-.01em;box-shadow:none;border:0}
+@S .secondary{background:var(--surface2);color:var(--ink);border-radius:999px;height:56px;font:640 16px var(--sgf);box-shadow:none;border:0}
+@S .danger{border-radius:999px}
+@S .ghost{border-radius:999px}
+@S .navrow{border-radius:var(--r-m)}
+@S .set-grp{font:700 14px var(--sgf);letter-spacing:-.01em;text-transform:none;color:var(--ink)}
+@S .hint{font:480 13.5px/1.4 var(--sgf);color:var(--muted)}
+@S .qbar{border-radius:999px}
+@S .qbar input{border-radius:999px}
+@S #lookHero,@S #lookAccent{display:none}
+
+/* ---------- the dock: a floating capsule; the tab you are on opens up to show its name ---------- */
+@S[data-lay="port"] .dock{background:linear-gradient(to top,var(--bg) 34%,color-mix(in srgb,var(--bg) 0%,transparent));padding:26px 0 max(12px,env(safe-area-inset-bottom,0px))}
+@S[data-lay="port"] .dock::before{display:none}
+@S[data-lay="port"] .dock-in{max-width:none;justify-content:center;gap:8px}
+@S[data-lay="port"] .tabs{flex:none;display:flex;gap:var(--tg);padding:var(--tp);border-radius:999px;background:var(--bar);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 12px 32px rgb(0 0 0 / .38);touch-action:manipulation}
+@S[data-lay="port"] .tabs .ind{top:var(--tp);left:0;height:var(--th);width:var(--ta)!important;border-radius:999px;background:#F3F2EE;box-shadow:none;transition:none}
+@S[data-lay="port"] .tabs button{width:var(--tw);height:var(--th);flex:none;flex-direction:row;gap:0;padding:0;border-radius:999px;color:var(--bar-ink);font:660 14px var(--sgf);letter-spacing:-.01em;text-transform:none;overflow:hidden;transition:width .46s var(--out),color .2s}
+@S[data-lay="port"] .tabs button svg.i{width:21px;height:21px;stroke-width:2;flex:none}
+@S[data-lay="port"] .tabs button span{max-width:0;opacity:0;margin-left:0;white-space:nowrap;transition:max-width .46s var(--out),opacity .18s,margin-left .46s var(--out)}
+@S[data-lay="port"] .tabs button.on{width:var(--ta);color:#141414!important;transform:none}
+@S[data-lay="port"] .tabs button.on span{max-width:64px;opacity:1;margin-left:7px;transition:max-width .46s var(--out),opacity .3s .12s,margin-left .46s var(--out)}
+@S[data-lay="port"] .tabs button:active svg.i{transform:scale(.86)}
+@S .tabs button svg.i{transition:transform .25s var(--spring)}
+@S #tabs button.on::after{display:none}
+@S .fab{width:60px;height:60px;border-radius:50%;background:var(--accent);color:#141414;box-shadow:0 12px 30px rgb(0 0 0 / .38);transition:transform .4s var(--spring)}
+@S .fab:active{transform:scale(.88) rotate(90deg);transition-duration:.12s}
+@S .fab svg.i{width:26px;height:26px;stroke-width:2.6}
+@S .nbrail{border-radius:var(--r-m)}
+/* laptop and landscape keep the rail; same tones */
+@S:not([data-lay="port"]) .tabs{background:var(--bar);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
+@S:not([data-lay="port"]) .tabs .ind{background:#F3F2EE;box-shadow:none}
+@S:not([data-lay="port"]) .tabs button{color:var(--bar-ink);font:600 10.5px var(--sgf)}
+@S:not([data-lay="port"]) .tabs button.on{color:#141414!important}
+@S .tabs .ind.lens{-webkit-backdrop-filter:none;backdrop-filter:none}
+@S .tabs .ind.lens::before,@S .tabs .ind.lens::after,@S .tabs .ind.lens .lmag{display:none}
+
+/* ---------- touch: everything you can press gives a little ---------- */
+@S :is(.chip,.pill,.link,.ib,.av,.primary,.secondary,.tile,.habit,.dl,.folder,.day,.ts-grid>button,li.rmd){transition:transform .28s var(--spring),background-color .18s,color .18s}
+@S :is(.chip,.pill,.link,.ib,.av,.primary,.secondary):active{transform:scale(.94);transition-duration:.08s}
+@S :is(.tile,.habit,.dl,.folder,.day,.ts-grid>button,li.rmd):active{transform:scale(.97);transition-duration:.08s}
+@S :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@S[data-motion="off"] *{transition-duration:.01s!important}
+
+/* ---------- the opening ---------- */
+@S #sgx{position:fixed;inset:0;z-index:2147483500;overflow:hidden;pointer-events:none;contain:strict}
+@S #sgx .cv{position:absolute;inset:0;background:var(--bg)}
+@S #sgx .ds{position:absolute;left:0;top:0;width:320px;height:320px;margin:-160px 0 0 -160px;border-radius:50%;background:var(--accent);will-change:transform;transform:scale(0)}
+@S #sgx .tx{position:absolute;left:16px;right:16px;top:0;color:#141414}
+@S #sgx .gr{font:620 15.5px/1.2 var(--sgf);letter-spacing:-.01em;opacity:0}
+@S #sgx .sgh{margin:0}
+@S #sgx .sgl>i{color:#141414;transform:translateY(105%)}
+@S #sgx .sgl.sg2>i{color:rgb(20 20 20 / .55)}
+
+/* ---------- second pass ---------- */
+/* bar: Today says who, the other tabs say the date until their title has scrolled away */
+@S[data-ltab="today"] #top .hello .cap{display:none}
+@S[data-ltab]:not([data-ltab="today"]) #top .hello{display:grid;align-items:center}
+@S[data-ltab]:not([data-ltab="today"]) #top .hello>*{grid-area:1/1}
+@S[data-ltab]:not([data-ltab="today"]) #top .hello .cap{margin:0;font-size:14px;transition:opacity .2s}
+@S[data-ltab]:not([data-ltab="today"]) #top.float .hello .cap{opacity:0}
+@S[data-ltab]:not([data-ltab="today"]) #top .hello h1{font-size:17px!important;font-weight:700!important}
+/* Today's slab opens with the one number that matters now */
+@S .hero .ts-top .cap:first-child{display:none}
+@S .hero .ts-top{justify-content:flex-start}
+@S .hero .ts-top .cap{font:740 21px/1.1 var(--sgf);letter-spacing:-.03em;color:var(--paper-ink)}
+/* the other slabs: the object sits on an ink disc */
+@S .hero:not(.h-today) .hart::after{content:"";position:absolute;inset:auto;left:auto;bottom:auto;right:-14px;top:14px;width:150px;height:150px;border-radius:50%;background:var(--ptile);opacity:1;transform:none;filter:none;animation:none;-webkit-mask:none;mask:none}
+@S .hero .hart::before{display:none}
+@S .hero-stats b,@S .hero .hero-stats b{color:var(--paper-ink)!important}
+@S .hero-stats>*{color:var(--paper-sub)}
+/* shapes that premium pins with !important */
+@S .rm-b,@S ul.rml>li.row.rmd .rm-b{border-radius:50%!important}
+@S .dl{--u:var(--ink)!important}
+@S .dl .cd-l span{font:800 30px/1 var(--sgf);font-stretch:74%;letter-spacing:0}
+@S .dl .cd-l small{font:700 15px/1 var(--sgf);font-stretch:74%}
+@S .dl-bar i{background:var(--accent)!important}
+@S .dl-t{font:650 15px/1.25 var(--sgf);letter-spacing:-.01em}
+@S .dl-s{color:var(--muted)}
+/* motivation line, add tiles, quick-add bar, filter chips */
+@S .mot{border-radius:var(--r-l);background:var(--surface);border:0;box-shadow:none}
+@S .mot .mi{border-radius:50%;background:var(--surface2);color:var(--accent)}
+@S .mot b{font:650 15px var(--sgf);letter-spacing:-.01em}
+@S .tilt{border-radius:var(--r-l);background:var(--surface2);border:0;box-shadow:none;font:620 14.5px var(--sgf);transition:transform .28s var(--spring)}
+@S .tilt:active{transform:scale(.94)}
+@S .tilt .ico{background:var(--bg);width:46px;height:46px}
+@S .qbar{background:var(--surface2);border:0;box-shadow:none}
+@S .qbar input{background:transparent;box-shadow:none}
+@S .qbar button{border-radius:50%;background:var(--ink);color:var(--bg)}
+@S .qbi{color:var(--accent)}
+@S .back,@S [data-back]{color:var(--ink)}
+@S .habit{border-radius:var(--r-l)}
+@S .habit b{font:650 14.5px var(--sgf);letter-spacing:-.01em}
+@S .habit small{color:var(--muted)}
+@S #view .habit .hring{background:radial-gradient(closest-side,var(--surface) 80%,transparent 81% 100%),conic-gradient(var(--accent) var(--p),var(--surface2) 0)}
+@S .tile .cap{color:var(--muted)}
+@S[data-lay="port"] .dock{background:none}
+@S .cal-f button{border:0;height:38px;padding:0 14px 0 12px;font:600 13.5px var(--sgf)}
+@S .cal-f button i{border-radius:50%}
+
+/* ---------- third pass ---------- */
+@S .hero:not(:has(>.a3d)) .hart::after{display:none}
+@S .hero .fd-head b,@S .hero .fdv b{color:var(--paper-ink)!important;font-stretch:74%;font-weight:800}
+@S .hero .fd-head,@S .hero .fdv,@S .hero .fd-when{color:var(--paper-sub)}
+@S .hero .fd-nav button{border-radius:50%;background:var(--paper-2);color:var(--paper-ink);border:0;box-shadow:none}
+@S .hero .fd-sep{background:var(--paper-line)}
+@S .hero .fdp{border-radius:999px;background:var(--paper-2);color:var(--paper-ink);border:0;box-shadow:none}
+@S .hero .fdp .fill{background:var(--paper-ink);opacity:.14}
+@S .hero .fdp[aria-pressed="true"]{background:var(--ptile);color:var(--ptile-ink)}
+@S .hero .fdp[aria-pressed="true"] span{color:var(--accent)}
+@S .hero .fdp b,@S .hero .fdp span{color:inherit}
+@S .empty svg,@S .empty .pxs{display:none}
+@S .empty{padding:18px 18px;text-align:left}
+@S .jhm button{border-radius:50%}
+@S .jhm button.now,@S .jhm button[aria-current]{outline:2px solid var(--ink);outline-offset:2px;border-style:none}
+@S .rc-row>i{background:var(--surface2);height:6px}
+@S .rc-row>i>i{background:var(--ink)!important}
+@S .folder.on{background:var(--ink)!important;color:var(--bg)!important}
+@S .folder.on *{color:inherit!important}
+@S .folder.on .ico{background:var(--bg)!important;color:var(--ink)!important}
+@S .navrow{border:0;background:var(--surface2);box-shadow:none}
+@S input:focus-visible,@S textarea:focus-visible,@S select:focus-visible{outline:0}
+@S .rt,@S .dl-t{text-transform:none}
+/* Today's greeting: two short lines, so the long ones never get cut */
+@S[data-ltab="today"] #top .hello h1{white-space:normal;overflow:visible;line-height:1.18!important}
+@S[data-ltab="today"] #top .hello h1 br{display:inline}
+@S[data-ltab="today"] #top .hello h1 .hl1{font-weight:520;font-size:13px;color:var(--muted)}
+@S[data-ltab="today"] #top .hello h1 em{margin-left:0;font-weight:700;font-size:16.5px}
