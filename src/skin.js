@@ -78,19 +78,23 @@ function sgBento(hero){
   const cal=leg(0),pro=leg(1),lm=left.match(/^([\d,.\-]+)\s*(.*)$/),C=2*Math.PI*30,rp=Math.max(0,Math.min(100,parseFloat(tx(ring.querySelector('.ts-c b')).replace(/,/g,''))||0));
   const cap=s=>s?s.charAt(0).toUpperCase()+s.slice(1):s;
   const small=b=>{const ico=b.querySelector('svg');return `<button class="sgt s" ${sgAttrs(b)}>${ico?`<span class="ic">${ico.outerHTML}</span>`:''}<span class="n">${esc(tx(b.querySelector('b')))}</span><span class="l">${esc(cap(tx(b.querySelector('small'))))}</span></button>`};
-  let big={a:sgAttrs(ring),l:cap(tx(ring.querySelector('.ts-c small'))||'today'),n:tx(ring.querySelector('.ts-c b')),v:verdict,p:rp};
-  if(!/read/i.test(big.l)){ /* no readiness score yet: show the cut instead of repeating calories */
-    try{const J=JRN(),tr=jTrend(),cur=tr.length?num(tr[tr.length-1].t):num(J.startW),goal=num(J.hi),span=Math.max(.1,num(J.startW)-goal),g=jGym();
-      big={a:'data-goto="health:journey"',l:'Weight',n:cur.toFixed(1),v:cur>goal?`${(cur-goal).toFixed(1)} lb to ${goal}`:'In your goal range',p:Math.max(0,Math.min(100,(num(J.startW)-cur)/span*100))}}catch(e){big.l='Today'}}
+  /* the big tile: readiness when the watch has synced; otherwise what is due this week, with a bar per day */
+  let big={a:sgAttrs(ring),l:cap(tx(ring.querySelector('.ts-c small'))||'today'),n:tx(ring.querySelector('.ts-c b')),v:verdict,g:`<svg class="sgring" viewBox="0 0 72 72"><circle cx="36" cy="36" r="30"/><circle class="a" cx="36" cy="36" r="30" stroke-dasharray="${(C*rp/100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 36 36)"/></svg>`};
+  if(!/read/i.test(big.l)){
+    try{const days=[...Array(7)].map((_,i)=>addDays(i)),per=days.map(()=>0);let next=null,total=0;
+      for(const e of db.entries){if(e.done)continue;const d=(e.type==='task'||e.type==='reminder')?e.due:(e.type==='meeting'?e.date:null);if(!d)continue;
+        const dd=dayDiff(d);if(dd<0){if(e.type!=='meeting'){per[0]++;total++;if(!next)next=e}continue}if(dd>6)continue;per[dd]++;total++;if(!next||dayDiff(next.due||next.date)>dd||dayDiff(next.due||next.date)<0&&false)next=next&&dayDiff(next.due||next.date)<=dd?next:e}
+      const mx=Math.max(1,...per),lab=days.map(d=>new Date(d+'T12:00').toLocaleDateString('en-US',{weekday:'narrow'}));
+      big={a:'data-goto="work:task"',l:'Due this week',n:String(total),v:next?next.title:'Nothing due',
+        g:`<span class="sgwk">${per.map((c,i)=>`<i class="${i?'':'on'}"><b style="height:${c?Math.max(18,c/mx*100).toFixed(0):6}%"></b><s>${lab[i]}</s></i>`).join('')}</span>`}}catch(e){big.l='Today'}}
   const el=document.createElement('div');el.className='sgbento';
-  el.innerHTML=`<button class="sgt big" ${big.a}><span class="l">${esc(big.l)}</span>
-      <svg class="sgring" viewBox="0 0 72 72"><circle cx="36" cy="36" r="30"/><circle class="a" cx="36" cy="36" r="30" stroke-dasharray="${(C*big.p/100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 36 36)"/></svg>
-      <span class="n${big.n.length>4?' sm':''}">${esc(big.n)}</span><span class="v">${esc(big.v)}</span></button>
+  el.innerHTML=`<button class="sgt big${big.g.includes('sgwk')?' wk':''}" ${big.a}><span class="l">${esc(big.l)}</span>${big.g}
+      <span class="n">${esc(big.n)}</span><span class="v">${esc(big.v)}</span></button>
     <button class="sgt kc" ${cal.a}><span class="l">${esc(lm?(/^kcal/i.test(lm[2])?lm[2].replace(/^kcal/i,'Calories'):cap(lm[2])):'Calories')}</span><span class="n">${esc(lm?lm[1]:cal.v)}</span><span class="sgbar"><i style="width:${cal.p.toFixed(0)}%"></i></span></button>
     ${small(grid[0])}${small(grid[1])}
     <button class="sgt pr" ${pro.a}><span class="l">${esc(pro.l)}</span><span class="n">${esc(pro.v)}<small>${esc(pro.g)}</small></span><span class="sgbar"><i style="width:${pro.p.toFixed(0)}%"></i></span></button>
     ${grid[2]?small(grid[2]):''}${grid[3]?small(grid[3]):''}
-    ${next?`<div class="sgt nx">${next.innerHTML}</div>`:''}`;
+    ${next&&!/^\s*nothing/i.test(next.textContent)?`<div class="sgt nx">${next.innerHTML}</div>`:''}`;
   if(acts){acts.classList.add('sgacts');el.appendChild(acts)}
   return el}
 
@@ -194,3 +198,9 @@ function sgRun(preview){
 /* "Play it now" in Look & feel: ours answers first (window, capture) and only when Signal is on */
 window.addEventListener('click',e=>{if(!skinOn())return;const b=e.target.closest&&e.target.closest('[data-introplay]');if(!b)return;
   e.preventDefault();e.stopImmediatePropagation();closeSheet();setTimeout(()=>{SC.scrollTop=0;sgRun(true)},380)},true);
+
+/* Settings: one grouped list, each row with the icon that says what it is */
+const SG_SET={profile:'person',goals:'target',home:'grid',sched:'cal',look:'sparkle',conn:'link',security:'lock',backup:'cloud',data:'layers',about:'heart'};
+{const _os=openSettings;openSettings=function(){const r=_os.apply(this,arguments);
+  try{if(skinOn())document.querySelectorAll('#sheetBody .navrow[data-panel]').forEach(b=>{const k=SG_SET[b.dataset.panel],i=b.querySelector('.ico');if(k&&i&&P[k])i.innerHTML=ic(k)})}catch(e){}
+  return r}}

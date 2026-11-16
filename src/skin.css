@@ -11,7 +11,7 @@
 
 /* ---------- tokens ---------- */
 @S{
-  --bg:#151515; --surface:#212121; --surface2:#2E2E2E; --line:rgb(255 255 255 / .08); --ink:#F5F5F2; --ink2:#D8D8D4; --muted:#9A9A96;
+  --bg:#151515; --surface:#212121; --surface2:#2E2E2E; --line:rgb(255 255 255 / .08); --ink:#F5F5F2; --ink2:#DEDEDA; --muted:#A9A9A5;
   --accent:#FF5A1F; --accent-ink:#141414;
   --paper:#F3F2EE; --paper-ink:#141414; --paper-sub:#62625E; --paper-2:#E2E1DB; --paper-line:rgb(0 0 0 / .09);
   --ptile:#161616; --ptile-ink:#F5F5F2; --ptile-sub:#A6A6A2;
@@ -22,7 +22,7 @@
   --sh0:#151515; --sh1:#151515; --sh2:#151515; --sh3:#151515;
   --sgf:-apple-system,BlinkMacSystemFont,'SF Pro Display','SF Pro Text','Inter',system-ui,'Segoe UI',Roboto,sans-serif;
   --serif:var(--sgf); --ui:var(--sgf); --mono:var(--sgf); --dot:var(--sgf);
-  --r-xl:32px; --r-l:26px; --r-m:20px; --r-s:14px; --r-xs:10px;
+  --r-xl:28px; --r-l:24px; --r-m:14px; --r-s:12px; --r-xs:8px;
   --spring:cubic-bezier(.3,1.3,.45,1); --out:cubic-bezier(.2,.8,.2,1);
   --tw:42px; --ta:104px; --tg:2px; --tp:5px; --th:50px;
   --glass-blur:0; --glass-tint:100;
@@ -561,3 +561,67 @@
 @keyframes sgp10{to{translate:0 46px}}
 @keyframes sgfade{to{opacity:0;translate:0 34px}}
 @S[data-motion="off"] :is(.sgsky,.sgstars,.sgsun,.sgglow,.sgr,.sghaze,.sgwater){animation:none}
+
+
+/* ============================================================================
+   v234: one system
+   Shape: page cards 24, anything inside a card 14 (outer radius minus padding), controls are pills.
+   Depth: surfaces step lighter as they come forward, each with a faint light edge. No drop shadows on content.
+   Type: 21 section title, 15.5 row title, 13 secondary. Sentence case everywhere.
+   ========================================================================== */
+/* --- shape --- */
+@S .hero,@S .hero[class*=" h-"],@S .journ-hero{border-radius:28px}
+@S #view :is(.card-s,.list,.tile,.habit,.stat,.hstat,.gcard,.dl,.mot,.banner,.empty,.wcard,.heat,.sgt,ul.list.rml){border-radius:24px!important}
+@S #view .card-s :is(.card-s,.habit,.tile,.stat,.ts-tile,.hstat,.tchip,.row,.empty,.tcard),@S #view .sec[data-shade] .card-s :is(.card-s,.habit,.stat,.ts-tile,.hstat,.tchip){border-radius:14px!important}
+@S .sgt.nx{border-radius:999px!important}
+@S input,@S textarea,@S select{border-radius:14px!important}
+/* --- depth: a hairline of light on every raised surface --- */
+@S #view :is(.card-s,.list,.tile,.habit,.stat,.hstat,.gcard,.dl,.mot,.banner,.empty,.wcard,.heat,ul.list.rml),@S .sgt:not(.big):not(.kc),@S .chip:not(.on),@S .link,@S .ib,@S .tabs{box-shadow:inset 0 0 0 1px rgb(255 255 255 / .055)!important}
+@S[data-theme="light"] #view :is(.card-s,.list,.tile,.habit,.stat,.hstat,.gcard,.dl,.mot,.banner,.empty,.wcard,.heat,ul.list.rml),@S[data-theme="light"] .sgt:not(.big):not(.kc),@S[data-theme="light"] .chip:not(.on),@S[data-theme="light"] .link{box-shadow:inset 0 0 0 1px rgb(0 0 0 / .06)!important}
+@S .tabs{box-shadow:inset 0 0 0 1px rgb(255 255 255 / .07),0 10px 28px rgb(0 0 0 / .34)!important}
+@S:not(.sg-over) #top .ib{box-shadow:none!important}
+/* --- controls are told apart from the card they sit on --- */
+@S .chip:not(:has(.ico)){padding:0 16px}
+@S #view .card-s .chip:not(.on):not([aria-pressed="true"]),@S .sheet .chip:not(.on):not([aria-pressed="true"]){background:var(--surface2)}
+@S .chip[aria-pressed="true"],@S .jg-chips .chip[aria-pressed="true"]{background:var(--ink)!important;color:var(--bg)!important}
+@S #view .card-s .link,@S #view .card-s .seg2{background:var(--surface2)}
+@S :is(.primary,.secondary,.pill,.link):disabled,@S .jg-row .primary:disabled{background:var(--surface2)!important;color:var(--muted)!important;opacity:1!important}
+@S .jg-row{grid-template-columns:96px minmax(0,1fr) minmax(0,1fr);gap:8px}
+@S .jg-row :is(.primary,.secondary){height:48px;font-size:14.5px;padding:0 8px;min-width:0;white-space:nowrap}
+@S .jg-min{height:48px;border-radius:14px;border:0;background:var(--surface2)}
+@S .jw-top{flex-wrap:wrap}
+@S .jw-in{flex:1 1 100%;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:8px}
+@S .jw-in input{width:100%;height:48px}
+@S .jw-in button{height:48px;padding:0 22px;border-radius:999px;background:var(--ink);color:var(--bg);font:600 14.5px var(--sgf)}
+@S select{border:0!important;background-color:var(--surface2)!important;box-shadow:none!important}
+@S .sheet .ghost,@S .sheet [data-introplay]{height:48px;border-radius:999px;background:var(--surface2);color:var(--ink);font:600 14.5px var(--sgf);width:100%}
+/* --- text: sentence case, readable secondary text --- */
+@S .jw-h,@S .goal,@S #view th,@S #view .cap,@S .sheet .cap{text-transform:none!important;letter-spacing:0!important;font:500 12.5px var(--sgf)!important;color:var(--muted)}
+@S #view .hint,@S .sheet .hint,@S #view small{color:var(--muted)}
+@S #view p,@S #view .rs{line-height:1.42}
+@S #view .tile b{font-size:20px}
+@S #view .tile b small{display:block;font-size:11.5px;font-weight:500;color:var(--muted);margin-top:1px}
+/* --- the week tile --- */
+@S .sgt.big.wk{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto 1fr auto}
+@S .sgt.big.wk .n{grid-area:2/1;font-size:46px;align-self:start;margin-top:6px}
+@S .sgt.big.wk .v{grid-area:4/1;margin-top:8px}
+@S .sgwk{grid-area:3/1;display:grid;grid-template-columns:repeat(7,1fr);gap:5px;align-self:end;height:52px;width:100%}
+@S .sgwk i{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;min-width:0}
+@S .sgwk b{display:block;width:100%;border-radius:4px;background:var(--paper-2);min-height:3px;flex:none;max-height:34px}
+@S .sgwk i{height:100%}
+@S .sgwk i b{height:auto}
+@S .sgwk i.on b{background:var(--accent)}
+@S .sgwk s{text-decoration:none;font:600 10px var(--sgf);color:var(--paper-sub)}
+@S .sgwk i.on s{color:var(--paper-ink)}
+/* --- settings: grouped list --- */
+@S .sheet .set-grp{margin:18px 4px 8px;font:600 13px var(--sgf);color:var(--muted)}
+@S .sheet .navrow{margin:0;border-radius:0;min-height:58px;padding:9px 14px;background:var(--surface2);box-shadow:none}
+@S .sheet .navrow+.navrow{box-shadow:inset 0 1px 0 var(--line)}
+@S .sheet .set-grp+.navrow{border-radius:20px 20px 0 0}
+@S .sheet .navrow:has(+.set-grp),@S .sheet .navrow:last-child{border-radius:0 0 20px 20px}
+@S .sheet .set-grp+.navrow:has(+.set-grp),@S .sheet .set-grp+.navrow:last-child{border-radius:20px}
+@S .sheet .navrow .ico{width:34px;height:34px;background:var(--bg);color:var(--ink)}
+@S .sheet .navrow .ico svg{width:17px;height:17px}
+@S .sheet .navrow .t{font:600 15px var(--sgf)}
+@S .sheet .navrow .t small{font:500 12.5px var(--sgf);color:var(--muted)}
+@S .sheet .navrow:active{transform:none;background:var(--line)}
