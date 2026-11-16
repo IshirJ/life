@@ -1858,7 +1858,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=234';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=235';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -6656,7 +6656,7 @@ function sgSky(){const h=new Date().getHours()+new Date().getMinutes()/60;
   const day=h>=6&&h<=20,t=day?(h-6)/14:0,g=day?.55+.45*Math.abs(Math.cos(Math.PI*t)):.3;
   return{h,day,t,g}}
 function sgSun(k,W){const s=sgSky();
-  if(k==='today'){const x=W*(.62+.2*(s.day?s.t:.5)),y=s.day?250-Math.sin(Math.PI*s.t)*40:262;return{x,y,d:132}}
+  if(k==='today'){const x=W*(.66+.16*(s.day?s.t:.5)),y=s.day?286-Math.sin(Math.PI*s.t)*16:290;return{x,y,d:120}}
   return{plan:{x:W*.78,y:158,d:76},work:{x:W*.7,y:196,d:150},health:{x:W*.8,y:170,d:104},mind:{x:W*.72,y:150,d:64}}[k]||{x:W*.75,y:180,d:110}}
 /*            sharp  amp   freq   per layer, far to near */
 const SG_LAND={today:[[.75,96,1.25],[.6,74,1.5],[.4,50,1.1],[.2,30,.9]],plan:[[.25,54,1.2],[.2,46,1.6],[.15,34,1.1],[.1,22,.9]],work:[[.7,112,1.35],[.6,84,1.6],[.4,54,1.2],[.2,30,.9]],health:[[0,60,1.1],[0,48,1.5],[0,36,1],[0,22,.8]]};
@@ -6694,10 +6694,10 @@ function sgBento(hero){
         const dd=dayDiff(d);if(dd<0){if(e.type!=='meeting'){per[0]++;total++;if(!next)next=e}continue}if(dd>6)continue;per[dd]++;total++;if(!next||dayDiff(next.due||next.date)>dd||dayDiff(next.due||next.date)<0&&false)next=next&&dayDiff(next.due||next.date)<=dd?next:e}
       const mx=Math.max(1,...per),lab=days.map(d=>new Date(d+'T12:00').toLocaleDateString('en-US',{weekday:'narrow'}));
       big={a:'data-goto="work:task"',l:'Due this week',n:String(total),v:next?next.title:'Nothing due',
-        g:`<span class="sgwk">${per.map((c,i)=>`<i class="${i?'':'on'}"><b style="height:${c?Math.max(18,c/mx*100).toFixed(0):6}%"></b><s>${lab[i]}</s></i>`).join('')}</span>`}}catch(e){big.l='Today'}}
+        g:`<span class="sgwk">${per.map((c,i)=>`<span class="d${i?'':' on'}"><span class="bar" style="height:${c?Math.max(6,Math.round(c/mx*30)):3}px"></span><span class="lb">${lab[i]}</span></span>`).join('')}</span>`}}catch(e){big.l='Today'}}
   const el=document.createElement('div');el.className='sgbento';
-  el.innerHTML=`<button class="sgt big${big.g.includes('sgwk')?' wk':''}" ${big.a}><span class="l">${esc(big.l)}</span>${big.g}
-      <span class="n">${esc(big.n)}</span><span class="v">${esc(big.v)}</span></button>
+  el.innerHTML=`<button class="sgt big${big.g.includes('sgwk')?' wk':''}" ${big.a}><span class="sgin"><span class="l">${esc(big.l)}</span>${big.g}
+      <span class="n">${esc(big.n)}</span><span class="v">${esc(big.v)}</span></span></button>
     <button class="sgt kc" ${cal.a}><span class="l">${esc(lm?(/^kcal/i.test(lm[2])?lm[2].replace(/^kcal/i,'Calories'):cap(lm[2])):'Calories')}</span><span class="n">${esc(lm?lm[1]:cal.v)}</span><span class="sgbar"><i style="width:${cal.p.toFixed(0)}%"></i></span></button>
     ${small(grid[0])}${small(grid[1])}
     <button class="sgt pr" ${pro.a}><span class="l">${esc(pro.l)}</span><span class="n">${esc(pro.v)}<small>${esc(pro.g)}</small></span><span class="sgbar"><i style="width:${pro.p.toFixed(0)}%"></i></span></button>

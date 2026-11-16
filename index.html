@@ -18,12 +18,12 @@
 
 /* ---------- tokens ---------- */
 html:root[data-skin="signal"]{
-  --bg:#151515; --surface:#212121; --surface2:#2E2E2E; --line:rgb(255 255 255 / .08); --ink:#F5F5F2; --ink2:#DEDEDA; --muted:#A9A9A5;
+  --bg:#151515; --surface:#212121; --surface2:#2E2E2E; --line:rgb(255 255 255 / .08); --ink:#F5F5F2; --ink2:#DEDEDA; --muted:#BCBCB8;
   --accent:#FF5A1F; --accent-ink:#141414;
-  --paper:#F3F2EE; --paper-ink:#141414; --paper-sub:#62625E; --paper-2:#E2E1DB; --paper-line:rgb(0 0 0 / .09);
+  --paper:#F3F2EE; --paper-ink:#141414; --paper-sub:#55554F; --paper-2:#E2E1DB; --paper-line:rgb(0 0 0 / .09);
   --ptile:#161616; --ptile-ink:#F5F5F2; --ptile-sub:#A6A6A2;
   --sage:var(--paper); --sage-ink:var(--paper-ink); --sage-soft:var(--paper-2);
-  --bar:#262626; --bar-ink:#A9A9A5; --late:#FF7A5C; --soon:#FFB36B; --good:#8FD6A0;
+  --bar:#262626; --bar-ink:#A9A9A5; --late:#FF9A72; --soon:#FFB36B; --good:#8FD6A0;
   --hi:transparent; --shadow:none; --card-shadow:none;
   --pf1:#212121; --pf2:#212121; --pin:#2E2E2E; --pin2:#2E2E2E; --pedge:transparent; --pedge2:transparent;
   --sh0:#151515; --sh1:#151515; --sh2:#151515; --sh3:#151515;
@@ -36,21 +36,21 @@ html:root[data-skin="signal"]{
   color-scheme:dark;
 }
 html:root[data-skin="signal"][data-theme="light"]{
-  --bg:#E8E7E2; --surface:#FFFFFF; --surface2:#EFEEE9; --line:rgb(0 0 0 / .08); --ink:#141414; --ink2:#33332F; --muted:#6C6C68;
+  --bg:#E8E7E2; --surface:#FFFFFF; --surface2:#EFEEE9; --line:rgb(0 0 0 / .08); --ink:#141414; --ink2:#33332F; --muted:#565652;
   --accent-ink:#141414;
-  --paper:#161616; --paper-ink:#F5F5F2; --paper-sub:#A6A6A2; --paper-2:#2C2C2C; --paper-line:rgb(255 255 255 / .10);
+  --paper:#161616; --paper-ink:#F5F5F2; --paper-sub:#BCBCB8; --paper-2:#2C2C2C; --paper-line:rgb(255 255 255 / .10);
   --ptile:#F3F2EE; --ptile-ink:#141414; --ptile-sub:#62625E;
-  --bar:#161616; --bar-ink:#A9A9A5; --late:#C2371B; --soon:#9A5B00; --good:#22703F;
+  --bar:#161616; --bar-ink:#A9A9A5; --late:#A32B12; --soon:#9A5B00; --good:#22703F;
   --pf1:#FFFFFF; --pf2:#FFFFFF; --pin:#EFEEE9; --pin2:#EFEEE9;
   --sh0:#E8E7E2; --sh1:#E8E7E2; --sh2:#E8E7E2; --sh3:#E8E7E2;
   color-scheme:light;
 }
 @media (prefers-color-scheme:light){html:root[data-skin="signal"]:not([data-theme="dark"]){
-  --bg:#E8E7E2; --surface:#FFFFFF; --surface2:#EFEEE9; --line:rgb(0 0 0 / .08); --ink:#141414; --ink2:#33332F; --muted:#6C6C68;
+  --bg:#E8E7E2; --surface:#FFFFFF; --surface2:#EFEEE9; --line:rgb(0 0 0 / .08); --ink:#141414; --ink2:#33332F; --muted:#565652;
   --accent-ink:#141414;
-  --paper:#161616; --paper-ink:#F5F5F2; --paper-sub:#A6A6A2; --paper-2:#2C2C2C; --paper-line:rgb(255 255 255 / .10);
+  --paper:#161616; --paper-ink:#F5F5F2; --paper-sub:#BCBCB8; --paper-2:#2C2C2C; --paper-line:rgb(255 255 255 / .10);
   --ptile:#F3F2EE; --ptile-ink:#141414; --ptile-sub:#62625E;
-  --bar:#161616; --bar-ink:#A9A9A5; --late:#C2371B; --soon:#9A5B00; --good:#22703F;
+  --bar:#161616; --bar-ink:#A9A9A5; --late:#A32B12; --soon:#9A5B00; --good:#22703F;
   --pf1:#FFFFFF; --pf2:#FFFFFF; --pin:#EFEEE9; --pin2:#EFEEE9;
   --sh0:#E8E7E2; --sh1:#E8E7E2; --sh2:#E8E7E2; --sh3:#E8E7E2;
   color-scheme:light;
@@ -632,6 +632,46 @@ html:root[data-skin="signal"] .sheet .navrow .ico svg{width:17px;height:17px}
 html:root[data-skin="signal"] .sheet .navrow .t{font:600 15px var(--sgf)}
 html:root[data-skin="signal"] .sheet .navrow .t small{font:500 12.5px var(--sgf);color:var(--muted)}
 html:root[data-skin="signal"] .sheet .navrow:active{transform:none;background:var(--line)}
+
+
+/* ============================================================================
+   v235: contrast audit fixes (every text/background pair checked) and a sturdier week tile
+   ========================================================================== */
+/* anything on the paper slab reads from the paper palette, whatever rule set its colour */
+html:root[data-skin="signal"] .hero,html:root[data-skin="signal"] .hero[class*=" h-"],html:root[data-skin="signal"] .sgt.big{--muted:var(--paper-sub);--ink:var(--paper-ink);--ink2:var(--paper-ink);--line:var(--paper-line);--surface2:var(--paper-2);--late:#B23A12}
+html:root[data-skin="signal"] .hero .cap,html:root[data-skin="signal"] .hero .cap em,html:root[data-skin="signal"] .hero small,html:root[data-skin="signal"] .hero .fd-l,html:root[data-skin="signal"] .hero .fd-g,html:root[data-skin="signal"] .hero .fd-when,html:root[data-skin="signal"] .hero .bu{color:var(--paper-sub)!important}
+html:root[data-skin="signal"] .hero b,html:root[data-skin="signal"] .hero .big{color:var(--paper-ink)}
+html:root[data-skin="signal"] .hero .pill.light,html:root[data-skin="signal"] .hero .pill.light *{color:#141414!important}
+html:root[data-skin="signal"] .sgt.kc .l{color:rgb(20 20 20 / .82)}
+html:root[data-skin="signal"] .fdw-d.on{color:#141414!important}
+html:root[data-skin="signal"] ul.rml>li.rmd .rm-m span.late,html:root[data-skin="signal"] .late{color:var(--late)!important}
+html:root[data-skin="signal"] #view .folder.on,html:root[data-skin="signal"] #view .folder.card-s.on{background:var(--ink)!important;color:var(--bg)!important}
+html:root[data-skin="signal"] #view .folder.on b,html:root[data-skin="signal"] #view .folder.on .cap,html:root[data-skin="signal"] #view .folder.on span{color:var(--bg)!important}
+html:root[data-skin="signal"] #view .folder.on .ico{background:var(--bg)!important;color:var(--ink)!important}
+html:root[data-skin="signal"] #view p.small,html:root[data-skin="signal"] #view .small{color:var(--muted);font-size:13px;line-height:1.42}
+/* headline stays readable over any part of the sky */
+html:root[data-skin="signal"] .sghd .sgl>i{text-shadow:0 1px 18px rgb(20 10 16 / .45)}
+html:root[data-skin="signal"] .sghd .sgl.sg2>i{color:rgb(245 243 238 / .8)}
+/* week tile: plain blocks inside the button, no grid on the button itself */
+html:root[data-skin="signal"] .sgt.big{display:block;padding:16px}
+html:root[data-skin="signal"] .sgt.big .sgin{display:flex;flex-direction:column;height:100%;position:relative;text-align:left}
+html:root[data-skin="signal"] .sgt.big .l{display:block}
+html:root[data-skin="signal"] .sgt.big .n{display:block;margin-top:auto;font-size:54px;line-height:.95}
+html:root[data-skin="signal"] .sgt.big .v{display:block;margin-top:6px;max-width:100%}
+html:root[data-skin="signal"] .sgt.big .sgring{position:absolute;right:0;top:0;width:56px;height:56px}
+html:root[data-skin="signal"] .sgt.big.wk .n{margin-top:6px;font-size:44px}
+html:root[data-skin="signal"] .sgt.big.wk .sgwk{order:3;margin-top:auto;display:flex;gap:5px;align-items:flex-end;height:48px;width:100%}
+html:root[data-skin="signal"] .sgt.big.wk .v{order:4}
+html:root[data-skin="signal"] .sgwk .d{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%}
+html:root[data-skin="signal"] .sgwk .bar{display:block;width:100%;border-radius:4px;background:var(--paper-2);flex:none}
+html:root[data-skin="signal"] .sgwk .d.on .bar{background:var(--accent)}
+html:root[data-skin="signal"] .sgwk .lb{display:block;font:600 10px/1 var(--sgf);color:var(--paper-sub);text-decoration:none}
+html:root[data-skin="signal"] .sgwk .d.on .lb{color:var(--paper-ink)}
+
+html:root[data-skin="signal"] #view :is(small,p.small,.small,.hint,.cap,.rm-m b,.rm-m span,.fd-g,.fd-when,.fd-l,.bu),html:root[data-skin="signal"] .sheet :is(small,p.small,.hint,.cap){opacity:1!important}
+html:root[data-skin="signal"][data-theme="light"] .glet{color:#A32B12!important}
+@media (prefers-color-scheme:light){html:root[data-skin="signal"]:not([data-theme="dark"]) .glet{color:#A32B12!important}}
+html:root[data-skin="signal"] .hero .fdp.on span,html:root[data-skin="signal"] .hero .fdp[aria-pressed="true"] span{color:inherit!important}
 </style>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://raw.githubusercontent.com https://images.unsplash.com; media-src 'self' blob: data: mediastream:; connect-src 'self' https://*.workers.dev wss://*.workers.dev https://world.openfoodfacts.org https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
@@ -1733,8 +1773,8 @@ details.sec>summary{list-style:none;cursor:pointer}details.sec>summary::-webkit-
 <div id="menuLayer"></div>
 
 <script async src="https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js" integrity="sha384-czaB7zH9slIhvFgUxhO8sSnYf4cnCeV2N3zOvDnNKFzRKu5AwqDKEZlCLsaQkoop" crossorigin="anonymous"></script>
-<script defer src="app1.js?v=234"></script>
-<script defer src="app2.js?v=234"></script>
+<script defer src="app1.js?v=235"></script>
+<script defer src="app2.js?v=235"></script>
 
 <script>
 if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(reg=>{

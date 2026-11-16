@@ -11,12 +11,12 @@
 
 /* ---------- tokens ---------- */
 @S{
-  --bg:#151515; --surface:#212121; --surface2:#2E2E2E; --line:rgb(255 255 255 / .08); --ink:#F5F5F2; --ink2:#DEDEDA; --muted:#A9A9A5;
+  --bg:#151515; --surface:#212121; --surface2:#2E2E2E; --line:rgb(255 255 255 / .08); --ink:#F5F5F2; --ink2:#DEDEDA; --muted:#BCBCB8;
   --accent:#FF5A1F; --accent-ink:#141414;
-  --paper:#F3F2EE; --paper-ink:#141414; --paper-sub:#62625E; --paper-2:#E2E1DB; --paper-line:rgb(0 0 0 / .09);
+  --paper:#F3F2EE; --paper-ink:#141414; --paper-sub:#55554F; --paper-2:#E2E1DB; --paper-line:rgb(0 0 0 / .09);
   --ptile:#161616; --ptile-ink:#F5F5F2; --ptile-sub:#A6A6A2;
   --sage:var(--paper); --sage-ink:var(--paper-ink); --sage-soft:var(--paper-2);
-  --bar:#262626; --bar-ink:#A9A9A5; --late:#FF7A5C; --soon:#FFB36B; --good:#8FD6A0;
+  --bar:#262626; --bar-ink:#A9A9A5; --late:#FF9A72; --soon:#FFB36B; --good:#8FD6A0;
   --hi:transparent; --shadow:none; --card-shadow:none;
   --pf1:#212121; --pf2:#212121; --pin:#2E2E2E; --pin2:#2E2E2E; --pedge:transparent; --pedge2:transparent;
   --sh0:#151515; --sh1:#151515; --sh2:#151515; --sh3:#151515;
@@ -29,21 +29,21 @@
   color-scheme:dark;
 }
 @S[data-theme="light"]{
-  --bg:#E8E7E2; --surface:#FFFFFF; --surface2:#EFEEE9; --line:rgb(0 0 0 / .08); --ink:#141414; --ink2:#33332F; --muted:#6C6C68;
+  --bg:#E8E7E2; --surface:#FFFFFF; --surface2:#EFEEE9; --line:rgb(0 0 0 / .08); --ink:#141414; --ink2:#33332F; --muted:#565652;
   --accent-ink:#141414;
-  --paper:#161616; --paper-ink:#F5F5F2; --paper-sub:#A6A6A2; --paper-2:#2C2C2C; --paper-line:rgb(255 255 255 / .10);
+  --paper:#161616; --paper-ink:#F5F5F2; --paper-sub:#BCBCB8; --paper-2:#2C2C2C; --paper-line:rgb(255 255 255 / .10);
   --ptile:#F3F2EE; --ptile-ink:#141414; --ptile-sub:#62625E;
-  --bar:#161616; --bar-ink:#A9A9A5; --late:#C2371B; --soon:#9A5B00; --good:#22703F;
+  --bar:#161616; --bar-ink:#A9A9A5; --late:#A32B12; --soon:#9A5B00; --good:#22703F;
   --pf1:#FFFFFF; --pf2:#FFFFFF; --pin:#EFEEE9; --pin2:#EFEEE9;
   --sh0:#E8E7E2; --sh1:#E8E7E2; --sh2:#E8E7E2; --sh3:#E8E7E2;
   color-scheme:light;
 }
 @media (prefers-color-scheme:light){@S:not([data-theme="dark"]){
-  --bg:#E8E7E2; --surface:#FFFFFF; --surface2:#EFEEE9; --line:rgb(0 0 0 / .08); --ink:#141414; --ink2:#33332F; --muted:#6C6C68;
+  --bg:#E8E7E2; --surface:#FFFFFF; --surface2:#EFEEE9; --line:rgb(0 0 0 / .08); --ink:#141414; --ink2:#33332F; --muted:#565652;
   --accent-ink:#141414;
-  --paper:#161616; --paper-ink:#F5F5F2; --paper-sub:#A6A6A2; --paper-2:#2C2C2C; --paper-line:rgb(255 255 255 / .10);
+  --paper:#161616; --paper-ink:#F5F5F2; --paper-sub:#BCBCB8; --paper-2:#2C2C2C; --paper-line:rgb(255 255 255 / .10);
   --ptile:#F3F2EE; --ptile-ink:#141414; --ptile-sub:#62625E;
-  --bar:#161616; --bar-ink:#A9A9A5; --late:#C2371B; --soon:#9A5B00; --good:#22703F;
+  --bar:#161616; --bar-ink:#A9A9A5; --late:#A32B12; --soon:#9A5B00; --good:#22703F;
   --pf1:#FFFFFF; --pf2:#FFFFFF; --pin:#EFEEE9; --pin2:#EFEEE9;
   --sh0:#E8E7E2; --sh1:#E8E7E2; --sh2:#E8E7E2; --sh3:#E8E7E2;
   color-scheme:light;
@@ -625,3 +625,43 @@
 @S .sheet .navrow .t{font:600 15px var(--sgf)}
 @S .sheet .navrow .t small{font:500 12.5px var(--sgf);color:var(--muted)}
 @S .sheet .navrow:active{transform:none;background:var(--line)}
+
+
+/* ============================================================================
+   v235: contrast audit fixes (every text/background pair checked) and a sturdier week tile
+   ========================================================================== */
+/* anything on the paper slab reads from the paper palette, whatever rule set its colour */
+@S .hero,@S .hero[class*=" h-"],@S .sgt.big{--muted:var(--paper-sub);--ink:var(--paper-ink);--ink2:var(--paper-ink);--line:var(--paper-line);--surface2:var(--paper-2);--late:#B23A12}
+@S .hero .cap,@S .hero .cap em,@S .hero small,@S .hero .fd-l,@S .hero .fd-g,@S .hero .fd-when,@S .hero .bu{color:var(--paper-sub)!important}
+@S .hero b,@S .hero .big{color:var(--paper-ink)}
+@S .hero .pill.light,@S .hero .pill.light *{color:#141414!important}
+@S .sgt.kc .l{color:rgb(20 20 20 / .82)}
+@S .fdw-d.on{color:#141414!important}
+@S ul.rml>li.rmd .rm-m span.late,@S .late{color:var(--late)!important}
+@S #view .folder.on,@S #view .folder.card-s.on{background:var(--ink)!important;color:var(--bg)!important}
+@S #view .folder.on b,@S #view .folder.on .cap,@S #view .folder.on span{color:var(--bg)!important}
+@S #view .folder.on .ico{background:var(--bg)!important;color:var(--ink)!important}
+@S #view p.small,@S #view .small{color:var(--muted);font-size:13px;line-height:1.42}
+/* headline stays readable over any part of the sky */
+@S .sghd .sgl>i{text-shadow:0 1px 18px rgb(20 10 16 / .45)}
+@S .sghd .sgl.sg2>i{color:rgb(245 243 238 / .8)}
+/* week tile: plain blocks inside the button, no grid on the button itself */
+@S .sgt.big{display:block;padding:16px}
+@S .sgt.big .sgin{display:flex;flex-direction:column;height:100%;position:relative;text-align:left}
+@S .sgt.big .l{display:block}
+@S .sgt.big .n{display:block;margin-top:auto;font-size:54px;line-height:.95}
+@S .sgt.big .v{display:block;margin-top:6px;max-width:100%}
+@S .sgt.big .sgring{position:absolute;right:0;top:0;width:56px;height:56px}
+@S .sgt.big.wk .n{margin-top:6px;font-size:44px}
+@S .sgt.big.wk .sgwk{order:3;margin-top:auto;display:flex;gap:5px;align-items:flex-end;height:48px;width:100%}
+@S .sgt.big.wk .v{order:4}
+@S .sgwk .d{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%}
+@S .sgwk .bar{display:block;width:100%;border-radius:4px;background:var(--paper-2);flex:none}
+@S .sgwk .d.on .bar{background:var(--accent)}
+@S .sgwk .lb{display:block;font:600 10px/1 var(--sgf);color:var(--paper-sub);text-decoration:none}
+@S .sgwk .d.on .lb{color:var(--paper-ink)}
+
+@S #view :is(small,p.small,.small,.hint,.cap,.rm-m b,.rm-m span,.fd-g,.fd-when,.fd-l,.bu),@S .sheet :is(small,p.small,.hint,.cap){opacity:1!important}
+@S[data-theme="light"] .glet{color:#A32B12!important}
+@media (prefers-color-scheme:light){@S:not([data-theme="dark"]) .glet{color:#A32B12!important}}
+@S .hero .fdp.on span,@S .hero .fdp[aria-pressed="true"] span{color:inherit!important}
