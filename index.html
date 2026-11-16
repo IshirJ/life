@@ -74,7 +74,7 @@ html:root[data-skin="signal"] em,html:root[data-skin="signal"] i{font-style:norm
 
 /* ---------- top bar ---------- */
 html:root[data-skin="signal"] .top{border-radius:0;margin:0 -16px;padding:10px 16px 8px;gap:8px;align-items:center}
-html:root[data-skin="signal"] .top.float{background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:none}
+html:root[data-skin="signal"].sg-over .top{background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:none}
 html:root[data-skin="signal"] .av{width:44px;height:44px;border-radius:50%;background:var(--paper);color:var(--paper-ink);font:800 15px var(--sgf);letter-spacing:0;box-shadow:none}
 html:root[data-skin="signal"] .avr{display:none}
 html:root[data-skin="signal"] .ib{width:44px;height:44px;border-radius:50%;background:var(--surface);border:0;box-shadow:none;color:var(--ink)}
@@ -87,7 +87,7 @@ html:root[data-skin="signal"][data-skin] :is(#top,#view) .hello h1 em{color:inhe
 html:root[data-skin="signal"][data-skin] :is(#top,#view) .hello .cap{font:520 12.5px/1.2 var(--sgf);color:var(--muted);margin-bottom:2px}
 /* on the other tabs the big title lives in the page; the small one in the bar only appears once that has scrolled away */
 html:root[data-skin="signal"][data-ltab]:not([data-ltab="today"]) #top .hello h1{opacity:0;transform:translateY(5px);transition:opacity .22s,transform .3s var(--out)}
-html:root[data-skin="signal"][data-ltab]:not([data-ltab="today"]) #top.float .hello h1{opacity:1;transform:none}
+html:root[data-skin="signal"].sg-over[data-ltab]:not([data-ltab="today"]) #top .hello h1{opacity:1;transform:none}
 
 /* ---------- the page headline ---------- */
 html:root[data-skin="signal"] .sgh{margin:0;display:block}
@@ -270,7 +270,7 @@ html:root[data-skin="signal"][data-ltab="today"] #top .hello .cap{display:none}
 html:root[data-skin="signal"][data-ltab]:not([data-ltab="today"]) #top .hello{display:grid;align-items:center}
 html:root[data-skin="signal"][data-ltab]:not([data-ltab="today"]) #top .hello>*{grid-area:1/1}
 html:root[data-skin="signal"][data-ltab]:not([data-ltab="today"]) #top .hello .cap{margin:0;font-size:14px;transition:opacity .2s}
-html:root[data-skin="signal"][data-ltab]:not([data-ltab="today"]) #top.float .hello .cap{opacity:0}
+html:root[data-skin="signal"].sg-over[data-ltab]:not([data-ltab="today"]) #top .hello .cap{opacity:0}
 html:root[data-skin="signal"][data-ltab]:not([data-ltab="today"]) #top .hello h1{font-size:17px!important;font-weight:700!important}
 /* Today's slab opens with the one number that matters now */
 html:root[data-skin="signal"] .hero .ts-top .cap:first-child{display:none}
@@ -344,20 +344,20 @@ html:root[data-skin="signal"][data-ltab="today"] #top .hello h1 em{margin-left:0
    Horizon pass: scenes, the sheet, Today's tiles and deck
    ========================================================================== */
 html:root[data-skin="signal"] .sgscene{position:relative;z-index:0;height:calc(318px + var(--tb,62px));margin:calc(-1 * var(--tb,62px)) -16px 0;overflow:hidden;--y:0px;--o:1;contain:layout paint;background:#17121c}
-html:root[data-skin="signal"] .sgsky{position:absolute;inset:-2px 0 0;transform:translate3d(0,calc(var(--y) * .5),0);will-change:transform}
-html:root[data-skin="signal"] .sgsun{position:absolute;left:0;top:0;border-radius:50%;background:#FF5A1F;box-shadow:0 0 0 22px rgb(255 120 60 / .15),0 0 0 54px rgb(255 140 80 / .07);transform:translate3d(var(--sx),calc(var(--sv) + var(--y) * .62),0);will-change:transform}
+html:root[data-skin="signal"] .sgsky{position:absolute;inset:-2px 0 0;will-change:transform}
+html:root[data-skin="signal"] .sgsun{position:absolute;left:0;top:0;border-radius:50%;background:#FF5A1F;box-shadow:0 0 0 22px rgb(255 120 60 / .15),0 0 0 54px rgb(255 140 80 / .07);transform:translate3d(var(--sx),var(--sv),0);will-change:transform}
 html:root[data-skin="signal"] .sgr{position:absolute;left:0;right:0;bottom:-1px;width:100%;height:210px;will-change:transform}
-html:root[data-skin="signal"] .sgr.r1{fill:#6b2b2d;opacity:.8;transform:translate3d(0,calc(var(--y) * .42),0)}
-html:root[data-skin="signal"] .sgr.r2{fill:#34161f;transform:translate3d(0,calc(var(--y) * .28),0)}
-html:root[data-skin="signal"] .sgr.r3{fill:#170d13;transform:translate3d(0,calc(var(--y) * .14),0)}
+html:root[data-skin="signal"] .sgr.r1{fill:#6b2b2d;opacity:.8;}
+html:root[data-skin="signal"] .sgr.r2{fill:#34161f;}
+html:root[data-skin="signal"] .sgr.r3{fill:#170d13;}
 html:root[data-skin="signal"] .sgwk rect{fill:#34161f}
 html:root[data-skin="signal"] .sgwk rect.past{fill:#2a121a}
 html:root[data-skin="signal"] .sgwk rect.now{fill:#F5F3EE}
 html:root[data-skin="signal"] .sgline{fill:none;stroke:#F5F3EE;stroke-width:2;stroke-linecap:round;opacity:.85;vector-effect:non-scaling-stroke}
-html:root[data-skin="signal"] .sgstars{position:absolute;inset:0;width:100%;height:100%;fill:#F5F3EE;transform:translate3d(0,calc(var(--y) * .5),0)}
+html:root[data-skin="signal"] .sgstars{position:absolute;inset:0;width:100%;height:100%;fill:#F5F3EE;}
 html:root[data-skin="signal"] .sgstars polyline{fill:none;stroke:#F5F3EE;stroke-width:.6;opacity:.35}
 html:root[data-skin="signal"] .sggrain{position:absolute;inset:0;opacity:.2;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
-html:root[data-skin="signal"] .sghd{position:absolute;left:18px;right:18px;top:calc(var(--tb,62px) + 6px);transform:translate3d(0,calc(var(--y) * .3),0);opacity:var(--o);will-change:transform,opacity}
+html:root[data-skin="signal"] .sghd{position:absolute;left:18px;right:18px;top:calc(var(--tb,62px) + 6px);opacity:var(--o);will-change:transform,opacity}
 html:root[data-skin="signal"] .sghd .sgl>i{color:#F5F3EE;font-size:clamp(44px,14.4vw,60px)}
 html:root[data-skin="signal"] .sghd .sgl.sg2>i{color:rgb(245 243 238 / .62)}
 html:root[data-skin="signal"] .sgpill{margin-top:14px;display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 15px 0 9px;border-radius:999px;background:rgb(0 0 0 / .32);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:#F5F3EE;font:620 13.5px var(--sgf)}
@@ -369,11 +369,11 @@ html:root[data-skin="signal"] .pane>:not(.sgscene){position:relative;z-index:1}
 html:root[data-skin="signal"] .pane>.sgcap+*{margin-top:0}
 /* the bar floats on the sky until the sheet reaches it */
 html:root[data-skin="signal"] #top{z-index:6;background:transparent}
-html:root[data-skin="signal"] #top:not(.float) .ib{background:rgb(0 0 0 / .3);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:#F5F3EE}
-html:root[data-skin="signal"] #top:not(.float) .av{background:#F5F3EE;color:#141414}
-html:root[data-skin="signal"] #top:not(.float) .hello h1,html:root[data-skin="signal"] #top:not(.float) .hello h1 em{color:#F5F3EE!important}
-html:root[data-skin="signal"] #top:not(.float) .hello .cap,html:root[data-skin="signal"] #top:not(.float) .hello h1 .hl1{color:rgb(245 243 238 / .7)!important}
-html:root[data-skin="signal"] #top:not(.float) .badge{box-shadow:none}
+html:root[data-skin="signal"]:not(.sg-over) #top .ib{background:rgb(0 0 0 / .3);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:#F5F3EE}
+html:root[data-skin="signal"]:not(.sg-over) #top .av{background:#F5F3EE;color:#141414}
+html:root[data-skin="signal"]:not(.sg-over) #top .hello h1,html:root[data-skin="signal"]:not(.sg-over) #top .hello h1 em{color:#F5F3EE!important}
+html:root[data-skin="signal"]:not(.sg-over) #top .hello .cap,html:root[data-skin="signal"]:not(.sg-over) #top .hello h1 .hl1{color:rgb(245 243 238 / .7)!important}
+html:root[data-skin="signal"]:not(.sg-over) #top .badge{box-shadow:none}
 html:root[data-skin="signal"] .hero.sgoff{display:none!important}
 
 /* the other tabs: their slab rides up over the scene */
@@ -415,20 +415,20 @@ html:root[data-skin="signal"] .pane>.banner{margin:0 0 12px}
 html:root[data-skin="signal"] .sgscene{height:calc(300px + var(--tb,62px))}
 html:root[data-skin="signal"][data-lay="port"] .sgscene:not([data-k="today"]){height:calc(232px + var(--tb,62px))}
 html:root[data-skin="signal"] .sgsun{background:radial-gradient(circle at 50% 42%,#FF7A3C 0%,#FF5A1F 62%);box-shadow:none}
-html:root[data-skin="signal"] .sgglow{position:absolute;left:0;top:0;border-radius:50%;pointer-events:none;background:radial-gradient(closest-side,rgb(255 150 80 / .42),rgb(255 120 60 / .16) 45%,rgb(255 120 60 / 0) 100%);transform:translate3d(var(--sx),calc(var(--sv) + var(--y) * .62),0);will-change:transform}
+html:root[data-skin="signal"] .sgglow{position:absolute;left:0;top:0;border-radius:50%;pointer-events:none;background:radial-gradient(closest-side,rgb(255 150 80 / .42),rgb(255 120 60 / .16) 45%,rgb(255 120 60 / 0) 100%);transform:translate3d(var(--sx),var(--sv),0);will-change:transform}
 html:root[data-skin="signal"] .sgr{height:220px;fill:none;opacity:1!important}
-html:root[data-skin="signal"] .sgr.r1{transform:translate3d(0,calc(var(--y) * .46),0)}
-html:root[data-skin="signal"] .sgr.r2{transform:translate3d(0,calc(var(--y) * .34),0)}
-html:root[data-skin="signal"] .sgr.r3{transform:translate3d(0,calc(var(--y) * .22),0)}
-html:root[data-skin="signal"] .sgr.r4{transform:translate3d(0,calc(var(--y) * .1),0)}
-html:root[data-skin="signal"] .sghaze{position:absolute;left:0;right:0;bottom:36px;height:120px;pointer-events:none;background:linear-gradient(180deg,rgb(255 150 90 / 0),rgb(255 150 90 / .13) 55%,rgb(255 150 90 / 0));transform:translate3d(0,calc(var(--y) * .34),0)}
+html:root[data-skin="signal"] .sgr.r1{}
+html:root[data-skin="signal"] .sgr.r2{}
+html:root[data-skin="signal"] .sgr.r3{}
+html:root[data-skin="signal"] .sgr.r4{}
+html:root[data-skin="signal"] .sghaze{position:absolute;left:0;right:0;bottom:36px;height:120px;pointer-events:none;background:linear-gradient(180deg,rgb(255 150 90 / 0),rgb(255 150 90 / .13) 55%,rgb(255 150 90 / 0));}
 html:root[data-skin="signal"] .sgstars{fill:#F5F3EE}
-html:root[data-skin="signal"] .sgwater{position:absolute;left:0;right:0;bottom:0;height:74px;background:linear-gradient(180deg,#6b2c2a,#2a121b 60%,#170b12);transform:translate3d(0,calc(var(--y) * .2),0)}
+html:root[data-skin="signal"] .sgwater{position:absolute;left:0;right:0;bottom:0;height:74px;background:linear-gradient(180deg,#6b2c2a,#2a121b 60%,#170b12);}
 html:root[data-skin="signal"] .sgwater i{position:absolute;top:0;width:68px;height:100%;background:linear-gradient(180deg,rgb(255 122 60 / .75),rgb(255 122 60 / 0));-webkit-mask:repeating-linear-gradient(180deg,#000 0 3px,transparent 3px 7px);mask:repeating-linear-gradient(180deg,#000 0 3px,transparent 3px 7px);border-radius:50%/0 0 100% 100%}
 html:root[data-skin="signal"] .sgscene[data-k="mind"] .sgr{bottom:60px}
 html:root[data-skin="signal"] .sggrain{display:none}
 html:root[data-skin="signal"] .sgpill{margin-top:12px;background:rgb(10 8 12 / .46);-webkit-backdrop-filter:none;backdrop-filter:none;height:38px}
-html:root[data-skin="signal"] #top:not(.float) .ib{background:rgb(10 8 12 / .42);-webkit-backdrop-filter:none;backdrop-filter:none}
+html:root[data-skin="signal"]:not(.sg-over) #top .ib{background:rgb(10 8 12 / .42);-webkit-backdrop-filter:none;backdrop-filter:none}
 html:root[data-skin="signal"] .sgcap{height:34px;margin-top:-34px;border-radius:32px 32px 0 0}
 
 /* --- Today's tiles: label, number and graphic each have their own place --- */
@@ -539,6 +539,35 @@ html:root[data-skin="signal"] .tabs .ind.lens .lmag,html:root[data-skin="signal"
 html:root[data-skin="signal"] .fab{background:var(--accent)!important;background-image:none!important}
 html:root[data-skin="signal"] .fab::before,html:root[data-skin="signal"] .fab::after{display:none!important}
 html:root[data-skin="signal"] #view ul.rml *,html:root[data-skin="signal"] #view .dl *{text-transform:none!important}
+
+
+/* ---------- v233 ---------- */
+html:root[data-skin="signal"]:not(.sg-over) .top.float{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
+html:root[data-skin="signal"] .sghd{opacity:1}
+html:root[data-skin="signal"] .sgt.big{grid-template-columns:minmax(0,1fr) 56px;grid-template-rows:56px 1fr auto}
+html:root[data-skin="signal"] .sgt.big .sgring{grid-area:1/2;width:56px;height:56px}
+html:root[data-skin="signal"] .sgt.big .n{grid-area:2/1/3/3;font-size:54px}
+html:root[data-skin="signal"] .sgt.big .n.sm{font-size:44px}
+html:root[data-skin="signal"] .sgt.big .v{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+/* parallax on the compositor: each layer is tied to the scroll position by the browser, not by script */
+@supports (animation-timeline:scroll()){
+  html:root[data-skin="signal"] #scroller{scroll-timeline:--sg block}
+  html:root[data-skin="signal"] .sgsky,html:root[data-skin="signal"] .sgstars{animation:sgp50 linear both;animation-timeline:--sg;animation-range:0 460px}
+  html:root[data-skin="signal"] .sgsun,html:root[data-skin="signal"] .sgglow{animation:sgp62 linear both;animation-timeline:--sg;animation-range:0 460px}
+  html:root[data-skin="signal"] .sgr.r1{animation:sgp46 linear both;animation-timeline:--sg;animation-range:0 460px}
+  html:root[data-skin="signal"] .sgr.r2,html:root[data-skin="signal"] .sghaze{animation:sgp34 linear both;animation-timeline:--sg;animation-range:0 460px}
+  html:root[data-skin="signal"] .sgr.r3,html:root[data-skin="signal"] .sgwater{animation:sgp22 linear both;animation-timeline:--sg;animation-range:0 460px}
+  html:root[data-skin="signal"] .sgr.r4{animation:sgp10 linear both;animation-timeline:--sg;animation-range:0 460px}
+  html:root[data-skin="signal"] .sghd{animation:sgfade linear both;animation-timeline:--sg;animation-range:0 46px}
+}
+@keyframes sgp62{to{translate:0 285px}}
+@keyframes sgp50{to{translate:0 230px}}
+@keyframes sgp46{to{translate:0 212px}}
+@keyframes sgp34{to{translate:0 156px}}
+@keyframes sgp22{to{translate:0 101px}}
+@keyframes sgp10{to{translate:0 46px}}
+@keyframes sgfade{to{opacity:0;translate:0 34px}}
+html:root[data-skin="signal"][data-motion="off"] :is(.sgsky,.sgstars,.sgsun,.sgglow,.sgr,.sghaze,.sgwater){animation:none}
 </style>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://raw.githubusercontent.com https://images.unsplash.com; media-src 'self' blob: data: mediastream:; connect-src 'self' https://*.workers.dev wss://*.workers.dev https://world.openfoodfacts.org https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
@@ -1640,8 +1669,8 @@ details.sec>summary{list-style:none;cursor:pointer}details.sec>summary::-webkit-
 <div id="menuLayer"></div>
 
 <script async src="https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js" integrity="sha384-czaB7zH9slIhvFgUxhO8sSnYf4cnCeV2N3zOvDnNKFzRKu5AwqDKEZlCLsaQkoop" crossorigin="anonymous"></script>
-<script defer src="app1.js?v=232"></script>
-<script defer src="app2.js?v=232"></script>
+<script defer src="app1.js?v=233"></script>
+<script defer src="app2.js?v=233"></script>
 
 <script>
 if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(reg=>{

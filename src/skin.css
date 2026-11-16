@@ -67,7 +67,7 @@
 
 /* ---------- top bar ---------- */
 @S .top{border-radius:0;margin:0 -16px;padding:10px 16px 8px;gap:8px;align-items:center}
-@S .top.float{background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:none}
+@S.sg-over .top{background:color-mix(in srgb,var(--bg) 88%,transparent);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:none}
 @S .av{width:44px;height:44px;border-radius:50%;background:var(--paper);color:var(--paper-ink);font:800 15px var(--sgf);letter-spacing:0;box-shadow:none}
 @S .avr{display:none}
 @S .ib{width:44px;height:44px;border-radius:50%;background:var(--surface);border:0;box-shadow:none;color:var(--ink)}
@@ -80,7 +80,7 @@
 @H .hello .cap{font:520 12.5px/1.2 var(--sgf);color:var(--muted);margin-bottom:2px}
 /* on the other tabs the big title lives in the page; the small one in the bar only appears once that has scrolled away */
 @S[data-ltab]:not([data-ltab="today"]) #top .hello h1{opacity:0;transform:translateY(5px);transition:opacity .22s,transform .3s var(--out)}
-@S[data-ltab]:not([data-ltab="today"]) #top.float .hello h1{opacity:1;transform:none}
+@S.sg-over[data-ltab]:not([data-ltab="today"]) #top .hello h1{opacity:1;transform:none}
 
 /* ---------- the page headline ---------- */
 @S .sgh{margin:0;display:block}
@@ -263,7 +263,7 @@
 @S[data-ltab]:not([data-ltab="today"]) #top .hello{display:grid;align-items:center}
 @S[data-ltab]:not([data-ltab="today"]) #top .hello>*{grid-area:1/1}
 @S[data-ltab]:not([data-ltab="today"]) #top .hello .cap{margin:0;font-size:14px;transition:opacity .2s}
-@S[data-ltab]:not([data-ltab="today"]) #top.float .hello .cap{opacity:0}
+@S.sg-over[data-ltab]:not([data-ltab="today"]) #top .hello .cap{opacity:0}
 @S[data-ltab]:not([data-ltab="today"]) #top .hello h1{font-size:17px!important;font-weight:700!important}
 /* Today's slab opens with the one number that matters now */
 @S .hero .ts-top .cap:first-child{display:none}
@@ -337,20 +337,20 @@
    Horizon pass: scenes, the sheet, Today's tiles and deck
    ========================================================================== */
 @S .sgscene{position:relative;z-index:0;height:calc(318px + var(--tb,62px));margin:calc(-1 * var(--tb,62px)) -16px 0;overflow:hidden;--y:0px;--o:1;contain:layout paint;background:#17121c}
-@S .sgsky{position:absolute;inset:-2px 0 0;transform:translate3d(0,calc(var(--y) * .5),0);will-change:transform}
-@S .sgsun{position:absolute;left:0;top:0;border-radius:50%;background:#FF5A1F;box-shadow:0 0 0 22px rgb(255 120 60 / .15),0 0 0 54px rgb(255 140 80 / .07);transform:translate3d(var(--sx),calc(var(--sv) + var(--y) * .62),0);will-change:transform}
+@S .sgsky{position:absolute;inset:-2px 0 0;will-change:transform}
+@S .sgsun{position:absolute;left:0;top:0;border-radius:50%;background:#FF5A1F;box-shadow:0 0 0 22px rgb(255 120 60 / .15),0 0 0 54px rgb(255 140 80 / .07);transform:translate3d(var(--sx),var(--sv),0);will-change:transform}
 @S .sgr{position:absolute;left:0;right:0;bottom:-1px;width:100%;height:210px;will-change:transform}
-@S .sgr.r1{fill:#6b2b2d;opacity:.8;transform:translate3d(0,calc(var(--y) * .42),0)}
-@S .sgr.r2{fill:#34161f;transform:translate3d(0,calc(var(--y) * .28),0)}
-@S .sgr.r3{fill:#170d13;transform:translate3d(0,calc(var(--y) * .14),0)}
+@S .sgr.r1{fill:#6b2b2d;opacity:.8;}
+@S .sgr.r2{fill:#34161f;}
+@S .sgr.r3{fill:#170d13;}
 @S .sgwk rect{fill:#34161f}
 @S .sgwk rect.past{fill:#2a121a}
 @S .sgwk rect.now{fill:#F5F3EE}
 @S .sgline{fill:none;stroke:#F5F3EE;stroke-width:2;stroke-linecap:round;opacity:.85;vector-effect:non-scaling-stroke}
-@S .sgstars{position:absolute;inset:0;width:100%;height:100%;fill:#F5F3EE;transform:translate3d(0,calc(var(--y) * .5),0)}
+@S .sgstars{position:absolute;inset:0;width:100%;height:100%;fill:#F5F3EE;}
 @S .sgstars polyline{fill:none;stroke:#F5F3EE;stroke-width:.6;opacity:.35}
 @S .sggrain{position:absolute;inset:0;opacity:.2;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
-@S .sghd{position:absolute;left:18px;right:18px;top:calc(var(--tb,62px) + 6px);transform:translate3d(0,calc(var(--y) * .3),0);opacity:var(--o);will-change:transform,opacity}
+@S .sghd{position:absolute;left:18px;right:18px;top:calc(var(--tb,62px) + 6px);opacity:var(--o);will-change:transform,opacity}
 @S .sghd .sgl>i{color:#F5F3EE;font-size:clamp(44px,14.4vw,60px)}
 @S .sghd .sgl.sg2>i{color:rgb(245 243 238 / .62)}
 @S .sgpill{margin-top:14px;display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 15px 0 9px;border-radius:999px;background:rgb(0 0 0 / .32);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:#F5F3EE;font:620 13.5px var(--sgf)}
@@ -362,11 +362,11 @@
 @S .pane>.sgcap+*{margin-top:0}
 /* the bar floats on the sky until the sheet reaches it */
 @S #top{z-index:6;background:transparent}
-@S #top:not(.float) .ib{background:rgb(0 0 0 / .3);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:#F5F3EE}
-@S #top:not(.float) .av{background:#F5F3EE;color:#141414}
-@S #top:not(.float) .hello h1,@S #top:not(.float) .hello h1 em{color:#F5F3EE!important}
-@S #top:not(.float) .hello .cap,@S #top:not(.float) .hello h1 .hl1{color:rgb(245 243 238 / .7)!important}
-@S #top:not(.float) .badge{box-shadow:none}
+@S:not(.sg-over) #top .ib{background:rgb(0 0 0 / .3);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:#F5F3EE}
+@S:not(.sg-over) #top .av{background:#F5F3EE;color:#141414}
+@S:not(.sg-over) #top .hello h1,@S:not(.sg-over) #top .hello h1 em{color:#F5F3EE!important}
+@S:not(.sg-over) #top .hello .cap,@S:not(.sg-over) #top .hello h1 .hl1{color:rgb(245 243 238 / .7)!important}
+@S:not(.sg-over) #top .badge{box-shadow:none}
 @S .hero.sgoff{display:none!important}
 
 /* the other tabs: their slab rides up over the scene */
@@ -408,20 +408,20 @@
 @S .sgscene{height:calc(300px + var(--tb,62px))}
 @S[data-lay="port"] .sgscene:not([data-k="today"]){height:calc(232px + var(--tb,62px))}
 @S .sgsun{background:radial-gradient(circle at 50% 42%,#FF7A3C 0%,#FF5A1F 62%);box-shadow:none}
-@S .sgglow{position:absolute;left:0;top:0;border-radius:50%;pointer-events:none;background:radial-gradient(closest-side,rgb(255 150 80 / .42),rgb(255 120 60 / .16) 45%,rgb(255 120 60 / 0) 100%);transform:translate3d(var(--sx),calc(var(--sv) + var(--y) * .62),0);will-change:transform}
+@S .sgglow{position:absolute;left:0;top:0;border-radius:50%;pointer-events:none;background:radial-gradient(closest-side,rgb(255 150 80 / .42),rgb(255 120 60 / .16) 45%,rgb(255 120 60 / 0) 100%);transform:translate3d(var(--sx),var(--sv),0);will-change:transform}
 @S .sgr{height:220px;fill:none;opacity:1!important}
-@S .sgr.r1{transform:translate3d(0,calc(var(--y) * .46),0)}
-@S .sgr.r2{transform:translate3d(0,calc(var(--y) * .34),0)}
-@S .sgr.r3{transform:translate3d(0,calc(var(--y) * .22),0)}
-@S .sgr.r4{transform:translate3d(0,calc(var(--y) * .1),0)}
-@S .sghaze{position:absolute;left:0;right:0;bottom:36px;height:120px;pointer-events:none;background:linear-gradient(180deg,rgb(255 150 90 / 0),rgb(255 150 90 / .13) 55%,rgb(255 150 90 / 0));transform:translate3d(0,calc(var(--y) * .34),0)}
+@S .sgr.r1{}
+@S .sgr.r2{}
+@S .sgr.r3{}
+@S .sgr.r4{}
+@S .sghaze{position:absolute;left:0;right:0;bottom:36px;height:120px;pointer-events:none;background:linear-gradient(180deg,rgb(255 150 90 / 0),rgb(255 150 90 / .13) 55%,rgb(255 150 90 / 0));}
 @S .sgstars{fill:#F5F3EE}
-@S .sgwater{position:absolute;left:0;right:0;bottom:0;height:74px;background:linear-gradient(180deg,#6b2c2a,#2a121b 60%,#170b12);transform:translate3d(0,calc(var(--y) * .2),0)}
+@S .sgwater{position:absolute;left:0;right:0;bottom:0;height:74px;background:linear-gradient(180deg,#6b2c2a,#2a121b 60%,#170b12);}
 @S .sgwater i{position:absolute;top:0;width:68px;height:100%;background:linear-gradient(180deg,rgb(255 122 60 / .75),rgb(255 122 60 / 0));-webkit-mask:repeating-linear-gradient(180deg,#000 0 3px,transparent 3px 7px);mask:repeating-linear-gradient(180deg,#000 0 3px,transparent 3px 7px);border-radius:50%/0 0 100% 100%}
 @S .sgscene[data-k="mind"] .sgr{bottom:60px}
 @S .sggrain{display:none}
 @S .sgpill{margin-top:12px;background:rgb(10 8 12 / .46);-webkit-backdrop-filter:none;backdrop-filter:none;height:38px}
-@S #top:not(.float) .ib{background:rgb(10 8 12 / .42);-webkit-backdrop-filter:none;backdrop-filter:none}
+@S:not(.sg-over) #top .ib{background:rgb(10 8 12 / .42);-webkit-backdrop-filter:none;backdrop-filter:none}
 @S .sgcap{height:34px;margin-top:-34px;border-radius:32px 32px 0 0}
 
 /* --- Today's tiles: label, number and graphic each have their own place --- */
@@ -532,3 +532,32 @@
 @S .fab{background:var(--accent)!important;background-image:none!important}
 @S .fab::before,@S .fab::after{display:none!important}
 @S #view ul.rml *,@S #view .dl *{text-transform:none!important}
+
+
+/* ---------- v233 ---------- */
+@S:not(.sg-over) .top.float{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
+@S .sghd{opacity:1}
+@S .sgt.big{grid-template-columns:minmax(0,1fr) 56px;grid-template-rows:56px 1fr auto}
+@S .sgt.big .sgring{grid-area:1/2;width:56px;height:56px}
+@S .sgt.big .n{grid-area:2/1/3/3;font-size:54px}
+@S .sgt.big .n.sm{font-size:44px}
+@S .sgt.big .v{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+/* parallax on the compositor: each layer is tied to the scroll position by the browser, not by script */
+@supports (animation-timeline:scroll()){
+  @S #scroller{scroll-timeline:--sg block}
+  @S .sgsky,@S .sgstars{animation:sgp50 linear both;animation-timeline:--sg;animation-range:0 460px}
+  @S .sgsun,@S .sgglow{animation:sgp62 linear both;animation-timeline:--sg;animation-range:0 460px}
+  @S .sgr.r1{animation:sgp46 linear both;animation-timeline:--sg;animation-range:0 460px}
+  @S .sgr.r2,@S .sghaze{animation:sgp34 linear both;animation-timeline:--sg;animation-range:0 460px}
+  @S .sgr.r3,@S .sgwater{animation:sgp22 linear both;animation-timeline:--sg;animation-range:0 460px}
+  @S .sgr.r4{animation:sgp10 linear both;animation-timeline:--sg;animation-range:0 460px}
+  @S .sghd{animation:sgfade linear both;animation-timeline:--sg;animation-range:0 46px}
+}
+@keyframes sgp62{to{translate:0 285px}}
+@keyframes sgp50{to{translate:0 230px}}
+@keyframes sgp46{to{translate:0 212px}}
+@keyframes sgp34{to{translate:0 156px}}
+@keyframes sgp22{to{translate:0 101px}}
+@keyframes sgp10{to{translate:0 46px}}
+@keyframes sgfade{to{opacity:0;translate:0 34px}}
+@S[data-motion="off"] :is(.sgsky,.sgstars,.sgsun,.sgglow,.sgr,.sghaze,.sgwater){animation:none}

@@ -1858,7 +1858,7 @@ function activityView(){
 /* ===================== notebooks (loaded only when you open them) ===================== */
 let NOTES_P=null;
 function loadNotes(){if(window.NOTES)return Promise.resolve(window.NOTES);if(NOTES_P)return NOTES_P;
-  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=232';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src+'?v=233';s.onload=res;s.onerror=()=>rej(new Error('Couldn’t load '+src));document.head.appendChild(s)});
   NOTES_P=add('pf.js').then(()=>add('notes.js')).then(()=>window.NOTES).catch(e=>{NOTES_P=null;throw e});return NOTES_P}
 async function openNotebooks(id){try{if(!wrap.hidden)closeSheet();const N=await loadNotes();N.open(id)}catch(e){toast('Notebooks need one online open first: '+e.message)}}
 async function notebookStrip(){
@@ -6645,7 +6645,7 @@ function skinSet(v){
    instead of zig-zagging. Each layer is shaded lighter with distance and separated by haze. */
 const SG_W=390,SG_H=220;
 function sgRnd(seed){let s=seed%2147483647;if(s<=0)s+=2147483646;return()=>((s=s*16807%2147483647)-1)/2147483646}
-function sgRidge(seed,base,amp,sharp,freq){const r=sgRnd(seed),oct=[[1,1],[2.3,.42],[4.7,.13]],ph=oct.map(()=>r()*6.283),N=96;let d=`M0 ${SG_H} `;
+function sgRidge(seed,base,amp,sharp,freq){const r=sgRnd(seed),oct=[[1,1],[2.3,.42],[4.7,.13]],ph=oct.map(()=>r()*6.283),N=64;let d=`M0 ${SG_H} `;
   for(let i=0;i<=N;i++){const x=i/N;let n=0,tot=0;oct.forEach(([f,a],j)=>{const s=Math.sin(x*f*freq*6.283+ph[j]),rg=1-Math.abs(s),sm=(s+1)/2;n+=(sharp*Math.pow(rg,1.6)+(1-sharp)*sm)*a;tot+=a});
     d+=`L${(x*SG_W).toFixed(1)} ${(base-amp*n/tot).toFixed(1)} `}
   return d+`L${SG_W} ${SG_H}Z`}
@@ -6663,7 +6663,7 @@ const SG_LAND={today:[[.75,96,1.25],[.6,74,1.5],[.4,50,1.1],[.2,30,.9]],plan:[[.
 function sgScene(k){
   const W=Math.min(innerWidth,sgPort()?innerWidth:1200),s=sgSky(),sun=sgSun(k,W),g=s.g;
   const sky=`linear-gradient(180deg,#15111b 0%,#231422 ${(30-14*g).toFixed(0)}%,#4a1f2d ${(56-22*g).toFixed(0)}%,#8f3a2c ${(78-20*g).toFixed(0)}%,#d36a34 ${(94-14*g).toFixed(0)}%,#f0a258 ${(108-10*g).toFixed(0)}%)`;
-  const r=sgRnd(71),stars=!s.day||k==='mind'?`<svg class="sgstars" viewBox="0 0 ${SG_W} ${SG_H}" preserveAspectRatio="xMidYMid slice">${[...Array(k==='mind'?34:18)].map(()=>`<circle cx="${(r()*SG_W).toFixed(1)}" cy="${(r()*120).toFixed(1)}" r="${(r()*.8+.35).toFixed(2)}" opacity="${(r()*.6+.25).toFixed(2)}"/>`).join('')}</svg>`:'';
+  const r=sgRnd(71),stars=!s.day||k==='mind'?`<svg class="sgstars" viewBox="0 0 ${SG_W} ${SG_H}" preserveAspectRatio="xMidYMid slice">${[...Array(k==='mind'?26:10)].map(()=>`<circle cx="${(r()*SG_W).toFixed(1)}" cy="${(r()*(k==='mind'?120:46)).toFixed(1)}" r="${(r()*.8+.35).toFixed(2)}" opacity="${(r()*.6+.25).toFixed(2)}"/>`).join('')}</svg>`:'';
   let land;
   if(k==='mind')land=sgLayer(1,sgRidge(9,150,20,.1,1),k)+`<div class="sgwater"><i style="left:${(sun.x-34).toFixed(0)}px"></i></div>`;
   else{const L=SG_LAND[k]||SG_LAND.today,bases=[150,172,194,212],seed={today:11,plan:31,work:53,health:77}[k]||11;
@@ -6686,10 +6686,14 @@ function sgBento(hero){
   const cal=leg(0),pro=leg(1),lm=left.match(/^([\d,.\-]+)\s*(.*)$/),C=2*Math.PI*30,rp=Math.max(0,Math.min(100,parseFloat(tx(ring.querySelector('.ts-c b')).replace(/,/g,''))||0));
   const cap=s=>s?s.charAt(0).toUpperCase()+s.slice(1):s;
   const small=b=>{const ico=b.querySelector('svg');return `<button class="sgt s" ${sgAttrs(b)}>${ico?`<span class="ic">${ico.outerHTML}</span>`:''}<span class="n">${esc(tx(b.querySelector('b')))}</span><span class="l">${esc(cap(tx(b.querySelector('small'))))}</span></button>`};
+  let big={a:sgAttrs(ring),l:cap(tx(ring.querySelector('.ts-c small'))||'today'),n:tx(ring.querySelector('.ts-c b')),v:verdict,p:rp};
+  if(!/read/i.test(big.l)){ /* no readiness score yet: show the cut instead of repeating calories */
+    try{const J=JRN(),tr=jTrend(),cur=tr.length?num(tr[tr.length-1].t):num(J.startW),goal=num(J.hi),span=Math.max(.1,num(J.startW)-goal),g=jGym();
+      big={a:'data-goto="health:journey"',l:'Weight',n:cur.toFixed(1),v:cur>goal?`${(cur-goal).toFixed(1)} lb to ${goal}`:'In your goal range',p:Math.max(0,Math.min(100,(num(J.startW)-cur)/span*100))}}catch(e){big.l='Today'}}
   const el=document.createElement('div');el.className='sgbento';
-  el.innerHTML=`<button class="sgt big" ${sgAttrs(ring)}><span class="l">${esc(cap(tx(ring.querySelector('.ts-c small'))||'today'))}</span>
-      <svg class="sgring" viewBox="0 0 72 72"><circle cx="36" cy="36" r="30"/><circle class="a" cx="36" cy="36" r="30" stroke-dasharray="${(C*rp/100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 36 36)"/></svg>
-      <span class="n">${esc(tx(ring.querySelector('.ts-c b')))}</span><span class="v">${esc(verdict)}</span></button>
+  el.innerHTML=`<button class="sgt big" ${big.a}><span class="l">${esc(big.l)}</span>
+      <svg class="sgring" viewBox="0 0 72 72"><circle cx="36" cy="36" r="30"/><circle class="a" cx="36" cy="36" r="30" stroke-dasharray="${(C*big.p/100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 36 36)"/></svg>
+      <span class="n${big.n.length>4?' sm':''}">${esc(big.n)}</span><span class="v">${esc(big.v)}</span></button>
     <button class="sgt kc" ${cal.a}><span class="l">${esc(lm?(/^kcal/i.test(lm[2])?lm[2].replace(/^kcal/i,'Calories'):cap(lm[2])):'Calories')}</span><span class="n">${esc(lm?lm[1]:cal.v)}</span><span class="sgbar"><i style="width:${cal.p.toFixed(0)}%"></i></span></button>
     ${small(grid[0])}${small(grid[1])}
     <button class="sgt pr" ${pro.a}><span class="l">${esc(pro.l)}</span><span class="n">${esc(pro.v)}<small>${esc(pro.g)}</small></span><span class="sgbar"><i style="width:${pro.p.toFixed(0)}%"></i></span></button>
@@ -6713,9 +6717,14 @@ const SG_GROUPS=[['Health',['food','workout','weight','injury']],['Work',['task'
     const rest=Object.keys(btn).filter(k=>!used.has(k));if(rest.length){const sec=document.createElement('div');sec.className='sgag';sec.innerHTML=`<div class="sgah">More</div><div class="sgar"></div>`;rest.forEach(k=>sec.lastChild.appendChild(btn[k]));wrap.appendChild(sec)}
     g.replaceWith(wrap);const h=document.querySelector('#sheetBody .sh-h h3');if(h)h.textContent='Add'}}}catch(e){console.error(e)}
   return r}}
-/* the scene moves slower than the page that slides over it */
-{let raf=0;const on=()=>{if(raf||!skinOn())return;raf=requestAnimationFrame(()=>{raf=0;const s=document.querySelector('#view .sgscene');if(!s)return;const y=Math.max(0,Math.min(460,SC.scrollTop));s.style.setProperty('--y',y+'px');s.style.setProperty('--o',Math.max(0,1-y/230).toFixed(3))})};
-  try{SC.addEventListener('scroll',on,{passive:true})}catch(e){}}
+/* The scene's parallax is a CSS scroll timeline (runs on the compositor, no script per frame).
+   Script only flips one class when the sheet reaches the bar, and fades the headline where timelines are missing. */
+const SG_TL=(()=>{try{return CSS.supports('animation-timeline: scroll()')}catch(e){return false}})();
+{let raf=0,over=null;const on=()=>{if(raf||!skinOn())return;raf=requestAnimationFrame(()=>{raf=0;const s=document.querySelector('#view .sgscene'),t=document.getElementById('top');if(!s||!t)return;
+    const y=SC.scrollTop,o=y>s.offsetHeight-t.offsetHeight-40;if(o!==over){over=o;document.documentElement.classList.toggle('sg-over',o)}
+    if(!SG_TL){const h=s.querySelector('.sghd');if(h)h.style.opacity=Math.max(0,1-y/46).toFixed(2)}})};
+  try{SC.addEventListener('scroll',on,{passive:true})}catch(e){}
+  window.sgOver=()=>{over=null;on()}}
 
 /* ---------- changing tabs: the same sun travels to its place in the next scene, the land rises, the page comes up ---------- */
 let SG_SUN=null;
@@ -6725,16 +6734,15 @@ function sgArrive(v,from,delay,light){if(noMotion())return;const A=(n,k,o)=>{try
   const sun=v.querySelector('.sgsun');
   if(sun&&from){const r=sun.getBoundingClientRect();if(r.width){const dx=from.left+from.width/2-(r.left+r.width/2),dy=from.top+from.height/2-(r.top+r.height/2),sc=from.width/r.width;
     [sun,v.querySelector('.sgglow')].forEach(n=>A(n,[{translate:`${dx}px ${dy}px`,scale:String(sc)},{translate:'0 0',scale:'1'}],{duration:760,delay:d0,easing:'cubic-bezier(.5,0,.15,1)',fill:'backwards'}))}}
-  if(!light){v.querySelectorAll('.sgr').forEach((n,i)=>A(n,[{translate:'0 '+(40+i*22)+'px'},{translate:'0 0'}],{duration:700+i*80,delay:d0+i*40,easing:OUT,fill:'backwards'}));
-    A(v.querySelector('.sgsky'),[{opacity:.6},{opacity:1}],{duration:500,delay:d0})}
+
   sgRoll(v,d0+90);
-  const rest=[...v.children].filter(n=>!n.matches('.sgscene')&&n.getBoundingClientRect().top<innerHeight).slice(0,light?3:6);
+  const rest=[...v.children].filter(n=>!n.matches('.sgscene')&&n.getBoundingClientRect().top<innerHeight).slice(0,light?3:4);
   rest.forEach((n,i)=>A(n,[{opacity:0,transform:'translateY(54px)'},{opacity:1,transform:'none'}],{duration:620,delay:d0+110+i*45,easing:OUT,fill:'backwards'}));
   v.querySelectorAll('.sgring .a').forEach(c=>{const da=c.getAttribute('stroke-dasharray');A(c,[{strokeDasharray:'0 200'},{strokeDasharray:da}],{duration:900,delay:d0+320,easing:OUT,fill:'backwards'})});
   v.querySelectorAll('.sgbar i').forEach(b=>A(b,[{transform:'scaleX(0)'},{transform:'none'}],{duration:700,delay:d0+360,easing:OUT,fill:'backwards'}))}
 {const _r=render;render=function(){if(skinOn()){try{const s=document.querySelector('#view .sgsun');SG_SUN=s?s.getBoundingClientRect():null}catch(e){SG_SUN=null}}
   const r=_r.apply(this,arguments);
-  if(skinOn()){try{const t=document.getElementById('top'),s=document.querySelector('#view .sgscene');if(t&&s)s.style.setProperty('--tb',t.offsetHeight+'px')}catch(e){}}
+  if(skinOn()){try{const t=document.getElementById('top'),s=document.querySelector('#view .sgscene');if(t&&s)s.style.setProperty('--tb',t.offsetHeight+'px');sgOver()}catch(e){}}
   return r}}
 {const _pi=playIn;playIn=function(first,dir){
   if(!skinOn()||noMotion()||first||dir===undefined)return _pi.apply(this,arguments);
@@ -6761,13 +6769,13 @@ function sgRun(preview){
   const onHome=hr&&hr.top>40&&hr.top<H*.5;
   tx.style.left=(onHome?hr.left:16)+'px';tx.style.right='auto';tx.style.width=(onHome?hr.width:W-32)+'px';tx.style.top=(onHome?hr.top:118)+'px';
   gr.style.cssText+=`position:absolute;left:0;bottom:calc(100% + 14px);white-space:nowrap`;
-  const realSun=document.querySelector('#view .sgsun'),fab=realSun||document.getElementById('fab'),fr=fab&&fab.getBoundingClientRect(),fx=fr&&fr.width?fr.left+fr.width/2:W-50,fy=fr&&fr.width?fr.top+fr.height/2:H-60,fs=(fr&&fr.width?fr.width:60)/320;
-  const cx=W/2,cy=H/2,cover=(Math.hypot(W,H)+60)/320;
+  const realSun=document.querySelector('#view .sgsun'),fab=realSun||document.getElementById('fab'),fr=fab&&fab.getBoundingClientRect(),fx=fr&&fr.width?fr.left+fr.width/2:W-50,fy=fr&&fr.width?fr.top+fr.height/2:H-60,fs0=(fr&&fr.width?fr.width:60);
+  const D=Math.ceil(Math.hypot(W,H)+60),cx=W/2,cy=H/2,cover=1,S0=61/D;ds.style.cssText+=`width:${D}px;height:${D}px;margin:${-D/2}px 0 0 ${-D/2}px`;
   const at=(x,y,s)=>`translate(${x}px,${y}px) scale(${s})`;
   const T1=380,T2=940,T3=1780,T4=2480;   /* landed · flooded · starts to pull back · gone */
   const run=()=>{
-    A(ds,[{transform:at(cx,cy,0)},{transform:at(cx,cy,.19)}],{duration:T1-80,delay:80,easing:'cubic-bezier(.3,1.5,.5,1)',fill:'both'});
-    A(ds,[{transform:at(cx,cy,.19)},{transform:at(cx,cy,cover)}],{duration:T2-T1,delay:T1,easing:IO,fill:'forwards'});
+    A(ds,[{transform:at(cx,cy,0)},{transform:at(cx,cy,S0)}],{duration:T1-80,delay:80,easing:'cubic-bezier(.3,1.5,.5,1)',fill:'both'});
+    A(ds,[{transform:at(cx,cy,S0)},{transform:at(cx,cy,cover)}],{duration:T2-T1,delay:T1,easing:IO,fill:'forwards'});
     A(gr,[{opacity:0},{opacity:1}],{duration:300,delay:T2-140,fill:'both'});
     lines.forEach((n,i)=>A(n,[{transform:'translateY(105%)'},{transform:'none'}],{duration:620,delay:T2-180+i*80,easing:OUT,fill:'both'}));
     /* once the screen is orange, Home can sit underneath, ready */
@@ -6775,7 +6783,7 @@ function sgRun(preview){
     setTimeout(()=>{if(!el.isConnected)return;
       lines.forEach((n,i)=>A(n,[{transform:'none'},{transform:'translateY(-105%)'}],{duration:340,delay:i*50,easing:'cubic-bezier(.6,0,.8,.2)',fill:'forwards'}));
       A(gr,[{opacity:1},{opacity:0}],{duration:200,fill:'forwards'});
-      A(ds,[{transform:at(cx,cy,cover)},{transform:at(fx,fy,fs)}],{duration:T4-T3,easing:IO,fill:'forwards'});
+      A(ds,[{transform:at(cx,cy,cover)},{transform:at(fx,fy,fs0/D)}],{duration:T4-T3,easing:IO,fill:'forwards'});
       try{const pane=document.querySelector('#view .pane');if(pane)sgArrive(pane,null,240,true);
         
       }catch(e){}},T3);
