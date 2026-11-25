@@ -665,3 +665,15 @@
 @S[data-theme="light"] .glet{color:#A32B12!important}
 @media (prefers-color-scheme:light){@S:not([data-theme="dark"]) .glet{color:#A32B12!important}}
 @S .hero .fdp.on span,@S .hero .fdp[aria-pressed="true"] span{color:inherit!important}
+
+
+/* ---------- v236 ---------- */
+/* the bar is a solid strip once the sheet reaches it: no blur to smear what scrolls under it, and nothing left behind when it hides */
+@S.sg-over .top{background:var(--bg)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+@S .top.away{visibility:hidden;background:transparent!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+@S .top,@S .top.float,@S .ib{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+@S.sg-over body::after{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:5;pointer-events:none}
+/* calendar blocks: one palette, readable at any height */
+@S .blk{border-radius:8px;padding:3px 6px}
+@S .blk.sh{padding:1px 6px}
+@S .blk.sh .bt{font-size:9.5px;line-height:1.15}

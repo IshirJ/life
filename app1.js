@@ -35,7 +35,7 @@ const ic=(k,cls='i')=>`<svg class="${cls}" viewBox="0 0 24 24" aria-hidden="true
 const TYPES={
   class:{label:'Class',f:[['title','Course','text'],['days','Days','days'],['start','Starts','time'],['end','Ends','time'],['place','Room','text'],['look','Icon & colour','look']]},
   task:{label:'Task',f:[['title','Task','text'],['due','Due','date'],['project','Project','text'],['priority','Priority','select:Normal,High,Low'],['notes','Notes','area']]},
-  meeting:{label:'Meeting',f:[['title','Meeting','text'],['date','Date','date'],['time','Time','time'],['repeat','Repeats','select:Never,Daily,Weekdays,Weekly,Every 2 weeks,Monthly'],['until','Repeat until (optional)','date'],['with','With','text'],['look','Icon & colour','look'],['notes','Notes','area']]},
+  meeting:{label:'Meeting',f:[['title','Meeting','text'],['date','Date','date'],['time','Starts','time'],['end','Ends (optional)','time'],['repeat','Repeats','select:Never,Daily,Weekdays,Weekly,Every 2 weeks,Monthly'],['until','Repeat until (optional)','date'],['with','With','text'],['look','Icon & colour','look'],['notes','Notes','area']]},
   project:{label:'Project',f:[['title','Project','text'],['status','Status','select:Active,Planning,Paused,Done'],['next','Next step','text'],['look','Icon & colour','look'],['notes','Notes','area']]},
   food:{label:'Food',f:[['title','Food','text'],['meal','Meal','select:Breakfast,Lunch,Dinner,Snack'],['grams','Amount (g)','number'],['kcal','Calories (kcal)','number'],['protein','Protein (g)','number'],['fat','Fat (g)','number'],['carbs','Carbs (g)','number'],['date','Date','date']]},
   weight:{label:'Weight',f:[['value','Weight (lb)','number'],['date','Date','date']]},
@@ -421,13 +421,13 @@ const toMin=t=>{if(!t)return null;const[h,m]=t.split(':').map(Number);return h*6
 /* in the 7-day view, empty weekend days get half a column so busy days have room for their titles */
 function wkCols(days){return days.map(d=>days.length===7&&[0,6].includes(new Date(d+'T12:00').getDay())&&!calItems(d).length?'minmax(0,.55fr)':'minmax(0,1fr)').join(' ')}
 function hourGrid(days,wide){
-  const items=days.map(d=>calItems(d).filter(e=>!e.allDay).map(e=>{const cl=e.type==='class'||e.type==='ext'||e.type==='block';const st=toMin(cl?e.start:e.time);let en=cl?toMin(e.end):null;if(st!==null&&(en===null||en<=st))en=st+60;return{e,st,en}}).filter(x=>x.st!==null));
+  const items=days.map(d=>calItems(d).filter(e=>!e.allDay).map(e=>{const cl=e.type==='class'||e.type==='ext'||e.type==='block';const st=toMin(cl?e.start:e.time);let en=toMin(e.end);if(st!==null&&(en===null||en<=st))en=st+60;return{e,st,en}}).filter(x=>x.st!==null));
   const all=items.flat();
   const h0=wide?Math.min(6,...all.map(x=>Math.floor(x.st/60))):Math.min(8,...all.map(x=>Math.floor(x.st/60))),h1=wide?Math.max(23,...all.map(x=>Math.ceil(x.en/60))):Math.max(18,...all.map(x=>Math.ceil(x.en/60)));
   const PH=wide?48:40,H=(h1-h0)*PH,sel=anchor(),nowM=new Date().getHours()*60+new Date().getMinutes();
   const hours=[...Array(h1-h0)].map((_,i)=>`<span style="top:${i*PH}px">${C24()?pad(h0+i):(((h0+i)%12)||12)+(h0+i<12?'a':'p')}</span>`).join('');
-  const cols=days.map((d,di)=>`<div class="wcol${!wide&&d===sel?' on':''}"${wide?'':` data-wday="${d}"`}>${items[di].map(({e,st,en})=>{const top=(st-h0*60)/60*PH,ht=Math.max(wide?28:18,(en-st)/60*PH-2);
-      const cl=e.type==='class'||e.type==='ext'||e.type==='block',t=cl?e.start:e.time,sub=[fmtT(t)+(cl&&e.end?`–${fmtT(e.end)}`:''),e.place||e.with].filter(Boolean).join(' · ');
+  const cols=days.map((d,di)=>`<div class="wcol${!wide&&d===sel?' on':''}"${wide?'':` data-wday="${d}"`}>${items[di].map(({e,st,en})=>{const top=(st-h0*60)/60*PH,ht=Math.max(wide?20:14,(en-st)/60*PH-2);
+      const cl=e.type==='class'||e.type==='ext'||e.type==='block',t=cl?e.start:e.time,sub=[fmtT(t)+(e.end?`–${fmtT(e.end)}`:''),e.place||e.with].filter(Boolean).join(' · ');
       const pc=e.color!==undefined&&e.color!==''&&PICK_COLS[+e.color];return`<button class="blk${wide?' wide':''}${ht<26?' sh':''} k-${e.type}" data-open="${esc(e.id)}" style="top:${top.toFixed(1)}px;height:${ht.toFixed(1)}px${pc?`;--c1:${pc[0]};--c2:${pc[1]}`:''}" aria-label="${esc(e.title)} ${esc(fmtT(t))}">${(()=>{/* lines that fully fit inside the block (padding 4px top+bottom, ~10.6px per line narrow / 16px wide); never clipped mid-line */
         const ln=Math.max(1,Math.floor((ht-8)/(wide?16:10.6)));return wide?`<span class="bt one">${esc(e.title)}</span>${ht>=40&&sub?`<small>${esc(sub)}</small>`:''}`:`<span class="bt${ln===1?' one':''}" style="-webkit-line-clamp:${ln}">${esc(e.title)}</span>`})()}</button>`}).join('')}${d===today()&&nowM>=h0*60&&nowM<=h1*60?`<i class="nowline" style="top:${((nowM-h0*60)/60*PH).toFixed(1)}px"></i>`:''}</div>`).join('');
   const gcols=wkCols(days);
@@ -871,7 +871,7 @@ function openSearch(){
 }
 
 /* ---------- settings + live appearance editor ---------- */
-const APP_VER='235';
+const APP_VER='236';
 const ACCENTS=['#D9552E','#2F6BFF','#1FA45A','#8B4CF0','#E0336B','#2A2A2A'];
 const HEROS=['#4E6A5A','#2C3A5A','#5A3A2E','#1E1E1E','#6A4FC4','#0F6E73'];
 function applyLook(){

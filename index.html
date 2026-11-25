@@ -672,6 +672,18 @@ html:root[data-skin="signal"] #view :is(small,p.small,.small,.hint,.cap,.rm-m b,
 html:root[data-skin="signal"][data-theme="light"] .glet{color:#A32B12!important}
 @media (prefers-color-scheme:light){html:root[data-skin="signal"]:not([data-theme="dark"]) .glet{color:#A32B12!important}}
 html:root[data-skin="signal"] .hero .fdp.on span,html:root[data-skin="signal"] .hero .fdp[aria-pressed="true"] span{color:inherit!important}
+
+
+/* ---------- v236 ---------- */
+/* the bar is a solid strip once the sheet reaches it: no blur to smear what scrolls under it, and nothing left behind when it hides */
+html:root[data-skin="signal"].sg-over .top{background:var(--bg)!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html:root[data-skin="signal"] .top.away{visibility:hidden;background:transparent!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html:root[data-skin="signal"] .top,html:root[data-skin="signal"] .top.float,html:root[data-skin="signal"] .ib{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+html:root[data-skin="signal"].sg-over body::after{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:5;pointer-events:none}
+/* calendar blocks: one palette, readable at any height */
+html:root[data-skin="signal"] .blk{border-radius:8px;padding:3px 6px}
+html:root[data-skin="signal"] .blk.sh{padding:1px 6px}
+html:root[data-skin="signal"] .blk.sh .bt{font-size:9.5px;line-height:1.15}
 </style>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob: https://raw.githubusercontent.com https://images.unsplash.com; media-src 'self' blob: data: mediastream:; connect-src 'self' https://*.workers.dev wss://*.workers.dev https://world.openfoodfacts.org https://cdn.jsdelivr.net https://fonts.googleapis.com https://fonts.gstatic.com; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
@@ -1773,8 +1785,8 @@ details.sec>summary{list-style:none;cursor:pointer}details.sec>summary::-webkit-
 <div id="menuLayer"></div>
 
 <script async src="https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js" integrity="sha384-czaB7zH9slIhvFgUxhO8sSnYf4cnCeV2N3zOvDnNKFzRKu5AwqDKEZlCLsaQkoop" crossorigin="anonymous"></script>
-<script defer src="app1.js?v=235"></script>
-<script defer src="app2.js?v=235"></script>
+<script defer src="app1.js?v=236"></script>
+<script defer src="app2.js?v=236"></script>
 
 <script>
 if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(reg=>{
